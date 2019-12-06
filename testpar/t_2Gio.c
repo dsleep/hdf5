@@ -1,6 +1,5 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Copyright by The HDF Group.                                               *
- * Copyright by the Board of Trustees of the University of Illinois.         *
  * All rights reserved.                                                      *
  *                                                                           *
  * This file is part of HDF5.  The full HDF5 copyright notice, including     *
@@ -109,7 +108,7 @@ usage(void)
     HDprintf("\t-n<n_groups>"
             "\tset number of groups for the multiple group test\n");
     HDprintf("\t-f <prefix>\tfilename prefix\n");
-    HDprintf("\t-2\t\tuse Split-file together with MPIO\n");
+    HDprintf("\t-i\tuse Independent IO \n");
     HDprintf("\t-d <factor0> <factor1>\tdataset dimensions factors. Defaults (%d,%d)\n",
             BIG_X_FACTOR, BIG_Y_FACTOR);
     HDprintf("\t-c <dim0> <dim1>\tdataset chunk dimensions. Defaults (dim0/10,dim1/10)\n");
@@ -162,12 +161,7 @@ parse_options(int argc, char **argv)
             case 'i':   /* Collective MPI-IO access with independent IO  */
                 dxfer_coll_type = DXFER_INDEPENDENT_IO;
                 break;
-            case '2':   /* Use the split-file driver with MPIO access */
-                /* Can use $HDF5_METAPREFIX to define the */
-                /* meta-file-prefix. */
-                facc_type = FACC_MPIO | FACC_SPLIT;
-                break;
-            case 'd':   /* dimensizes */
+            case 'd':   /* dimension sizes */
                 if (--argc < 2){
                     nerrors++;
                     return(1);
