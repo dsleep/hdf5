@@ -322,19 +322,24 @@ H5VL__native_object_specific(void *obj, const H5VL_loc_params_t *loc_params, H5V
             {
                 H5_index_t idx_type     = (H5_index_t)HDva_arg(arguments, int); /* enum work-around */
                 H5_iter_order_t order   = (H5_iter_order_t)HDva_arg(arguments, int); /* enum work-around */
-                H5O_iterate_t op        = HDva_arg(arguments, H5O_iterate_t);
+                H5O_iterate2_t op       = HDva_arg(arguments, H5O_iterate2_t);
                 void *op_data           = HDva_arg(arguments, void *);
                 unsigned fields         = HDva_arg(arguments, unsigned);
+                H5O_shim_data_t *shim_data  = (H5O_shim_data_t *)op_data;
+
+                H5O_iterate_t real_op       = shim_data->real_op;
+                void *real_op_data          = shim_data->real_op_data;
+
 
                 /* Call internal object visitation routine */
                 if(loc_params->type == H5VL_OBJECT_BY_SELF) {
                     /* H5Ovisit */
-                    if((ret_value = H5O__visit(&loc, ".", idx_type, order, op, op_data, fields)) < 0)
+                    if((ret_value = H5O__visit(&loc, ".", idx_type, order, real_op, real_op_data, fields)) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
                 } /* end if */
                 else if(loc_params->type == H5VL_OBJECT_BY_NAME) {
                     /* H5Ovisit_by_name */
-                    if((ret_value = H5O__visit(&loc, loc_params->loc_data.loc_by_name.name, idx_type, order, op, op_data, fields)) < 0)
+                    if((ret_value = H5O__visit(&loc, loc_params->loc_data.loc_by_name.name, idx_type, order, real_op, real_op_data, fields)) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
                 } /* end else-if */
                 else

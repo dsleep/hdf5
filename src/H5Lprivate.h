@@ -98,6 +98,11 @@ typedef struct H5L_elink_cb_t {
     void                      *user_data;
 } H5L_elink_cb_t;
 
+/* Shim data for using native H5Literate/visit callbacks with the VOL */
+typedef struct H5L_shim_data_t {
+    H5L_iterate_t   real_op;
+    void            *real_op_data;
+} H5L_shim_data_t;
 
 /*****************************/
 /* Library Private Variables */

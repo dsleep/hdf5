@@ -877,6 +877,13 @@ typedef struct {
     void *new_obj;              /* Pointer to new object created */
 } H5O_obj_create_t;
 
+/* Shim data for using native H5Ovisit callbacks with the VOL */
+typedef struct H5O_shim_data_t {
+    H5O_iterate_t   real_op;
+    void            *real_op_data;
+} H5O_shim_data_t;
+
+
 /* Forward declarations for prototype arguments */
 struct H5P_genplist_t;
 
