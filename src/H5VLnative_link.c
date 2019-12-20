@@ -241,20 +241,36 @@ H5VL__native_link_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_link_
         /* H5Lget_info/H5Lget_info_by_idx */
         case H5VL_LINK_GET_INFO:
             {
-                H5L_info_t *linfo  = HDva_arg(arguments, H5L_info_t *);
+                H5L_info2_t *linfo2  = HDva_arg(arguments, H5L_info2_t *);
+                H5L_info_t  linfo;
 
                 /* Get the link information */
                 if(loc_params->type == H5VL_OBJECT_BY_NAME) { /* H5Lget_info */
-                    if(H5L_get_info(&loc, loc_params->loc_data.loc_by_name.name, linfo) < 0)
+                    if(H5L_get_info(&loc, loc_params->loc_data.loc_by_name.name, &linfo) < 0)
                         HGOTO_ERROR(H5E_LINK, H5E_NOTFOUND, FAIL, "unable to get link info")
                 } /* end if */
                 else if(loc_params->type == H5VL_OBJECT_BY_IDX) { /* H5Lget_info_by_idx */
                     if(H5L_get_info_by_idx(&loc, loc_params->loc_data.loc_by_idx.name, loc_params->loc_data.loc_by_idx.idx_type,
-                            loc_params->loc_data.loc_by_idx.order, loc_params->loc_data.loc_by_idx.n, linfo) < 0)
+                            loc_params->loc_data.loc_by_idx.order, loc_params->loc_data.loc_by_idx.n, &linfo) < 0)
                         HGOTO_ERROR(H5E_LINK, H5E_NOTFOUND, FAIL, "unable to get link info")
                 } /* end else-if */
                 else
                     HGOTO_ERROR(H5E_LINK, H5E_NOTFOUND, FAIL, "unable to get link info")
+
+                /* Copy old-style members to new-style struct. */
+                linfo2->type            = linfo.type;
+                linfo2->corder_valid    = linfo.corder_valid;
+                linfo2->corder          = linfo.corder;
+                linfo2->cset            = linfo.cset;
+                if (H5L_TYPE_HARD == linfo.type) {
+                    uint8_t *p = (uint8_t *)(&(linfo2->u.token)); /* Pointer into token   */
+
+                    /* Convert from address to VOL token */
+                    H5F_addr_encode(loc.oloc->file, &p, linfo.u.address);
+                }
+                else
+                    linfo2->u.val_size = linfo.u.val_size;
+
                 break;
             }
 

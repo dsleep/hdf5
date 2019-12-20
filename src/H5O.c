@@ -260,9 +260,7 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     void *opened_obj = NULL;            /* Opened object */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     H5VL_token_t obj_token = {0};       /* Object token */
-    hid_t file_id = H5I_INVALID_HID;    /* File ID */
-    void *vol_obj_file = NULL;          /* Object token of file_id */
-    H5F_t *f = NULL;
+    size_t addr_len = 0;                /* Size of haddr_t in this file */
     uint8_t *p = NULL;
     hid_t ret_value = H5I_INVALID_HID;  /* Return value */
 
@@ -277,21 +275,13 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     if((vol_obj_type = H5I_get_type(loc_id)) < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
 
-    /* Get the file for the object */
-    if((file_id = H5F_get_file_id(vol_obj, vol_obj_type, FALSE)) < 0)
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a file or file object")
-
-    /* Retrieve VOL object */
-    if(NULL == (vol_obj_file = H5VL_vol_object(file_id)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
-
-    /* Retrieve file from VOL object */
-    if(NULL == (f = (H5F_t *)H5VL_object_data(vol_obj_file)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid VOL object")
+    /* Get the size of an haddr_t in this file */
+    if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "unable to get the file's address size")
 
     /* This is a native specific routine that requires serialization of the token */
     p = (uint8_t *)&obj_token;
-    H5F_addr_encode(f, &p, addr);
+    H5F_addr_encode_len(addr_len, &p, addr);
 
     loc_params.type = H5VL_OBJECT_BY_TOKEN;
     loc_params.loc_data.loc_by_token.token = &obj_token;
@@ -306,8 +296,6 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to atomize object handle")
 
 done:
-    if(file_id != H5I_INVALID_HID && H5I_dec_ref(file_id) < 0)
-        HDONE_ERROR(H5E_REFERENCE, H5E_CANTDEC, H5I_INVALID_HID, "unable to decrement refcount on file")
     FUNC_LEAVE_API(ret_value)
 } /* end H5Oopen_by_addr() */
 
