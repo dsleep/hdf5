@@ -24,10 +24,33 @@
 #ifndef _H5Lpublic_H
 #define _H5Lpublic_H
 
+/* Early typedefs to avoid circular dependencies */
+
+/* Link class types.
+ * Values less than 64 are reserved for the HDF5 library's internal use.
+ * Values 64 to 255 are for "user-defined" link class types; these types are
+ * defined by HDF5 but their behavior can be overridden by users.
+ * Users who want to create new classes of links should contact the HDF5
+ * development team at hdfhelp@ncsa.uiuc.edu .
+ * These values can never change because they appear in HDF5 files.
+ */
+typedef enum {
+    H5L_TYPE_ERROR = (-1),      /* Invalid link type id         */
+    H5L_TYPE_HARD = 0,          /* Hard link id                 */
+    H5L_TYPE_SOFT = 1,          /* Soft link id                 */
+    H5L_TYPE_EXTERNAL = 64,     /* External link id             */
+    H5L_TYPE_MAX = 255	        /* Maximum link type id         */
+} H5L_type_t;
+#define H5L_TYPE_BUILTIN_MAX H5L_TYPE_SOFT      /* Maximum value link value for "built-in" link types */
+#define H5L_TYPE_UD_MIN      H5L_TYPE_EXTERNAL  /* Link ids at or above this value are "user-defined" link types. */
+
+
+
 /* Public headers needed by this file */
 #include "H5public.h"		/* Generic Functions			*/
 #include "H5Ipublic.h"		/* IDs			  		*/
 #include "H5Tpublic.h"		/* Datatypes				*/
+#include "H5VLpublic.h"         /* Virtual Object Layer                 */
 
 /*****************/
 /* Public Macros */
@@ -54,25 +77,9 @@ extern "C" {
 /* Public Typedefs */
 /*******************/
 
-/* Link class types.
- * Values less than 64 are reserved for the HDF5 library's internal use.
- * Values 64 to 255 are for "user-defined" link class types; these types are
- * defined by HDF5 but their behavior can be overridden by users.
- * Users who want to create new classes of links should contact the HDF5
- * development team at hdfhelp@ncsa.uiuc.edu .
- * These values can never change because they appear in HDF5 files.
+/* Information struct for link (for H5Lget_info/H5Lget_info_by_idx)
+ * Soon to be deprecated haddr_t version used in current public API calls
  */
-typedef enum {
-    H5L_TYPE_ERROR = (-1),      /* Invalid link type id         */
-    H5L_TYPE_HARD = 0,          /* Hard link id                 */
-    H5L_TYPE_SOFT = 1,          /* Soft link id                 */
-    H5L_TYPE_EXTERNAL = 64,     /* External link id             */
-    H5L_TYPE_MAX = 255	        /* Maximum link type id         */
-} H5L_type_t;
-#define H5L_TYPE_BUILTIN_MAX H5L_TYPE_SOFT      /* Maximum value link value for "built-in" link types */
-#define H5L_TYPE_UD_MIN      H5L_TYPE_EXTERNAL  /* Link ids at or above this value are "user-defined" link types. */
-
-/* Information struct for link (for H5Lget_info/H5Lget_info_by_idx) */
 typedef struct {
     H5L_type_t          type;           /* Type of link                   */
     hbool_t             corder_valid;   /* Indicate if creation order is valid */
@@ -83,6 +90,20 @@ typedef struct {
         size_t          val_size;       /* Size of a soft link or UD link value */
     } u;
 } H5L_info_t;
+
+/* Information struct for link (for H5Lget_info/H5Lget_info_by_idx)
+ * H5VL_token_t version used in VOL layer and future public API calls
+ */
+typedef struct {
+    H5L_type_t          type;           /* Type of link                   */
+    hbool_t             corder_valid;   /* Indicate if creation order is valid */
+    int64_t             corder;         /* Creation order                 */
+    H5T_cset_t          cset;           /* Character set of link name     */
+    union {
+        H5VL_token_t    token;          /* VOL token of location hard link points to */
+        size_t          val_size;       /* Size of a soft link or UD link value */
+    } u;
+} H5L_info2_t;
 
 /* The H5L_class_t struct can be used to override the behavior of a
  * "user-defined" link class. Users should populate the struct with callback
@@ -141,8 +162,16 @@ typedef struct {
     H5L_query_func_t query_func;    /* Callback for queries                 */
 } H5L_class_t;
 
-/* Prototype for H5Literate/H5Literate_by_name() operator */
+/* Prototype for H5Literate/H5Literate_by_name() operator
+ * Soon to be deprecated haddr_t version used in current public API calls
+ */
 typedef herr_t (*H5L_iterate_t)(hid_t group, const char *name, const H5L_info_t *info,
+    void *op_data);
+
+/* Prototype for H5Literate/H5Literate_by_name() operator
+ * H5VL_token_t version used in VOL layer and future public API calls
+ */
+typedef herr_t (*H5L_iterate2_t)(hid_t group, const char *name, const H5L_info2_t *info,
     void *op_data);
 
 /* Callback for external link traversal */
