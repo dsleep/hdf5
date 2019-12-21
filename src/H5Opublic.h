@@ -25,10 +25,37 @@
 #ifndef _H5Opublic_H
 #define _H5Opublic_H
 
+/* Early typedefs to avoid circular dependencies */
+
+/* Types of objects in file */
+typedef enum H5O_type_t {
+    H5O_TYPE_UNKNOWN = -1,	/* Unknown object type		*/
+    H5O_TYPE_GROUP,	        /* Object is a group		*/
+    H5O_TYPE_DATASET,		/* Object is a dataset		*/
+    H5O_TYPE_NAMED_DATATYPE, 	/* Object is a named data type	*/
+    H5O_TYPE_MAP,               /* Object is a map */
+    H5O_TYPE_NTYPES             /* Number of different object types (must be last!) */
+} H5O_type_t;
+
+/* Typedef for message creation indexes */
+typedef uint32_t H5O_msg_crt_idx_t;
+
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+/* A struct that's part of the H5G_stat_t structure (deprecated) */
+typedef struct H5O_stat_t {
+    hsize_t size;               /* Total size of object header in file */
+    hsize_t free;               /* Free space within object header */
+    unsigned nmesgs;            /* Number of object header messages */
+    unsigned nchunks;           /* Number of object header chunks */
+} H5O_stat_t;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
+
+
 /* Public headers needed by this file */
 #include "H5public.h"		/* Generic Functions			*/
 #include "H5Ipublic.h"		/* IDs			  		*/
 #include "H5Lpublic.h"		/* Links		  		*/
+#include "H5VLpublic.h"         /* Virtual Object Layer                 */
 
 /*****************/
 /* Public Macros */
@@ -88,16 +115,6 @@
 /* Public Typedefs */
 /*******************/
 
-/* Types of objects in file */
-typedef enum H5O_type_t {
-    H5O_TYPE_UNKNOWN = -1,	/* Unknown object type		*/
-    H5O_TYPE_GROUP,	        /* Object is a group		*/
-    H5O_TYPE_DATASET,		/* Object is a dataset		*/
-    H5O_TYPE_NAMED_DATATYPE, 	/* Object is a named data type	*/
-    H5O_TYPE_MAP,               /* Object is a map */
-    H5O_TYPE_NTYPES             /* Number of different object types (must be last!) */
-} H5O_type_t;
-
 /* Information struct for object header metadata (for H5Oget_info/H5Oget_info_by_name/H5Oget_info_by_idx) */
 typedef struct H5O_hdr_info_t {
     unsigned version;		/* Version number of header format in file */
@@ -135,11 +152,35 @@ typedef struct H5O_info_t {
     } meta_size;
 } H5O_info_t;
 
-/* Typedef for message creation indexes */
-typedef uint32_t H5O_msg_crt_idx_t;
+/* Data model information struct for objects */
+typedef struct H5O_info2_t {
+    unsigned long 	fileno;     /* File number that object is located in    */
+    H5VL_token_t    token;      /* VOL token representing the object        */
+    H5O_type_t 		type;       /* Basic object type (group, dataset, etc.) */
+    unsigned 		rc;         /* Reference count of object                */
+    time_t          atime;      /* Access time                              */
+    time_t          mtime;		/* Modification time                        */
+    time_t          ctime;      /* Change time                              */
+    time_t          btime;      /* Birth time                               */
+    hsize_t 		num_attrs;  /* # of attributes attached to object       */
+} H5O_info2_t;
+
+/* Native file format information struct for objects */
+typedef struct H5O_native_info_t {
+    H5O_hdr_info_t      hdr;            /* Object header information */
+    /* Extra metadata storage for obj & attributes */
+    struct {
+        H5_ih_info_t   obj;             /* v1/v2 B-tree & local/fractal heap for groups, B-tree for chunked datasets */
+        H5_ih_info_t   attr;            /* v2 B-tree & heap for attributes */
+    } meta_size;
+} H5O_native_info_t;
 
 /* Prototype for H5Ovisit/H5Ovisit_by_name() operator */
 typedef herr_t (*H5O_iterate_t)(hid_t obj, const char *name, const H5O_info_t *info,
+    void *op_data);
+
+/* Prototype for H5Ovisit/H5Ovisit_by_name() operator */
+typedef herr_t (*H5O_iterate2_t)(hid_t obj, const char *name, const H5O_info2_t *info,
     void *op_data);
 
 typedef enum H5O_mcdt_search_ret_t {
@@ -208,14 +249,6 @@ H5_DLL herr_t H5Oare_mdc_flushes_disabled(hid_t object_id, hbool_t *are_disabled
 /* Macros */
 
 /* Typedefs */
-
-/* A struct that's part of the H5G_stat_t structure (deprecated) */
-typedef struct H5O_stat_t {
-    hsize_t size;               /* Total size of object header in file */
-    hsize_t free;               /* Free space within object header */
-    unsigned nmesgs;            /* Number of object header messages */
-    unsigned nchunks;           /* Number of object header chunks */
-} H5O_stat_t;
 
 /* Function prototypes */
 H5_DLL herr_t H5Oget_info1(hid_t loc_id, H5O_info_t *oinfo);

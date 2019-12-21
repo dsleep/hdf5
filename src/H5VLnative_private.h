@@ -110,6 +110,9 @@ H5_DLL herr_t H5VL__native_blob_put(void *obj, const void *buf, size_t size, voi
 H5_DLL herr_t H5VL__native_blob_get(void *obj, const void *blob_id, void *buf, size_t size, void *ctx);
 H5_DLL herr_t H5VL__native_blob_specific(void *obj, void *blob_id, H5VL_blob_specific_t specific_type, va_list arguments);
 
+/* Helper functions */
+H5_DLL herr_t H5VL_native_get_file_addr_len(hid_t loc_id, size_t *addr_len);
+
 #ifdef __cplusplus
 }
 #endif

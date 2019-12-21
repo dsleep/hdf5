@@ -260,9 +260,7 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     void *opened_obj = NULL;            /* Opened object */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     H5VL_token_t obj_token = {0};       /* Object token */
-    hid_t file_id = H5I_INVALID_HID;    /* File ID */
-    void *vol_obj_file = NULL;          /* Object token of file_id */
-    H5F_t *f = NULL;
+    size_t addr_len = 0;                /* Size of haddr_t in this file */
     uint8_t *p = NULL;
     hid_t ret_value = H5I_INVALID_HID;  /* Return value */
 
@@ -277,21 +275,13 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     if((vol_obj_type = H5I_get_type(loc_id)) < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
 
-    /* Get the file for the object */
-    if((file_id = H5F_get_file_id(vol_obj, vol_obj_type, FALSE)) < 0)
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "not a file or file object")
-
-    /* Retrieve VOL object */
-    if(NULL == (vol_obj_file = H5VL_vol_object(file_id)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
-
-    /* Retrieve file from VOL object */
-    if(NULL == (f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid VOL object")
+    /* Get the size of an haddr_t in this file */
+    if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "unable to get the file's address size")
 
     /* This is a native specific routine that requires serialization of the token */
     p = (uint8_t *)&obj_token;
-    H5F_addr_encode(f, &p, addr);
+    H5F_addr_encode_len(addr_len, &p, addr);
 
     loc_params.type = H5VL_OBJECT_BY_TOKEN;
     loc_params.loc_data.loc_by_token.token = &obj_token;
@@ -306,8 +296,6 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to atomize object handle")
 
 done:
-    if(file_id != H5I_INVALID_HID && H5I_dec_ref(file_id) < 0)
-        HDONE_ERROR(H5E_REFERENCE, H5E_CANTDEC, H5I_INVALID_HID, "unable to decrement refcount on file")
     FUNC_LEAVE_API(ret_value)
 } /* end H5Oopen_by_addr() */
 
@@ -927,6 +915,41 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* end H5Oget_comment_by_name() */
 
+herr_t
+H5O__iterate2_shim(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2, void *op_data)
+{
+    H5O_shim_data_t *shim_data = (H5O_shim_data_t *)op_data;
+    H5O_info_t oinfo;
+    size_t addr_len = 0;
+    const uint8_t *p = (const uint8_t *)(&(oinfo2->token)); /* Pointer into token   */
+
+    HDmemset(&oinfo, 0, sizeof(H5O_info_t));
+
+    /* Copy the new-style members into the old-style struct
+     * NOTE: All native fields will be full of zero bytes.
+     */
+    if (oinfo2) {
+        oinfo.fileno        = oinfo2->fileno;
+        oinfo.type          = oinfo2->type;
+        oinfo.rc            = oinfo2->rc;
+        oinfo.atime         = oinfo2->atime;
+        oinfo.mtime         = oinfo2->mtime;
+        oinfo.ctime         = oinfo2->ctime;
+        oinfo.btime         = oinfo2->btime;
+        oinfo.num_attrs     = oinfo2->num_attrs;
+
+        if (H5VL_native_get_file_addr_len(obj_id, &addr_len) < 0)
+            return FAIL;
+
+        /* Convert from VOL token to address */
+        H5F_addr_decode_len(addr_len, &p, &(oinfo.addr));
+    }
+
+    /* Invoke the real callback */
+    return shim_data->real_op(obj_id, name, &oinfo, shim_data->real_op_data);
+
+} /* end H5O__iterate2_shim() */
+
 
 /*-------------------------------------------------------------------------
  * Function:    H5Ovisit2
@@ -969,6 +992,7 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
     H5VL_loc_params_t   loc_params;
+    H5O_shim_data_t     shim_data;
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -992,8 +1016,13 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     loc_params.type         = H5VL_OBJECT_BY_SELF;
     loc_params.obj_type     = H5I_get_type(obj_id);
 
+    /* Set up shim */
+    shim_data.real_op = op;
+    shim_data.real_op_data = op_data;
+
     /* Visit the objects */
-    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, op, op_data, fields)) < 0)
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order,
+                    H5O__iterate2_shim, (void *)&shim_data, fields)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
 
 done:
@@ -1042,6 +1071,7 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
     H5VL_loc_params_t   loc_params; 
+    H5O_shim_data_t     shim_data;
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1076,8 +1106,13 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     loc_params.loc_data.loc_by_name.lapl_id = lapl_id;
     loc_params.obj_type                     = H5I_get_type(loc_id);
 
+    /* Set up shim */
+    shim_data.real_op = op;
+    shim_data.real_op_data = op_data;
+
     /* Visit the objects */
-    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, op, op_data, fields)) < 0)
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order,
+                    H5O__iterate2_shim, (void *)&shim_data, fields)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
 
 done:
