@@ -129,6 +129,7 @@ $Source = "";
                "H5VL_request_specific_t"    => "Vr",
                "H5VL_request_optional_t"    => "Vz",
                "H5VL_blob_optional_t"       => "VA",
+               "H5VL_token_t"               => "VT",
                "void"                       => "x",
                "FILE"                       => "x",
                "H5A_operator_t"             => "x",
