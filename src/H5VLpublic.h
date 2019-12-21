@@ -24,7 +24,6 @@ typedef struct H5VL_token_t H5VL_token_t;
 #include "H5public.h"           /* Generic Functions                    */
 #include "H5Ipublic.h"          /* IDs                                  */
 
-
 /*****************/
 /* Public Macros */
 /*****************/
@@ -91,6 +90,7 @@ H5_DLL herr_t H5VLunregister_connector(hid_t connector_id);
 /* Semi-public headers mainly for VOL connector authors */
 #include "H5VLconnector.h"
 #include "H5VLconnector_passthru.h"
+#include "H5VLnative.h"                 /* Native VOL connector macros, for VOL connector authors */
 
 #endif /* _H5VLpublic_H */
 

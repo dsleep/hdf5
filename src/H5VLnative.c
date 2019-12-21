@@ -32,7 +32,7 @@ static hid_t H5VL_NATIVE_ID_g = H5I_INVALID_HID;
 static herr_t H5VL__native_term(void);
 
 /* Native VOL connector class struct */
-static H5VL_class_t H5VL_native_cls_g = {
+static const H5VL_class_t H5VL_native_cls_g = {
     H5VL_NATIVE_VERSION,                            /* version      */
     H5VL_NATIVE_VALUE,                              /* value        */
     H5VL_NATIVE_NAME,                               /* name         */
@@ -113,6 +113,10 @@ static H5VL_class_t H5VL_native_cls_g = {
         H5VL__native_object_specific,               /* specific     */
         H5VL__native_object_optional                /* optional     */
     },
+    {   /* introspect_cls */
+        H5VL__native_introspect_get_conn_cls,       /* get_conn_cls */
+        H5VL__native_introspect_opt_query,          /* opt_query    */
+    },
     {   /* request_cls */
         NULL,                                       /* wait         */
         NULL,                                       /* notify       */
@@ -149,8 +153,8 @@ H5VL_native_register(void)
     FUNC_ENTER_NOAPI(H5I_INVALID_HID)
 
     /* Register the native VOL connector, if it isn't already */
-    if(NULL == H5I_object_verify(H5VL_NATIVE_ID_g, H5I_VOL))
-        if((H5VL_NATIVE_ID_g = H5VL_register_connector((const H5VL_class_t *)&H5VL_native_cls_g, TRUE, H5P_DEFAULT)) < 0)
+    if(H5I_INVALID_HID == H5VL_NATIVE_ID_g)
+        if((H5VL_NATIVE_ID_g = H5VL_register_connector(&H5VL_native_cls_g, TRUE, H5P_DEFAULT)) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTINSERT, H5I_INVALID_HID, "can't create ID for native VOL connector")
 
     /* Set return value */
@@ -236,4 +240,32 @@ done:
         HDONE_ERROR(H5E_VOL, H5E_CANTDEC, H5I_INVALID_HID, "unable to decrement refcount on file")
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL_native_get_file_addr_len() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5VL__native_introspect_get_conn_cls
+ *
+ * Purpose:     Query the connector class.
+ *
+ * Note:        This routine is in this file so that it can return the address
+ *              of the staticly declared class struct.
+ *
+ * Returns:     SUCCEED (Can't fail)
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VL__native_introspect_get_conn_cls(void H5_ATTR_UNUSED *obj,
+    H5VL_get_conn_lvl_t H5_ATTR_UNUSED lvl, const H5VL_class_t **conn_cls)
+{
+    FUNC_ENTER_PACKAGE_NOERR
+
+    /* Sanity check */
+    HDassert(conn_cls);
+
+    /* Retrieve the native VOL connector class */
+    *conn_cls = &H5VL_native_cls_g;
+
+    FUNC_LEAVE_NOAPI(SUCCEED)
+} /* end H5VL__native_introspect_get_conn_cls() */
 
