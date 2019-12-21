@@ -291,13 +291,64 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     if(NULL == (opened_obj = H5VL_object_open(vol_obj, &loc_params, &opened_type, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL)))
         HGOTO_ERROR(H5E_OHDR, H5E_CANTOPENOBJ, H5I_INVALID_HID, "unable to open object")
 
-    /* Register the dataset ID */
+    /* Register the object's ID */
     if((ret_value = H5VL_register(opened_type, opened_obj, vol_obj->connector, TRUE)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to atomize object handle")
 
 done:
     FUNC_LEAVE_API(ret_value)
 } /* end H5Oopen_by_addr() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oopen_by_token
+ *
+ * Purpose:     Same as H5Oopen_by_addr, but uses VOL-independent tokens.
+ *
+ * Return:      Success:    An open object identifier
+ *              Failure:    H5I_INVALID_HID
+ *
+ * Programmer:  Dana Robinson
+ *              Winter 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+hid_t
+H5Oopen_by_token(hid_t loc_id, H5VL_token_t token)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
+    H5I_type_t opened_type;             /* Opened object type */
+    void *opened_obj = NULL;            /* Opened object */
+    H5VL_loc_params_t loc_params;       /* Location parameters */
+    hid_t ret_value = H5I_INVALID_HID;  /* Return value */
+
+    FUNC_ENTER_API(H5I_INVALID_HID)
+    H5TRACE2("i", "iVT", loc_id, token);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+
+    loc_params.type = H5VL_OBJECT_BY_TOKEN;
+    loc_params.loc_data.loc_by_token.token = &token;
+    loc_params.obj_type = vol_obj_type;
+
+    /* Open the object */
+    if(NULL == (opened_obj = H5VL_object_open(vol_obj, &loc_params, &opened_type, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL)))
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTOPENOBJ, H5I_INVALID_HID, "unable to open object")
+
+    /* Register the object's ID */
+    if((ret_value = H5VL_register(opened_type, opened_obj, vol_obj->connector, TRUE)) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to atomize object handle")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oopen_by_token() */
 
 
 /*-------------------------------------------------------------------------
