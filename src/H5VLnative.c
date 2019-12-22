@@ -17,7 +17,7 @@
 
 #include "H5private.h"          /* Generic Functions                        */
 #include "H5Eprivate.h"         /* Error handling                           */
-#include "H5Fprivate.h"         /* File access                              */
+#include "H5Fprivate.h"         /* Files                                    */
 #include "H5Iprivate.h"         /* IDs                                      */
 #include "H5Pprivate.h"         /* Property lists                           */
 #include "H5VLprivate.h"        /* Virtual Object Layer                     */
@@ -275,4 +275,130 @@ H5VL__native_introspect_get_conn_cls(void H5_ATTR_UNUSED *obj,
 
     FUNC_LEAVE_NOAPI(SUCCEED)
 } /* end H5VL__native_introspect_get_conn_cls() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL_addr_to_token
+ *
+ * Purpose:     Converts a native VOL haddr_t address to an abstract VOL token.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token)
+{
+    H5VL_object_t   *vol_obj        = NULL;             /* Object token of loc_id */
+    H5I_type_t      vol_obj_type    = H5I_BADID;        /* Object type of loc_id */
+    hid_t           file_id         = H5I_INVALID_HID;  /* File ID */
+    void            *vol_obj_file   = NULL;             /* Object token of file_id */
+    H5F_t           *file           = NULL;             /* File stuct pointer */
+    uint8_t         *p = (uint8_t *)token;          /* Pointer into token   */
+    herr_t          ret_value = SUCCEED;            /* Return value         */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Check args */
+    HDassert(token);
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    if (H5I_FILE == vol_obj_type) {
+        /* Retrieve VOL object */
+        if(NULL == (vol_obj_file = H5VL_vol_object(loc_id)))
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+    }
+    else {
+        /* Get the location object */
+        if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+
+        /* Get the file for the object */
+        if((file_id = H5F_get_file_id(vol_obj, vol_obj_type, FALSE)) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not a file or file object")
+
+        /* Retrieve VOL object */
+        if(NULL == (vol_obj_file = H5VL_vol_object(file_id)))
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+    }
+
+    /* Retrieve file struct from VOL object */
+    if(NULL == (file = (H5F_t *)H5VL_object_data(vol_obj_file)))
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid VOL object")
+
+    /* Encode token */
+    H5F_addr_encode(file, &p, addr);
+
+done:
+    if(file_id != H5I_INVALID_HID && H5I_dec_ref(file_id) < 0)
+        HDONE_ERROR(H5E_VOL, H5E_CANTDEC, H5I_INVALID_HID, "unable to decrement refcount on file")
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_addr_to_token() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL_token_to_addr
+ *
+ * Purpose:     Converts an abstract VOL token to a native VOL haddr_t address.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr)
+{
+    H5VL_object_t   *vol_obj        = NULL;             /* Object token of loc_id */
+    H5I_type_t      vol_obj_type    = H5I_BADID;        /* Object type of loc_id */
+    hid_t           file_id         = H5I_INVALID_HID;  /* File ID */
+    void            *vol_obj_file   = NULL;             /* Object token of file_id */
+    H5F_t           *file           = NULL;             /* File stuct pointer */
+    const uint8_t   *p = (const uint8_t *)(&token); /* Pointer into token   */
+    herr_t          ret_value = SUCCEED;            /* Return value         */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Check args */
+    HDassert(addr);
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    if (H5I_FILE == vol_obj_type) {
+        /* Retrieve VOL object */
+        if(NULL == (vol_obj_file = H5VL_vol_object(loc_id)))
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+    }
+    else {
+        /* Get the location object */
+        if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+
+        /* Get the file for the object */
+        if((file_id = H5F_get_file_id(vol_obj, vol_obj_type, FALSE)) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not a file or file object")
+
+        /* Retrieve VOL object */
+        if(NULL == (vol_obj_file = H5VL_vol_object(file_id)))
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+    }
+
+    /* Retrieve file struct from VOL object */
+    if(NULL == (file = (H5F_t *)H5VL_object_data(vol_obj_file)))
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid VOL object")
+
+    /* Decode token */
+    H5F_addr_decode(file, &p, addr);
+
+done:
+    if(file_id != H5I_INVALID_HID && H5I_dec_ref(file_id) < 0)
+        HDONE_ERROR(H5E_VOL, H5E_CANTDEC, H5I_INVALID_HID, "unable to decrement refcount on file")
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_token_to_addr() */
 
