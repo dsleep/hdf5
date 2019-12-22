@@ -984,52 +984,57 @@ H5G__get_objinfo_cb(H5G_loc_t H5_ATTR_UNUSED *grp_loc/*in*/, const char *name, c
     FUNC_ENTER_STATIC;
 
     /* Check if the name in this group resolved to a valid link */
-    if (lnk == NULL && obj_loc == NULL)
+    if(lnk == NULL && obj_loc == NULL)
         HGOTO_ERROR(H5E_SYM, H5E_NOTFOUND, FAIL, "'%s' doesn't exist", name);
 
-    /* Only modify user's buffer if it's available */                            
-    if (udata->statbuf) {                                                         
+    /* Only modify user's buffer if it's available */
+    if(udata->statbuf) {
         H5G_stat_t *statbuf = udata->statbuf;   /* Convenience pointer for statbuf */
 
         /* Common code to retrieve the file's fileno */
-        if (H5F_get_fileno((obj_loc ? obj_loc : grp_loc)->oloc->file, &statbuf->fileno[0]) < 0)
+        if(H5F_get_fileno((obj_loc ? obj_loc : grp_loc)->oloc->file, &statbuf->fileno[0]) < 0)
             HGOTO_ERROR(H5E_FILE, H5E_BADVALUE, FAIL, "unable to read fileno");
 
         /* Info for soft and UD links is gotten by H5L_get_info. If we have
          *      a hard link, follow it and get info on the object
          */
-        if (udata->follow_link || !lnk || (lnk->type == H5L_TYPE_HARD)) {
-            H5O_info_t oinfo;           /* Object information */
+        if(udata->follow_link || !lnk || (lnk->type == H5L_TYPE_HARD)) {
+            H5O_info2_t dm_info;                /* Data model information */
+            H5O_native_info_t nat_info;         /* Native information */
+            haddr_t obj_addr;                   /* Address of object */
 
-            /* Go retrieve the object information */
+            /* Go retrieve the data model & native object information */
             /* (don't need index & heap info) */
             HDassert(obj_loc);
-            if (H5O_get_info(obj_loc->oloc, &oinfo, H5O_INFO_BASIC|H5O_INFO_TIME|H5O_INFO_HDR) < 0)
-                HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to get object info");
+            if(H5O_get_dm_info(obj_loc->oloc, &dm_info, H5O_INFO_BASIC | H5O_INFO_TIME) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to get data model object info")
+            if(H5O_get_native_info(obj_loc->oloc, &nat_info, H5O_INFO_HDR) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to get native object info")
 
             /* Get mapped object type */
-            statbuf->type = H5G_map_obj_type(oinfo.type);
+            statbuf->type = H5G_map_obj_type(dm_info.type);
 
             /* Get object number (i.e. address) for object */
-            statbuf->objno[0] = (unsigned long)(oinfo.addr);
+            HDmemcpy(&obj_addr, &dm_info.token, sizeof(obj_addr));
+            statbuf->objno[0] = (unsigned long)(obj_addr);
 #if H5_SIZEOF_UINT64_T > H5_SIZEOF_LONG
-            statbuf->objno[1] = (unsigned long)(oinfo.addr >> 8 * sizeof(long));
+            statbuf->objno[1] = (unsigned long)(obj_addr >> 8 * sizeof(long));
 #else
             statbuf->objno[1] = 0;
 #endif
             /* Get # of hard links pointing to object */
-            statbuf->nlink = oinfo.rc;
+            statbuf->nlink = dm_info.rc;
 
             /* Get modification time for object */
-            statbuf->mtime = oinfo.ctime;
+            statbuf->mtime = dm_info.ctime;
 
             /* Retrieve the object header information */
-            statbuf->ohdr.size = oinfo.hdr.space.total;
-            statbuf->ohdr.free = oinfo.hdr.space.free;
-            statbuf->ohdr.nmesgs = oinfo.hdr.nmesgs;
-            statbuf->ohdr.nchunks = oinfo.hdr.nchunks;
-        }
-    }
+            statbuf->ohdr.size = nat_info.hdr.space.total;
+            statbuf->ohdr.free = nat_info.hdr.space.free;
+            statbuf->ohdr.nmesgs = nat_info.hdr.nmesgs;
+            statbuf->ohdr.nchunks = nat_info.hdr.nchunks;
+        } /* end if */
+    } /* end if */
 
 done:
     /* Indicate that this callback didn't take ownership of the group *
@@ -1190,8 +1195,7 @@ H5Gget_objtype_by_idx(hid_t loc_id, hsize_t idx)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
     H5VL_loc_params_t loc_params;
-    H5O_info_t oinfo;                   /* Object info (contains object type) */
-    unsigned fields;                    /* Which fields in object info to populate */
+    H5O_info2_t oinfo;                  /* Object info (contains object type) */
     H5G_obj_t ret_value;                /* Return value */
 
     FUNC_ENTER_API(H5G_UNKNOWN)
@@ -1211,8 +1215,7 @@ H5Gget_objtype_by_idx(hid_t loc_id, hsize_t idx)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5G_UNKNOWN, "invalid location identifier")
 
     /* Retrieve the object's basic information (which includes its type) */
-    fields = H5O_INFO_BASIC;
-    if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, &oinfo, fields) < 0)
+    if(H5VL_object_get(vol_obj, &loc_params, H5VL_OBJECT_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &oinfo, H5O_INFO_BASIC) < 0)
         HGOTO_ERROR(H5E_SYM, H5E_BADTYPE, H5G_UNKNOWN, "can't get object info")
 
     /* Map to group object type */

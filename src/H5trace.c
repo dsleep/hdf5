@@ -3461,9 +3461,6 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                                 case H5VL_NATIVE_OBJECT_GET_COMMENT:
                                     HDfprintf(out, "H5VL_NATIVE_OBJECT_GET_COMMENT");
                                     break;
-                                case H5VL_NATIVE_OBJECT_GET_INFO:
-                                    HDfprintf(out, "H5VL_NATIVE_OBJECT_GET_INFO");
-                                    break;
                                 case H5VL_NATIVE_OBJECT_SET_COMMENT:
                                     HDfprintf(out, "H5VL_NATIVE_OBJECT_SET_COMMENT");
                                     break;
@@ -3475,6 +3472,9 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                                     break;
                                 case H5VL_NATIVE_OBJECT_ARE_MDC_FLUSHES_DISABLED:
                                     HDfprintf(out, "H5VL_NATIVE_OBJECT_ARE_MDC_FLUSHES_DISABLED");
+                                    break;
+                                case H5VL_NATIVE_OBJECT_GET_NATIVE_INFO:
+                                    HDfprintf(out, "H5VL_NATIVE_OBJECT_GET_NATIVE_INFO");
                                     break;
                                 default:
                                     HDfprintf(out, "%ld", (long)optional);
