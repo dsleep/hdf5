@@ -22,6 +22,7 @@
 #include "testhdf5.h"
 #include "H5Fprivate.h"
 #include "H5VLprivate.h"
+#include "H5VLnative_private.h"
 
 #define TEST_FILENAME "th5o_file"
 
@@ -384,8 +385,7 @@ test_h5o_open_by_token(void)
     haddr_t grp_addr;                       /* Addresses for objects */
     haddr_t dset_addr;
     haddr_t dtype_addr;
-    void *vol_obj_file = NULL;              /* Object token of file_id */
-    H5F_t *f = NULL;
+    size_t addr_len = 0;                    /* Size of haddr_t in this file */
     H5VL_token_t grp_token;                 /* VOL tokens for objects */
     H5VL_token_t dset_token;
     H5VL_token_t dtype_token;
@@ -440,21 +440,17 @@ test_h5o_open_by_token(void)
     CHECK(ret, FAIL, "H5Lget_info");
     dset_addr = li.u.address;
 
-    /* Need the file struct to address encoding */
-    /* Retrieve VOL object */
-    vol_obj_file = H5VL_vol_object(fid);
-    CHECK(vol_obj_file, NULL, "H5VL_vol_object");
-    /* Retrieve file from VOL object */
-    f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file);
-    CHECK(f, NULL, "H5VL_object_data");
+    /* Need the length of a haddr_t in the file to encode the address */
+    ret = H5VL_native_get_file_addr_len(fid, &addr_len); 
+    CHECK(ret, FAIL, "H5VL_native_get_file_addr_len");
 
     /* Serialize the addresses into VOL tokens */
     p = (uint8_t *)&grp_token;
-    H5F_addr_encode(f, &p, grp_addr);
+    H5F_addr_encode_len(addr_len, &p, grp_addr);
     p = (uint8_t *)&dtype_token;
-    H5F_addr_encode(f, &p, dtype_addr);
+    H5F_addr_encode_len(addr_len, &p, dtype_addr);
     p = (uint8_t *)&dset_token;
-    H5F_addr_encode(f, &p, dset_addr);
+    H5F_addr_encode_len(addr_len, &p, dset_addr);
 
     /* Now make sure that H5Oopen_by_token can open all three types of objects */
     grp = H5Oopen_by_token(fid, grp_token);
