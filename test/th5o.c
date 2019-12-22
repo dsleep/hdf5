@@ -385,11 +385,9 @@ test_h5o_open_by_token(void)
     haddr_t grp_addr;                       /* Addresses for objects */
     haddr_t dset_addr;
     haddr_t dtype_addr;
-    size_t addr_len = 0;                    /* Size of haddr_t in this file */
     H5VL_token_t grp_token;                 /* VOL tokens for objects */
     H5VL_token_t dset_token;
     H5VL_token_t dtype_token;
-    uint8_t *p = NULL;                      /* Pointer for serialization */
     hsize_t     dims[RANK];
     H5I_type_t  id_type;                    /* Type of IDs returned from H5Oopen */
     H5G_info_t  ginfo;                      /* Group info struct */
@@ -440,17 +438,13 @@ test_h5o_open_by_token(void)
     CHECK(ret, FAIL, "H5Lget_info");
     dset_addr = li.u.address;
 
-    /* Need the length of a haddr_t in the file to encode the address */
-    ret = H5VL_native_get_file_addr_len(fid, &addr_len); 
-    CHECK(ret, FAIL, "H5VL_native_get_file_addr_len");
-
-    /* Serialize the addresses into VOL tokens */
-    p = (uint8_t *)&grp_token;
-    H5F_addr_encode_len(addr_len, &p, grp_addr);
-    p = (uint8_t *)&dtype_token;
-    H5F_addr_encode_len(addr_len, &p, dtype_addr);
-    p = (uint8_t *)&dset_token;
-    H5F_addr_encode_len(addr_len, &p, dset_addr);
+    /* Convert the addresses into VOL tokens */
+    ret = H5VL_addr_to_token(fid, grp_addr, &grp_token);
+    CHECK(ret, FAIL, "H5VL_addr_to_token");
+    ret = H5VL_addr_to_token(fid, dtype_addr, &dtype_token);
+    CHECK(ret, FAIL, "H5VL_addr_to_token");
+    ret = H5VL_addr_to_token(fid, dset_addr, &dset_token);
+    CHECK(ret, FAIL, "H5VL_addr_to_token");
 
     /* Now make sure that H5Oopen_by_token can open all three types of objects */
     grp = H5Oopen_by_token(fid, grp_token);
