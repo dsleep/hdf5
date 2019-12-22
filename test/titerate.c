@@ -891,15 +891,15 @@ static void test_links(hid_t fapl)
     /* Test these two functions, H5Oget_info_by_idx and H5Lget_name_by_idx */
     for(i = 0; i < ginfo.nlinks; i++) {
         H5O_info_t oinfo;               /* Object info */
-        H5L_info_t linfo;               /* Link info */
+        H5L_info2_t linfo;              /* Link info */
 
         /* Get link name */
         name_len = H5Lget_name_by_idx(gid, ".", H5_INDEX_NAME, H5_ITER_INC, i, obj_name, (size_t)NAMELEN, H5P_DEFAULT);
         CHECK(name_len, FAIL, "H5Lget_name_by_idx");
 
         /* Get link type */
-        ret = H5Lget_info_by_idx(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &linfo, H5P_DEFAULT);
-        CHECK(ret, FAIL, "H5Lget_info_by_idx");
+        ret = H5Lget_info_by_idx2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &linfo, H5P_DEFAULT);
+        CHECK(ret, FAIL, "H5Lget_info_by_idx2");
 
         /* Get object type */
         if(linfo.type == H5L_TYPE_HARD) {
@@ -1015,6 +1015,87 @@ static void test_corrupted_attnamelen(void)
 
 } /* test_corrupted_attnamelen() */
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+/****************************************************************
+**
+**  test_links_deprec(): Test soft and hard link iteration
+**
+****************************************************************/
+static void test_links_deprec(hid_t fapl)
+{
+    hid_t file;             /* File ID */
+    char obj_name[NAMELEN]; /* Names of the object in group */
+    ssize_t name_len;       /* Length of object's name */
+    hid_t    gid, gid1;
+    H5G_info_t ginfo;       /* Buffer for querying object's info */
+    hsize_t i;
+    herr_t ret;            /* Generic return value */
+
+    /* Output message about test being performed */
+    MESSAGE(5, ("Testing Soft and Hard Link Iteration Functionality Using Deprecated Routines\n"));
+
+    /* Create the test file with the datasets */
+    file = H5Fcreate(DATAFILE, H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    CHECK(file, FAIL, "H5Fcreate");
+
+    /* create groups */
+    gid = H5Gcreate2(file, "/g1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(gid, FAIL, "H5Gcreate2");
+
+    gid1 = H5Gcreate2(file, "/g1/g1.1", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(gid1, FAIL, "H5Gcreate2");
+
+    /* create soft and hard links to the group "/g1". */
+    ret = H5Lcreate_soft("something", gid, "softlink", H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lcreate_soft");
+
+    ret = H5Lcreate_hard(gid, "/g1", H5L_SAME_LOC, "hardlink", H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lcreate_hard");
+
+    ret = H5Gget_info(gid, &ginfo);
+    CHECK(ret, FAIL, "H5Gget_info");
+    VERIFY(ginfo.nlinks, 3, "H5Gget_info");
+
+    /* Test these two functions, H5Oget_info_by_idx and H5Lget_name_by_idx */
+    for(i = 0; i < ginfo.nlinks; i++) {
+        H5O_info_t oinfo;               /* Object info */
+        H5L_info_t linfo;               /* Link info */
+
+        /* Get link name */
+        name_len = H5Lget_name_by_idx(gid, ".", H5_INDEX_NAME, H5_ITER_INC, i, obj_name, (size_t)NAMELEN, H5P_DEFAULT);
+        CHECK(name_len, FAIL, "H5Lget_name_by_idx");
+
+        /* Get link type */
+        ret = H5Lget_info_by_idx1(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &linfo, H5P_DEFAULT);
+        CHECK(ret, FAIL, "H5Lget_info_by_idx1");
+
+        /* Get object type */
+        if(linfo.type == H5L_TYPE_HARD) {
+            ret = H5Oget_info_by_idx2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+            CHECK(ret, FAIL, "H5Oget_info_by_idx");
+        } /* end if */
+
+        if(!HDstrcmp(obj_name, "g1.1"))
+            VERIFY(oinfo.type, H5O_TYPE_GROUP, "H5Lget_name_by_idx");
+        else if(!HDstrcmp(obj_name, "hardlink"))
+            VERIFY(oinfo.type, H5O_TYPE_GROUP, "H5Lget_name_by_idx");
+        else if(!HDstrcmp(obj_name, "softlink"))
+            VERIFY(linfo.type, H5L_TYPE_SOFT, "H5Lget_name_by_idx");
+        else
+            CHECK(0, 0, "unknown object name");
+    } /* end for */
+
+    ret = H5Gclose(gid);
+    CHECK(ret, FAIL, "H5Gclose");
+
+    ret = H5Gclose(gid1);
+    CHECK(ret, FAIL, "H5Gclose");
+
+    ret = H5Fclose(file);
+    CHECK(ret, FAIL, "H5Fclose");
+} /* test_links_deprec() */
+#endif
+
 /****************************************************************
 **
 **  test_iterate(): Main iteration testing routine.
@@ -1045,10 +1126,13 @@ test_iterate(void)
     /* These next tests use the same file */
     for(new_format = FALSE; new_format <= TRUE; new_format++) {
         test_iter_group(new_format ? fapl2 : fapl, new_format); /* Test group iteration */
-        test_iter_group_large(new_format ? fapl2 : fapl);   /* Test group iteration for large # of objects */
+        test_iter_group_large(new_format ? fapl2 : fapl);       /* Test group iteration for large # of objects */
         test_iter_attr(new_format ? fapl2 : fapl, new_format);  /* Test attribute iteration */
-        test_grp_memb_funcs(new_format ? fapl2 : fapl);     /* Test group member information functions */
-        test_links(new_format ? fapl2 : fapl);              /* Test soft and hard link iteration */
+        test_grp_memb_funcs(new_format ? fapl2 : fapl);         /* Test group member information functions */
+        test_links(new_format ? fapl2 : fapl);                  /* Test soft and hard link iteration */
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        test_links_deprec(new_format ? fapl2 : fapl);           /* Test soft and hard link iteration */
+#endif
     } /* end for */
 
     /* Test the fix for issue HDFFV-10588 */

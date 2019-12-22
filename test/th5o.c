@@ -242,17 +242,20 @@ test_h5o_close(void)
 static void
 test_h5o_open_by_addr(void)
 {
-    hid_t       fid;                        /* HDF5 File ID      */
-    hid_t       grp, dset, dtype, dspace;   /* Object identifiers */
-    H5L_info_t li;                      /* Buffer for H5Lget_info */
-    haddr_t grp_addr;                       /* Addresses for objects */
-    haddr_t dset_addr;
-    haddr_t dtype_addr;
-    hsize_t     dims[RANK];
-    H5I_type_t  id_type;                    /* Type of IDs returned from H5Oopen */
-    H5G_info_t  ginfo;                      /* Group info struct */
-    H5T_class_t type_class;                 /* Class of the datatype */
-    herr_t      ret;                        /* Value returned from API calls */
+    hid_t        fid;                        /* HDF5 File ID      */
+    hid_t        grp, dset, dtype, dspace;   /* Object identifiers */
+    H5F_t       *f = NULL;
+    H5L_info2_t  li;                         /* Buffer for H5Lget_info */
+    haddr_t      grp_addr;                   /* Addresses for objects */
+    haddr_t      dset_addr;
+    haddr_t      dtype_addr;
+    void        *vol_obj_file = NULL;        /* Object token of file_id */
+    uint8_t     *p = NULL;                   /* Pointer for de-serialization */
+    hsize_t      dims[RANK];
+    H5I_type_t   id_type;                    /* Type of IDs returned from H5Oopen */
+    H5G_info_t   ginfo;                      /* Group info struct */
+    H5T_class_t  type_class;                 /* Class of the datatype */
+    herr_t       ret;                        /* Value returned from API calls */
 
     /* Create a new HDF5 file */
     fid = H5Fcreate(TEST_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -287,16 +290,27 @@ test_h5o_open_by_addr(void)
     ret = H5Sclose(dspace);
     CHECK(ret, FAIL, "H5Sclose");
 
+    /* Need the file struct to address encoding */
+    /* Retrieve VOL object */
+    vol_obj_file = H5VL_vol_object(fid);
+    CHECK(vol_obj_file, NULL, "H5VL_vol_object");
+    /* Retrieve file from VOL object */
+    f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file);
+    CHECK(f, NULL, "H5VL_object_data");
+
     /* Get address for each object */
-    ret = H5Lget_info(fid, "group", &li, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Lget_info");
-    grp_addr = li.u.address;
-    ret = H5Lget_info(fid, "group/datatype", &li, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Lget_info");
-    dtype_addr = li.u.address;
-    ret = H5Lget_info(fid, "dataset", &li, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Lget_info");
-    dset_addr = li.u.address;
+    ret = H5Lget_info2(fid, "group", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info2");
+    p = (uint8_t *)&li.u.token;
+    H5F_addr_decode(f, &p, &grp_addr);
+    ret = H5Lget_info2(fid, "group/datatype", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info2");
+    p = (uint8_t *)&li.u.token;
+    H5F_addr_decode(f, &p, &dtype_addr);
+    ret = H5Lget_info2(fid, "dataset", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info2");
+    p = (uint8_t *)&li.u.token;
+    H5F_addr_decode(f, &p, &dset_addr);
 
     /* Now make sure that H5Oopen_by_addr can open all three types of objects */
     grp = H5Oopen_by_addr(fid, grp_addr);
@@ -1508,6 +1522,143 @@ test_h5o_getinfo_same_file(void)
 
 /****************************************************************
 **
+**  test_h5o_open_by_addr_deprec(): Test H5Oopen_by_addr function.
+**
+****************************************************************/
+static void
+test_h5o_open_by_addr_deprec(void)
+{
+    hid_t       fid;                        /* HDF5 File ID      */
+    hid_t       grp, dset, dtype, dspace;   /* Object identifiers */
+    H5L_info_t  li;                         /* Buffer for H5Lget_info1 */
+    haddr_t     grp_addr;                   /* Addresses for objects */
+    haddr_t     dset_addr;
+    haddr_t     dtype_addr;
+    hsize_t     dims[RANK];
+    H5I_type_t  id_type;                    /* Type of IDs returned from H5Oopen */
+    H5G_info_t  ginfo;                      /* Group info struct */
+    H5T_class_t type_class;                 /* Class of the datatype */
+    herr_t      ret;                        /* Value returned from API calls */
+
+    /* Create a new HDF5 file */
+    fid = H5Fcreate(TEST_FILENAME, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(fid, FAIL, "H5Fcreate");
+
+    /* Create a group, dataset, and committed datatype within the file */
+    /* Create the group */
+    grp = H5Gcreate2(fid, "group", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(grp, FAIL, "H5Gcreate2");
+    ret = H5Gclose(grp);
+    CHECK(ret, FAIL, "H5Gclose");
+
+    /* Commit the type inside the group */
+    dtype = H5Tcopy(H5T_NATIVE_INT);
+    CHECK(dtype, FAIL, "H5Tcopy");
+    ret = H5Tcommit2(fid, "group/datatype", dtype, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Tcommit2");
+    ret = H5Tclose(dtype);
+    CHECK(ret, FAIL, "H5Tclose");
+
+    /* Create the data space for the dataset. */
+    dims[0] = DIM0;
+    dims[1] = DIM1;
+    dspace = H5Screate_simple(RANK, dims, NULL);
+    CHECK(dspace, FAIL, "H5Screate_simple");
+
+    /* Create the dataset. */
+    dset = H5Dcreate2(fid, "dataset", H5T_NATIVE_INT, dspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    CHECK(dset, FAIL, "H5Dcreate2");
+    ret = H5Dclose(dset);
+    CHECK(ret, FAIL, "H5Dclose");
+    ret = H5Sclose(dspace);
+    CHECK(ret, FAIL, "H5Sclose");
+
+    /* Get address for each object */
+    ret = H5Lget_info1(fid, "group", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info");
+    grp_addr = li.u.address;
+    ret = H5Lget_info1(fid, "group/datatype", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info");
+    dtype_addr = li.u.address;
+    ret = H5Lget_info1(fid, "dataset", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info");
+    dset_addr = li.u.address;
+
+    /* Now make sure that H5Oopen_by_addr can open all three types of objects */
+    grp = H5Oopen_by_addr(fid, grp_addr);
+    CHECK(grp, FAIL, "H5Oopen_by_addr");
+    dtype = H5Oopen_by_addr(fid, dtype_addr);
+    CHECK(dtype, FAIL, "H5Oopen_by_addr");
+    /* Check that we can use the group ID as a valid location */
+    dset = H5Oopen_by_addr(grp, dset_addr);
+    CHECK(dset, FAIL, "H5Oopen_by_addr");
+
+    /* Make sure that each is the right kind of ID */
+    id_type = H5Iget_type(grp);
+    VERIFY(id_type, H5I_GROUP, "H5Iget_type for group ID");
+    id_type = H5Iget_type(dtype);
+    VERIFY(id_type, H5I_DATATYPE, "H5Iget_type for datatype ID");
+    id_type = H5Iget_type(dset);
+    VERIFY(id_type, H5I_DATASET, "H5Iget_type for dataset ID");
+
+    /* Do something more complex with each of the IDs to make sure they "work" */
+    ret = H5Gget_info(grp, &ginfo);
+    CHECK(ret, FAIL, "H5Gget_info");
+    VERIFY(ginfo.nlinks, 1, "H5Gget_info"); /* There should be one object, the datatype */
+
+    type_class = H5Tget_class(dtype);
+    VERIFY(type_class, H5T_INTEGER, "H5Tget_class");
+
+    dspace = H5Dget_space(dset);
+    CHECK(dspace, FAIL, "H5Dget_space");
+
+    /* Close the IDs */
+    ret = H5Sclose(dspace);
+    CHECK(ret, FAIL, "H5Sclose");
+    ret = H5Gclose(grp);
+    CHECK(ret, FAIL, "H5Gclose");
+    ret = H5Tclose(dtype);
+    CHECK(ret, FAIL, "H5Tclose");
+    ret = H5Dclose(dset);
+    CHECK(ret, FAIL, "H5Dclose");
+
+    /* Try giving some bogus values to H5O_open_by_addr. */
+    /* Try to open an object with a bad address */
+    grp_addr += 20;
+    H5E_BEGIN_TRY{
+      grp = H5Oopen_by_addr(fid, grp_addr);
+    }H5E_END_TRY
+    VERIFY(grp, FAIL, "H5Oopen_by_addr");
+
+    /* For instance, an objectno smaller than the end of the file's superblock should
+     * trigger an error */
+    grp_addr = 10;
+    H5E_BEGIN_TRY{
+      grp = H5Oopen_by_addr(fid, grp_addr);
+    }H5E_END_TRY
+    VERIFY(grp, FAIL, "H5Oopen_by_addr");
+
+    /* Likewise, an objectno larger than the size of the file should fail */
+    grp_addr = 0;
+    grp_addr = 1000000000;
+    H5E_BEGIN_TRY{
+      grp = H5Oopen_by_addr(fid, grp_addr);
+    }H5E_END_TRY
+    VERIFY(grp, FAIL, "H5Oopen_by_addr");
+
+    ret = H5Fclose(fid);
+    CHECK(ret, FAIL, "H5Fclose");
+
+    /* Also, trying to open an object without a valid location should fail */
+    H5E_BEGIN_TRY{
+      dtype = H5Oopen_by_addr(fid, dtype_addr);
+    }H5E_END_TRY
+    VERIFY(dtype, FAIL, "H5Oopen_by_addr");
+} /* test_h5o_open_by_addr_deprec() */
+
+
+/****************************************************************
+**
 **  visit_obj_cb():
 **      This is the callback function invoked by H5Ovisit1() in
 **      test_h5o_getinfo_visit():
@@ -1647,18 +1798,19 @@ test_h5o(void)
     /* Output message about test being performed */
     MESSAGE(5, ("Testing Objects\n"));
 
-    test_h5o_open();              /* Test generic open function */
-    test_h5o_open_by_addr();      /* Test opening objects by address */
-    test_h5o_open_by_token();     /* Test opening objects by token */
-    test_h5o_close();             /* Test generic close function */
-    test_h5o_refcount();          /* Test incrementing and decrementing reference count */
-    test_h5o_plist();             /* Test object creation properties */
-    test_h5o_link();              /* Test object link routine */
-    test_h5o_comment();           /* Test routines for comment */
-    test_h5o_comment_by_name();   /* Test routines for comment by name */
-    test_h5o_getinfo_same_file(); /* Test info for objects in the same file */
+    test_h5o_open();                /* Test generic open function */
+    test_h5o_open_by_addr();        /* Test opening objects by address */
+    test_h5o_open_by_token();       /* Test opening objects by token */
+    test_h5o_close();               /* Test generic close function */
+    test_h5o_refcount();            /* Test incrementing and decrementing reference count */
+    test_h5o_plist();               /* Test object creation properties */
+    test_h5o_link();                /* Test object link routine */
+    test_h5o_comment();             /* Test routines for comment */
+    test_h5o_comment_by_name();     /* Test routines for comment by name */
+    test_h5o_getinfo_same_file();   /* Test info for objects in the same file */
 #ifndef H5_NO_DEPRECATED_SYMBOLS
-    test_h5o_getinfo_visit();     /* Test object info for H5Oget_info1/2 and H5Ovisit1 */
+    test_h5o_open_by_addr_deprec(); /* Test opening objects by address with H5Lget_info1 */
+    test_h5o_getinfo_visit();       /* Test object info for H5Oget_info1/2 and H5Ovisit1 */
 #endif
 } /* test_h5o() */
 
