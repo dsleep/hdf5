@@ -20,6 +20,7 @@
 *************************************************************/
 
 #include "testhdf5.h"
+#include "H5VLnative_private.h"
 
 /*
  * This file needs to access private information from the H5O package.
@@ -446,8 +447,8 @@ test_attr_basic_read(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 2, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 2, "H5Oget_info3");
 
     /* Open first attribute for the dataset */
     attr = H5Aopen(dataset, ATTR_TMP_NAME, H5P_DEFAULT);
@@ -475,8 +476,8 @@ test_attr_basic_read(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(group, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 1, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 1, "H5Oget_info3");
 
     /* Open the attribute for the group */
     attr = H5Aopen(group, ATTR2_NAME, H5P_DEFAULT);
@@ -828,8 +829,8 @@ test_attr_compound_read(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 1, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 1, "H5Oget_info3");
 
     /* Open 1st attribute for the dataset */
     attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)0, H5P_DEFAULT, H5P_DEFAULT);
@@ -1032,8 +1033,8 @@ test_attr_scalar_read(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 1, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 1, "H5Oget_info3");
 
     /* Open an attribute for the dataset */
     attr = H5Aopen(dataset, ATTR5_NAME, H5P_DEFAULT);
@@ -1235,8 +1236,8 @@ test_attr_mult_read(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 3, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 3, "H5Oget_info3");
 
     /* Open 1st attribute for the dataset */
     attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)0, H5P_DEFAULT, H5P_DEFAULT);
@@ -1492,8 +1493,8 @@ test_attr_iterate(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 0, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 0, "H5Oget_info3");
 
     /* Iterate over attributes on dataset */
     count = 0;
@@ -1510,8 +1511,8 @@ test_attr_iterate(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 3, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 3, "H5Oget_info3");
 
     /* Iterate over attributes on dataset */
     count = 0;
@@ -1557,8 +1558,8 @@ test_attr_delete(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 3, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 3, "H5Oget_info3");
 
     /* Try to delete bogus attribute */
     ret = H5Adelete(dataset, "Bogus");
@@ -1566,8 +1567,8 @@ test_attr_delete(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 3, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 3, "H5Oget_info3");
 
     /* Delete middle (2nd) attribute */
     ret = H5Adelete(dataset, ATTR2_NAME);
@@ -1575,8 +1576,8 @@ test_attr_delete(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 2, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 2, "H5Oget_info3");
 
     /* Open 1st attribute for the dataset */
     attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)0, H5P_DEFAULT, H5P_DEFAULT);
@@ -1612,8 +1613,8 @@ test_attr_delete(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 1, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 1, "H5Oget_info3");
 
     /* Open last (formally 3rd) attribute for the dataset */
     attr = H5Aopen_by_idx(dataset, ".", H5_INDEX_CRT_ORDER, H5_ITER_INC, (hsize_t)0, H5P_DEFAULT, H5P_DEFAULT);
@@ -1635,8 +1636,8 @@ test_attr_delete(hid_t fapl)
 
     /* Verify the correct number of attributes */
     ret = H5Oget_info3(dataset, &oinfo, H5O_INFO_NUM_ATTRS);
-    CHECK(ret, FAIL, "H5Oget_info");
-    VERIFY(oinfo.num_attrs, 0, "H5Oget_info");
+    CHECK(ret, FAIL, "H5Oget_info3");
+    VERIFY(oinfo.num_attrs, 0, "H5Oget_info3");
 
     /* Close dataset */
     ret = H5Dclose(dataset);
@@ -10863,9 +10864,10 @@ test_attr_bug8(hid_t fcpl, hid_t fapl)
     hid_t   gid;            /* Group ID */
     hid_t   oid;            /* Object ID */
     hsize_t dims = 256;     /* Attribute dimensions */
-    H5O_info1_t oinfo;      /* Object info */
+    H5O_info2_t oinfo;      /* Object info */
     H5A_info_t ainfo;       /* Attribute info */
     haddr_t root_addr;      /* Root group address */
+    haddr_t link_addr;      /* Link (to root group) address */
     herr_t  ret;            /* Generic return status */
 
     /* Output message about test being performed */
@@ -10881,9 +10883,10 @@ test_attr_bug8(hid_t fcpl, hid_t fapl)
     CHECK(gid, FAIL, "H5Gcreate2");
 
     /* Get root group address */
-    ret = H5Oget_info2(fid, &oinfo, H5O_INFO_BASIC);
+    ret = H5Oget_info3(fid, &oinfo, H5O_INFO_BASIC);
     CHECK(ret, FAIL, "H5Oget_info");
-    root_addr = oinfo.addr;
+    ret = H5VL_token_to_addr(fid, oinfo.token, &root_addr);
+    CHECK(ret, FAIL, "H5VL_token_to_addr");
 
     /*
      * Create link to root group
@@ -10906,10 +10909,12 @@ test_attr_bug8(hid_t fcpl, hid_t fapl)
     CHECK(gid, FAIL, "H5Gopen2");
     oid = H5Oopen(gid, LINK1_NAME, H5P_DEFAULT);
     CHECK(oid, FAIL, "H5Oopen");
-    ret = H5Oget_info2(oid, &oinfo, H5O_INFO_BASIC);
+    ret = H5Oget_info3(oid, &oinfo, H5O_INFO_BASIC);
     CHECK(ret, FAIL, "H5Oget_info");
-    if(oinfo.addr != root_addr)
-        TestErrPrintf("incorrect link target address: addr: %llu, expected: %llu\n", (long long unsigned)oinfo.addr, (long long unsigned)root_addr);
+    ret = H5VL_token_to_addr(fid, oinfo.token, &link_addr);
+    CHECK(ret, FAIL, "H5VL_token_to_addr");
+    if(link_addr != root_addr)
+        TestErrPrintf("incorrect link target address: addr: %llu, expected: %llu\n", (long long unsigned)link_addr, (long long unsigned)root_addr);
 
     /* Close file */
     ret = H5Fclose(fid);
@@ -10951,10 +10956,12 @@ test_attr_bug8(hid_t fcpl, hid_t fapl)
     CHECK(gid, FAIL, "H5Gopen2");
     oid = H5Oopen(gid, LINK1_NAME, H5P_DEFAULT);
     CHECK(oid, FAIL, "H5Oopen");
-    ret = H5Oget_info2(oid, &oinfo, H5O_INFO_BASIC);
+    ret = H5Oget_info3(oid, &oinfo, H5O_INFO_BASIC);
     CHECK(ret, FAIL, "H5Oget_info");
-    if(oinfo.addr != root_addr)
-        TestErrPrintf("incorrect link target address: addr: %llu, expected: %llu\n", (long long unsigned)oinfo.addr, (long long unsigned)root_addr);
+    ret = H5VL_token_to_addr(fid, oinfo.token, &link_addr);
+    CHECK(ret, FAIL, "H5VL_token_to_addr");
+    if(link_addr != root_addr)
+        TestErrPrintf("incorrect link target address: addr: %llu, expected: %llu\n", (long long unsigned)link_addr, (long long unsigned)root_addr);
     ret = H5Aget_info_by_name(gid, ".", ATTR1_NAME, &ainfo, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Aget_info_by_name");
     if(ainfo.data_size != dims)
