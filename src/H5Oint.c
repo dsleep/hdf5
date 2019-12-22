@@ -2195,6 +2195,7 @@ H5O_get_dm_info(const H5O_loc_t *loc, H5O_info2_t *oinfo, unsigned fields)
         H5F_GET_FILENO(loc->file, oinfo->fileno);
 
         /* Set the object's address into the token */
+        HDmemset(&oinfo->token, 0, sizeof(H5VL_token_t));
         HDmemcpy(&oinfo->token, &loc->addr, sizeof(loc->addr));
 
         /* Retrieve the type of the object */
