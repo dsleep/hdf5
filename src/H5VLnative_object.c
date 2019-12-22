@@ -231,7 +231,6 @@ H5VL__native_object_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_obj
             {
                 H5O_info2_t  *oinfo = HDva_arg(arguments, H5O_info2_t *);
                 unsigned fields         = HDva_arg(arguments, unsigned);
-                uint8_t *p = NULL;
 
                 /* Use the original H5Oget_info code to get the data */
 
