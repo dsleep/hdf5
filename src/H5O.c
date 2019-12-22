@@ -768,6 +768,334 @@ done:
 
 
 /*-------------------------------------------------------------------------
+ * Function:    H5Oget_info3
+ *
+ * Purpose:     Retrieve information about an object.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Dana Robinson
+ *              Fall 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_info3(hid_t loc_id, H5O_info2_t *oinfo, unsigned fields)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t   loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE3("e", "i*xIu", loc_id, oinfo, fields);
+
+    /* Check args */
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "oinfo parameter cannot be NULL")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Set location struct fields */
+    loc_params.type         = H5VL_OBJECT_BY_SELF;
+    loc_params.obj_type     = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve the object's information */
+    if(H5VL_object_get(vol_obj, &loc_params, H5VL_OBJECT_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get data model info for object")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_info3() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oget_info_by_name3
+ *
+ * Purpose:     Retrieve information about an object
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Dana Robinson
+ *              Fall 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_info_by_name3(hid_t loc_id, const char *name,
+    H5O_info2_t *oinfo, unsigned fields, hid_t lapl_id)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE5("e", "i*s*xIui", loc_id, name, oinfo, fields, lapl_id);
+
+    /* Check args */
+    if(!name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be NULL")
+    if(!*name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be an empty string")
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "oinfo parameter cannot be NULL")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Verify access property list and set up collective metadata if appropriate */
+    if(H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info")
+
+    /* Fill out location struct */
+    loc_params.type                         = H5VL_OBJECT_BY_NAME;
+    loc_params.loc_data.loc_by_name.name    = name;
+    loc_params.loc_data.loc_by_name.lapl_id = lapl_id;
+    loc_params.obj_type                     = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve the object's information */
+    if(H5VL_object_get(vol_obj, &loc_params, H5VL_OBJECT_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get data model info for object")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_info_by_name3() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oget_info_by_idx3
+ *
+ * Purpose:     Retrieve information about an object, according to
+ *              the order of an index.
+ *
+ * Return:      Success:	Non-negative
+ *              Failure:	Negative
+ *
+ * Programmer:	Dana Robinson
+ *              Fall 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_info_by_idx3(hid_t loc_id, const char *group_name, H5_index_t idx_type,
+    H5_iter_order_t order, hsize_t n, H5O_info2_t *oinfo, unsigned fields, hid_t lapl_id)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE8("e", "i*sIiIoh*xIui", loc_id, group_name, idx_type, order, n, oinfo,
+             fields, lapl_id);
+
+    /* Check args */
+    if(!group_name || !*group_name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no name specified")
+    if(idx_type <= H5_INDEX_UNKNOWN || idx_type >= H5_INDEX_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid index type specified")
+    if(order <= H5_ITER_UNKNOWN || order >= H5_ITER_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified")
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no info struct")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Verify access property list and set up collective metadata if appropriate */
+    if(H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info")
+
+    loc_params.type = H5VL_OBJECT_BY_IDX;
+    loc_params.loc_data.loc_by_idx.name = group_name;
+    loc_params.loc_data.loc_by_idx.idx_type = idx_type;
+    loc_params.loc_data.loc_by_idx.order = order;
+    loc_params.loc_data.loc_by_idx.n = n;
+    loc_params.loc_data.loc_by_idx.lapl_id = lapl_id;
+    loc_params.obj_type = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve the object's information */
+    if(H5VL_object_get(vol_obj, &loc_params, H5VL_OBJECT_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get data model info for object")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_info_by_idx3() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oget_native_info
+ *
+ * Purpose:     Retrieve native file format information about an object.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Dana Robinson
+ *              Fall 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_native_info(hid_t loc_id, H5O_native_info_t *oinfo, unsigned fields)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t   loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE3("e", "i*xIu", loc_id, oinfo, fields);
+
+    /* Check args */
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "oinfo parameter cannot be NULL")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Set location struct fields */
+    loc_params.type         = H5VL_OBJECT_BY_SELF;
+    loc_params.obj_type     = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve the object's information */
+    if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get native file format info for object")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_native_info() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oget_native_info_by_name
+ *
+ * Purpose:     Retrieve native file format information about an object
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Dana Robinson
+ *              Fall 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_native_info_by_name(hid_t loc_id, const char *name, H5O_native_info_t *oinfo,
+    unsigned fields, hid_t lapl_id)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE5("e", "i*s*xIui", loc_id, name, oinfo, fields, lapl_id);
+
+    /* Check args */
+    if(!name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be NULL")
+    if(!*name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be an empty string")
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "oinfo parameter cannot be NULL")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Verify access property list and set up collective metadata if appropriate */
+    if(H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info")
+
+    /* Fill out location struct */
+    loc_params.type                         = H5VL_OBJECT_BY_NAME;
+    loc_params.loc_data.loc_by_name.name    = name;
+    loc_params.loc_data.loc_by_name.lapl_id = lapl_id;
+    loc_params.obj_type                     = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve the object's information */
+    if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get native file format info for object: '%s'", name)
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_native_info_by_name() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oget_native_info_by_idx
+ *
+ * Purpose:     Retrieve native file format information about an object,
+ *              according to the order of an index.
+ *
+ * Return:      Success:	Non-negative
+ *              Failure:	Negative
+ *
+ * Programmer:	Dana Robinson
+ *              Fall 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_native_info_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type,
+    H5_iter_order_t order, hsize_t n, H5O_native_info_t *oinfo, unsigned fields, hid_t lapl_id)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE8("e", "i*sIiIoh*xIui", loc_id, group_name, idx_type, order, n, oinfo,
+             fields, lapl_id);
+
+    /* Check args */
+    if(!group_name || !*group_name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no name specified")
+    if(idx_type <= H5_INDEX_UNKNOWN || idx_type >= H5_INDEX_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid index type specified")
+    if(order <= H5_ITER_UNKNOWN || order >= H5_ITER_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified")
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no info struct")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Verify access property list and set up collective metadata if appropriate */
+    if(H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info")
+
+    loc_params.type = H5VL_OBJECT_BY_IDX;
+    loc_params.loc_data.loc_by_idx.name = group_name;
+    loc_params.loc_data.loc_by_idx.idx_type = idx_type;
+    loc_params.loc_data.loc_by_idx.order = order;
+    loc_params.loc_data.loc_by_idx.n = n;
+    loc_params.loc_data.loc_by_idx.lapl_id = lapl_id;
+    loc_params.obj_type = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve the object's information */
+    if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get native file format info for object")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_native_info_by_idx() */
+
+
+/*-------------------------------------------------------------------------
  * Function:    H5Oset_comment
  *
  * Purpose:     Gives the specified object a comment.  The COMMENT string

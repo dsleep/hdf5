@@ -1397,7 +1397,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
     hid_t fcpl_id=-1;           /* Group creation property list ID */
     hid_t lcpl_id=-1;
     hid_t lcpl2_id=-1;
-    H5O_info_t oinfo;
+    H5O_info2_t oinfo;
     H5L_info2_t linfo;
     H5T_cset_t old_cset;
     int64_t old_corder;         /* Creation order value of link */
@@ -1436,7 +1436,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
 
     /* Get the group's link's information */
     if(H5Lget_info2(file_id, "group", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file_id, "group", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     old_cset = linfo.cset;
     if(old_cset != H5T_CSET_UTF8) TEST_ERROR
     if(linfo.corder_valid != TRUE) TEST_ERROR
@@ -1455,7 +1455,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
 
     /* Get the link's character set & modification time .  They should be unchanged */
     if(H5Lget_info2(file_id, "group", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file_id, "group", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_modification_time != oinfo.mtime) TEST_ERROR
     if(old_cset != linfo.cset) TEST_ERROR
     if(linfo.corder_valid != TRUE) TEST_ERROR
@@ -1463,7 +1463,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
 
     /* Create a new link to the group.  It should have a different creation order value but the same modification time */
     if(H5Lcreate_hard(file_id, "group", file_id, "group2", H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file_id, "group2", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group2", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_modification_time != oinfo.mtime) TEST_ERROR
     if(H5Lget_info2(file_id, "group2", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_corder == linfo.corder) TEST_ERROR
@@ -1476,7 +1476,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
      * should not change.
      */
     if(H5Lcopy(file_id, "group", file_id, "group_copied", lcpl_id, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file_id, "group_copied", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group_copied", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_modification_time != oinfo.mtime) TEST_ERROR
     if(H5Lget_info2(file_id, "group_copied", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
     if(linfo.corder_valid != TRUE) TEST_ERROR
@@ -1487,7 +1487,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
 
     /* Move the link with the default property list. */
     if(H5Lmove(file_id, "group_copied", file_id, "group_copied2", H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file_id, "group_copied2", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group_copied2", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_modification_time != oinfo.mtime) TEST_ERROR
     if(H5Lget_info2(file_id, "group_copied2", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
     if(linfo.corder_valid != TRUE) TEST_ERROR
@@ -1497,7 +1497,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
     if(linfo.cset == H5T_CSET_UTF8) TEST_ERROR
 
     /* Check that the original link is unchanged */
-    if(H5Oget_info_by_name2(file_id, "group", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_modification_time != oinfo.mtime) TEST_ERROR
     if(H5Lget_info2(file_id, "group", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
     if(linfo.corder_valid != TRUE) TEST_ERROR
@@ -1508,7 +1508,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
      *  Its creation order value will change, but modification time should not
      *  change. */
     if(H5Lmove(file_id, "group", file_id, "group_moved", lcpl_id, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file_id, "group_moved", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group_moved", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_modification_time != oinfo.mtime) TEST_ERROR
     if(H5Lget_info2(file_id, "group_moved", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
     if(linfo.corder_valid != TRUE) TEST_ERROR
@@ -1519,7 +1519,7 @@ test_move_preserves(hid_t fapl_id, hbool_t new_format)
 
     /* Move the link again using the default property list. */
     if(H5Lmove(file_id, "group_moved", file_id, "group_moved_again", H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file_id, "group_moved_again", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file_id, "group_moved_again", &oinfo, H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR
     if(old_modification_time != oinfo.mtime) TEST_ERROR
     if(H5Lget_info2(file_id, "group_moved_again", &linfo, H5P_DEFAULT) < 0) TEST_ERROR
     if(linfo.corder_valid != TRUE) TEST_ERROR
@@ -7995,7 +7995,7 @@ external_link_query(hid_t fapl, hbool_t new_format)
     hid_t        gid = -1;                       /* Group IDs */
     const char  *file_name;                      /* Name of the file the external link points to */
     const char  *object_name;                    /* Name of the object the external link points to */
-    H5O_info_t   oi;                             /* Object information */
+    H5O_info2_t  oi;                            /* Object information */
     H5L_info2_t  li;                             /* Link information */
     char         filename1[NAME_BUF_SIZE],
                  filename2[NAME_BUF_SIZE],       /* Names of files to externally link across */
@@ -8062,7 +8062,7 @@ external_link_query(hid_t fapl, hbool_t new_format)
     if(HDstrcmp(object_name, "/dst")) TEST_ERROR
 
     /* Query information about object that external link points to */
-    if(H5Oget_info_by_name2(fid, "src", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Oget_info_by_name3(fid, "src", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5O_TYPE_GROUP != oi.type) {
         H5_FAILED();
         HDputs("    Unexpected object type - should have been a group");
@@ -8708,7 +8708,7 @@ external_link_closing(hid_t fapl, hbool_t new_format)
                 filename4[NAME_BUF_SIZE],       /* Names of files to externally link across */
                 buf[NAME_BUF_SIZE];             /* misc. buffer */
     H5L_info2_t li;
-    H5O_info_t  oi;
+    H5O_info2_t oi;
     hobj_ref_t  obj_ref;
 
     if(new_format)
@@ -8766,8 +8766,8 @@ external_link_closing(hid_t fapl, hbool_t new_format)
     /* Test that getting info works */
     if(H5Lget_info2(fid1, "elink/elink/elink/type1", &li, H5P_DEFAULT) < 0) TEST_ERROR
     if(H5Lget_info2(fid1, "elink/elink/elink", &li, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(fid1, "elink/elink/elink/type1", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(fid1, "elink/elink/elink", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(fid1, "elink/elink/elink/type1", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(fid1, "elink/elink/elink", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
 
     /* Test move */
     if(H5Lmove(fid1, "elink/elink/elink/group1", fid1,
@@ -8854,7 +8854,7 @@ external_link_closing(hid_t fapl, hbool_t new_format)
     if(H5Gclose(gid) < 0) TEST_ERROR
     if((gid = H5Gcreate2(fid1, "elink/elink2/group2/group3/group4", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Gclose(gid) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(fid1, "elink/elink2/group2/group3/group4", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(fid1, "elink/elink2/group2/group3/group4", &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
 
     /* Add a few regular groups and a soft link in file2 using intermediate group creation */
     if((lcpl_id = H5Pcreate(H5P_LINK_CREATE)) < 0) TEST_ERROR
@@ -16787,7 +16787,8 @@ timestamps(hid_t fapl)
     hid_t       group_id2 = -1;         /* Group ID */
     hid_t       gcpl_id = -1;           /* Group creation property list ID */
     hid_t       gcpl_id2 = -1;          /* Group creation property list ID */
-    H5O_info_t  oinfo, oinfo2;          /* Object info for groups created */
+    H5O_info2_t oinfo, oinfo2;          /* Object info for groups created */
+    H5O_native_info_t  ninfo, ninfo2;   /* Native info for groups created */
     char        filename[NAME_BUF_SIZE];/* File name */
     hbool_t     track_times;            /* The object timestamp setting */
 
@@ -16836,10 +16837,15 @@ timestamps(hid_t fapl)
     if(track_times != TRUE) TEST_ERROR
 
     /* Query the object information for each group */
-    if(H5Oget_info2(group_id, &oinfo, H5O_INFO_TIME|H5O_INFO_HDR) < 0) TEST_ERROR
-    if(H5Oget_info2(group_id2, &oinfo2, H5O_INFO_TIME|H5O_INFO_HDR) < 0) TEST_ERROR
+    /* Generic info */
+    if(H5Oget_info3(group_id, &oinfo, H5O_INFO_TIME) < 0) TEST_ERROR
+    if(H5Oget_info3(group_id2, &oinfo2, H5O_INFO_TIME) < 0) TEST_ERROR
+    /* Native file format info */
+    if(H5Oget_native_info(group_id, &ninfo, H5O_INFO_HDR) < 0) TEST_ERROR
+    if(H5Oget_native_info(group_id2, &ninfo2, H5O_INFO_HDR) < 0) TEST_ERROR
 
     /* Sanity check object information for each group */
+    /* Generic info */
     if(oinfo.atime != 0) TEST_ERROR
     if(oinfo.mtime != 0) TEST_ERROR
     if(oinfo.ctime != 0) TEST_ERROR
@@ -16848,10 +16854,11 @@ timestamps(hid_t fapl)
     if(oinfo.mtime == oinfo2.mtime) TEST_ERROR
     if(oinfo.ctime == oinfo2.ctime) TEST_ERROR
     if(oinfo.btime == oinfo2.btime) TEST_ERROR
-    if((oinfo.hdr.flags & H5O_HDR_STORE_TIMES) != 0) TEST_ERROR
-    if((oinfo2.hdr.flags & H5O_HDR_STORE_TIMES) == 0) TEST_ERROR
-    if(oinfo.hdr.space.total >= oinfo2.hdr.space.total) TEST_ERROR
-    if(oinfo.hdr.space.meta >= oinfo2.hdr.space.meta) TEST_ERROR
+    /* Native file format info */
+    if((ninfo.hdr.flags & H5O_HDR_STORE_TIMES) != 0) TEST_ERROR
+    if((ninfo2.hdr.flags & H5O_HDR_STORE_TIMES) == 0) TEST_ERROR
+    if(ninfo.hdr.space.total >= ninfo2.hdr.space.total) TEST_ERROR
+    if(ninfo.hdr.space.meta >= ninfo2.hdr.space.meta) TEST_ERROR
 
     /* Close the property lists */
     if(H5Pclose(gcpl_id) < 0) TEST_ERROR
@@ -16882,10 +16889,14 @@ timestamps(hid_t fapl)
     if(track_times != TRUE) TEST_ERROR
 
     /* Query the object information for each group */
-    if(H5Oget_info2(group_id, &oinfo, H5O_INFO_TIME|H5O_INFO_HDR) < 0) TEST_ERROR
-    if(H5Oget_info2(group_id2, &oinfo2, H5O_INFO_TIME|H5O_INFO_HDR) < 0) TEST_ERROR
+    if(H5Oget_info3(group_id, &oinfo, H5O_INFO_TIME) < 0) TEST_ERROR
+    if(H5Oget_info3(group_id2, &oinfo2, H5O_INFO_TIME) < 0) TEST_ERROR
+    /* Native file format info */
+    if(H5Oget_native_info(group_id, &ninfo, H5O_INFO_HDR) < 0) TEST_ERROR
+    if(H5Oget_native_info(group_id2, &ninfo2, H5O_INFO_HDR) < 0) TEST_ERROR
 
     /* Sanity check object information for each group */
+    /* Generic info */
     if(oinfo.atime != 0) TEST_ERROR
     if(oinfo.mtime != 0) TEST_ERROR
     if(oinfo.ctime != 0) TEST_ERROR
@@ -16894,10 +16905,11 @@ timestamps(hid_t fapl)
     if(oinfo.mtime == oinfo2.mtime) TEST_ERROR
     if(oinfo.ctime == oinfo2.ctime) TEST_ERROR
     if(oinfo.btime == oinfo2.btime) TEST_ERROR
-    if((oinfo.hdr.flags & H5O_HDR_STORE_TIMES) != 0) TEST_ERROR
-    if((oinfo2.hdr.flags & H5O_HDR_STORE_TIMES) == 0) TEST_ERROR
-    if(oinfo.hdr.space.total >= oinfo2.hdr.space.total) TEST_ERROR
-    if(oinfo.hdr.space.meta >= oinfo2.hdr.space.meta) TEST_ERROR
+    /* Native file format info */
+    if((ninfo.hdr.flags & H5O_HDR_STORE_TIMES) != 0) TEST_ERROR
+    if((ninfo2.hdr.flags & H5O_HDR_STORE_TIMES) == 0) TEST_ERROR
+    if(ninfo.hdr.space.total >= ninfo2.hdr.space.total) TEST_ERROR
+    if(ninfo.hdr.space.meta >= ninfo2.hdr.space.meta) TEST_ERROR
 
     /* Close the property lists */
     if(H5Pclose(gcpl_id) < 0) TEST_ERROR

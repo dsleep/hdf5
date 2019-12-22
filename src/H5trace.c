@@ -3069,6 +3069,9 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                                 case H5VL_OBJECT_GET_TYPE:
                                     HDfprintf(out, "H5VL_OBJECT_GET_TYPE");
                                     break;
+                                case H5VL_OBJECT_GET_INFO:
+                                    HDfprintf(out, "H5VL_OBJECT_GET_INFO");
+                                    break;
                                 default:
                                     HDfprintf(out, "%ld", (long)get);
                                     break;
@@ -3260,6 +3263,7 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                             } /* end switch */
                         } /* end else */
                         break;
+
                     case 'T':
                         if(ptr) {
                             if(vp)
@@ -3275,6 +3279,7 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                                 HDfprintf(out, "%02x", token.__data[j]);
                         } /* end else */
                         break;
+
                     case 'u':
                         if(ptr) {
                             if(vp)
