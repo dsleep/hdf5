@@ -101,8 +101,8 @@ test_main(hid_t file_id, hid_t fapl)
     hid_t   space_id;
     hid_t   type_id, type2_id;
     hsize_t dims[1] = { 5 };
-    size_t  name_len; /* Name length */ 
-    H5O_info_t oinfo;      /* Object info structs */
+    size_t  name_len; /* Name length */
+    H5O_info1_t oinfo;     /* Object info structs */
     hid_t      dtype;      /* Object identifier for testing */
     hid_t      dtype_anon; /* Object identifier for testing anonymous */
     ssize_t    size;       /* Size returned by H5Iget_name */

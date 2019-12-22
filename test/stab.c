@@ -328,7 +328,7 @@ lifecycle(hid_t fcpl, hid_t fapl2)
     unsigned    est_num_entries;    /* Estimated # of entries in group */
     unsigned    est_name_len;        /* Estimated length of entry name */
     unsigned    nmsgs;                /* Number of messages in group's header */
-    H5O_info_t  oinfo;                  /* Object info */
+    H5O_info1_t oinfo;                  /* Object info */
     char        objname[NAME_BUF_SIZE];         /* Object name */
     char    filename[NAME_BUF_SIZE];
     h5_stat_size_t       empty_size;             /* Size of an empty file */

@@ -202,7 +202,7 @@ compare_attribute_compound_vlstr(hid_t loc, hid_t loc2);
  *-------------------------------------------------------------------------
  */
 static void
-addr_insert(H5O_info_t *oi)
+addr_insert(H5O_info1_t *oi)
 {
     size_t  n;
 
@@ -238,7 +238,7 @@ addr_insert(H5O_info_t *oi)
  *-------------------------------------------------------------------------
  */
 static H5_ATTR_PURE hbool_t
-addr_lookup(H5O_info_t *oi)
+addr_lookup(H5O_info1_t *oi)
 {
     size_t  n;
 
@@ -852,7 +852,7 @@ static int
 compare_std_attributes(hid_t oid, hid_t oid2, hid_t pid)
 {
     hid_t aid = -1, aid2 = -1;                  /* Attribute IDs */
-    H5O_info_t oinfo1, oinfo2;                  /* Object info */
+    H5O_info2_t oinfo1, oinfo2;                  /* Object info */
     unsigned cpy_flags;                         /* Object copy flags */
 
     /* Retrieve the object copy flags from the property list, if it's non-DEFAULT */
@@ -863,10 +863,10 @@ compare_std_attributes(hid_t oid, hid_t oid2, hid_t pid)
         cpy_flags = 0;
 
     /* Check the number of attributes on source dataset */
-    if(H5Oget_info2(oid, &oinfo1, H5O_INFO_NUM_ATTRS) < 0) TEST_ERROR
+    if(H5Oget_info3(oid, &oinfo1, H5O_INFO_NUM_ATTRS) < 0) TEST_ERROR
 
     /* Check the number of attributes on destination dataset */
-    if(H5Oget_info2(oid2, &oinfo2, H5O_INFO_NUM_ATTRS) < 0) TEST_ERROR
+    if(H5Oget_info3(oid2, &oinfo2, H5O_INFO_NUM_ATTRS) < 0) TEST_ERROR
 
     if(cpy_flags & H5O_COPY_WITHOUT_ATTR_FLAG) {
         /* Check that the destination has no attributes */
@@ -1055,7 +1055,7 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
 
                 /* break the infinite loop when the ref_object points to itself */
                 if(obj_owner > 0) {
-                    H5O_info_t oinfo1, oinfo2;
+                    H5O_info1_t oinfo1, oinfo2;
 
                     if(H5Oget_info2(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info2(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
@@ -1116,7 +1116,7 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
 
                 /* break the infinite loop when the ref_object points to itself */
                 if(obj_owner > 0) {
-                    H5O_info_t oinfo1, oinfo2;
+                    H5O_info1_t oinfo1, oinfo2;
 
                     if(H5Oget_info2(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info2(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
@@ -1412,7 +1412,7 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
             /* Extra checks for "real" objects */
             if(linfo.type == H5L_TYPE_HARD) {
                 hid_t oid, oid2;                /* IDs of objects within group */
-                H5O_info_t oinfo, oinfo2;       /* Object info */
+                H5O_info1_t oinfo, oinfo2;       /* Object info */
 
                 /* Compare some pieces of the object info */
                 if(H5Oget_info_by_name2(gid, objname, &oinfo, H5O_INFO_BASIC|H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
@@ -1861,7 +1861,7 @@ test_copy_named_datatype_attr_self(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     hid_t aid = -1;                     /* Attribute ID */
     hid_t sid = -1;                     /* Dataspace ID */
     hsize_t dims[2] = {3, 4};           /* Dataspace dimensions */
-    H5O_info_t oinfo, oinfo2;           /* Object info */
+    H5O_info1_t oinfo, oinfo2;          /* Object info */
     H5G_info_t ginfo;                   /* Group info */
     char                src_filename[NAME_BUF_SIZE];
     char                dst_filename[NAME_BUF_SIZE];
@@ -10218,7 +10218,7 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     unsigned int i;                             /* Local index variables */
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                          /* Object info */
     haddr_t exp_addr;                           /* Expected object address */
     char src1_filename[NAME_BUF_SIZE];
     char src2_filename[NAME_BUF_SIZE];
@@ -10456,7 +10456,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     unsigned int i;                             /* Local index variables */
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                          /* Object info */
     haddr_t exp_addr;                           /* Expected object address */
     char filename[NAME_BUF_SIZE];
 
@@ -10729,7 +10729,7 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     unsigned int i;                             /* Local index variables */
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                          /* Object info */
     haddr_t exp_addr;                           /* Expected object address */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
@@ -10960,7 +10960,7 @@ test_copy_committed_dt_merge_attr(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     unsigned int i;                             /* Local index variables */
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                          /* Object info */
     haddr_t exp_addr;                           /* Expected object address */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
@@ -11192,7 +11192,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     hsize_t dim1d[1];                /* dimension sizes */
     int buf[DIM_SIZE_1];            /* Buffer for data */
     haddr_t exp_addr_int, exp_addr_short;         /* Expected object addresses */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                       /* Object info */
     char src_filename[NAME_BUF_SIZE];        /* Source file name */
     char dst_filename[NAME_BUF_SIZE];        /* Destination file name */
 
@@ -11515,8 +11515,8 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     hid_t aid = -1;                /* Attribute ID */
     hid_t ocpypl_id = -1;                       /* Object copy plist ID */
     hsize_t dim1d[1];                /* dimension sizes */
-    H5O_info_t oinfo;                           /* Object info */
-    haddr_t exp_addr;                  /* Expected object addresses */
+    H5O_info1_t oinfo;                          /* Object info */
+    haddr_t exp_addr;                           /* Expected object addresses */
     char src_filename[NAME_BUF_SIZE];        /* Source file name */
     char dst_filename[NAME_BUF_SIZE];        /* Destination file name */
 
@@ -11741,7 +11741,7 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     hid_t fid_src = -1, fid_dst = -1;           /* File IDs */
     hid_t tid = -1;                             /* Datatype ID */
     hid_t ocpypl_id = -1;                       /* Object copy plist ID */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                          /* Object info */
     haddr_t exp_addr;                           /* Expected object address */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
@@ -11981,7 +11981,7 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     unsigned int i;                             /* Local index variables */
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                          /* Object info */
     haddr_t exp_addr;                           /* Expected object address */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
@@ -12749,7 +12749,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     unsigned int i;                             /* Local index variables */
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
-    H5O_info_t oinfo;                           /* Object info */
+    H5O_info1_t oinfo;                          /* Object info */
     haddr_t exp_addr;                           /* Expected object address */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];

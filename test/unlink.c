@@ -434,7 +434,7 @@ static int
 check_new_move(hid_t fapl)
 {
     hid_t     file;
-    H5O_info_t    oi_hard1, oi_hard2;
+    H5O_info1_t oi_hard1, oi_hard2;
     char     filename[1024];
     char     linkval[1024];
 
@@ -2156,7 +2156,7 @@ test_full_group_compact(hid_t fapl)
 {
     hid_t file_id = -1;
     hid_t gid = -1, gid2 = -1;  /* Group IDs */
-    H5O_info_t    oi;             /* Stat buffer for object */
+    H5O_info2_t oi;             /* Stat buffer for object */
     char objname[128];          /* Buffer for name of objects to create */
     char objname2[128];         /* Buffer for name of objects to create */
     char filename[1024];        /* Buffer for filename */
@@ -2228,7 +2228,7 @@ test_full_group_compact(hid_t fapl)
     /* Check reference count on objects to keep */
     for(u = 0; u < FULL_GROUP_NUM_KEEP; u++) {
         HDsprintf(objname, "/keep/keep %u\n", u);
-        if(H5Oget_info_by_name2(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+        if(H5Oget_info_by_name3(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
         if(oi.rc != 2) TEST_ERROR
     } /* end for */
 
@@ -2245,7 +2245,7 @@ test_full_group_compact(hid_t fapl)
     /* Check reference count on objects to keep */
     for(u = 0; u < FULL_GROUP_NUM_KEEP; u++) {
         HDsprintf(objname, "/keep/keep %u\n", u);
-        if(H5Oget_info_by_name2(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+        if(H5Oget_info_by_name3(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
         if(oi.rc != 1) TEST_ERROR
     } /* end for */
 
@@ -2290,7 +2290,7 @@ test_full_group_dense(hid_t fapl)
     hid_t file_id = -1;
     hid_t gcpl = (-1);          /* Group creation property list ID */
     hid_t gid = -1, gid2 = -1;  /* Group IDs */
-    H5O_info_t    oi;             /* Stat buffer for object */
+    H5O_info2_t oi;             /* Stat buffer for object */
     char objname[128];          /* Buffer for name of objects to create */
     char objname2[128];         /* Buffer for name of objects to create */
     char filename[1024];        /* Buffer for filename */
@@ -2374,7 +2374,7 @@ test_full_group_dense(hid_t fapl)
     /* Check reference count on objects to keep */
     for(u = 0; u < FULL_GROUP_NUM_KEEP; u++) {
         HDsprintf(objname, "/keep/keep %u\n", u);
-        if(H5Oget_info_by_name2(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+        if(H5Oget_info_by_name3(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
         if(oi.rc != 2) TEST_ERROR
     } /* end for */
 
@@ -2391,7 +2391,7 @@ test_full_group_dense(hid_t fapl)
     /* Check reference count on objects to keep */
     for(u = 0; u < FULL_GROUP_NUM_KEEP; u++) {
         HDsprintf(objname, "/keep/keep %u\n", u);
-        if(H5Oget_info_by_name2(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+        if(H5Oget_info_by_name3(file_id, objname, &oi, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
         if(oi.rc != 1) TEST_ERROR
     } /* end for */
 

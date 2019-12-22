@@ -1430,7 +1430,7 @@ test_reference_group(void)
     H5R_ref_t rref;                /* Reference to read */
     H5G_info_t ginfo;           /* Group info struct */
     char objname[NAME_SIZE];    /* Buffer to store name */
-    H5O_info_t oinfo;           /* Object info struct */
+    H5O_info2_t oinfo;          /* Object info struct */
     int count = 0;              /* Count within iterated group */
     ssize_t size;               /* Name length */
     herr_t ret;
@@ -1520,9 +1520,9 @@ test_reference_group(void)
     CHECK(size, (-1), "H5Lget_name_by_idx");
     VERIFY_STR(objname, DSETNAME2, "H5Lget_name_by_idx");
 
-    ret = H5Oget_info_by_idx2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)0, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Oget_info_by_idx");
-    VERIFY(oinfo.type, H5O_TYPE_DATASET, "H5Oget_info_by_idx");
+    ret = H5Oget_info_by_idx3(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)0, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Oget_info_by_idx3");
+    VERIFY(oinfo.type, H5O_TYPE_DATASET, "H5Oget_info_by_idx3");
 
     /* Unlink one of the objects in the dereferenced group */
     ret = H5Ldelete(gid, GROUPNAME2, H5P_DEFAULT);
