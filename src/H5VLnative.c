@@ -213,23 +213,30 @@ H5VL_native_get_file_addr_len(hid_t loc_id, size_t *addr_len)
     /* check arguments */
     HDassert(addr_len);
 
-    /* Get the location object */
-    if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
-
     /* Get object type */
     if((vol_obj_type = H5I_get_type(loc_id)) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
 
-    /* Get the file for the object */
-    if((file_id = H5F_get_file_id(vol_obj, vol_obj_type, FALSE)) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not a file or file object")
+    if (H5I_FILE == vol_obj_type) {
+        /* Retrieve VOL object */
+        if(NULL == (vol_obj_file = H5VL_vol_object(loc_id)))
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+    }
+    else {
+        /* Get the location object */
+        if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
 
-    /* Retrieve VOL object */
-    if(NULL == (vol_obj_file = H5VL_vol_object(file_id)))
-        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+        /* Get the file for the object */
+        if((file_id = H5F_get_file_id(vol_obj, vol_obj_type, FALSE)) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "not a file or file object")
 
-    /* Retrieve file from VOL object */
+        /* Retrieve VOL object */
+        if(NULL == (vol_obj_file = H5VL_vol_object(file_id)))
+            HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+    }
+
+    /* Retrieve file struct from VOL object */
     if(NULL == (file = (H5F_t *)H5VL_object_data(vol_obj_file)))
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid VOL object")
 
