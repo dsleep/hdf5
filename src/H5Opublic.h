@@ -217,6 +217,21 @@ H5_DLL herr_t H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info_t *o
 H5_DLL herr_t H5Oget_info_by_idx2(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5O_info_t *oinfo,
     unsigned fields, hid_t lapl_id);
+
+H5_DLL herr_t H5Oget_info3(hid_t loc_id, H5O_info2_t *oinfo, unsigned fields);
+H5_DLL herr_t H5Oget_info_by_name3(hid_t loc_id, const char *name, H5O_info2_t *oinfo,
+    unsigned fields, hid_t lapl_id);
+H5_DLL herr_t H5Oget_info_by_idx3(hid_t loc_id, const char *group_name,
+    H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5O_info2_t *oinfo,
+    unsigned fields, hid_t lapl_id);
+
+H5_DLL herr_t H5Oget_native_info(hid_t loc_id, H5O_native_info_t *oinfo, unsigned fields);
+H5_DLL herr_t H5Oget_native_info_by_name(hid_t loc_id, const char *name, H5O_native_info_t *oinfo,
+    unsigned fields, hid_t lapl_id);
+H5_DLL herr_t H5Oget_native_info_by_idx(hid_t loc_id, const char *group_name,
+    H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5O_native_info_t *oinfo,
+    unsigned fields, hid_t lapl_id);
+
 H5_DLL herr_t H5Olink(hid_t obj_id, hid_t new_loc_id, const char *new_name,
     hid_t lcpl_id, hid_t lapl_id);
 H5_DLL herr_t H5Oincr_refcount(hid_t object_id);
