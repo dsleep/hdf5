@@ -317,7 +317,7 @@ test_api_get_ex_dcpl(test_api_config_t config, hid_t fapl, hid_t dcpl,
     hid_t       dset = -1;      /* Virtual dataset */
     H5D_space_status_t space_status; /* Dataset space status */
     void        *plist_buf = NULL; /* Serialized property list buffer */
-    H5O_native_info_t  oinfo;          /* Object info struct */
+    H5O_info_t  oinfo;          /* Object info struct */
     htri_t      tri_ret;
 
     HDassert((config >= TEST_API_BASIC) && (config < TEST_API_NTESTS));
@@ -372,7 +372,7 @@ test_api_get_ex_dcpl(test_api_config_t config, hid_t fapl, hid_t dcpl,
             TEST_ERROR
 
         /* Test H5Oget_info returns correct metadata size */
-        if(H5Oget_native_info(dset, &oinfo, H5O_INFO_META_SIZE) < 0)
+        if(H5Oget_info2(dset, &oinfo, H5O_INFO_META_SIZE) < 0)
             TEST_ERROR
         if(oinfo.meta_size.obj.index_size != (hsize_t)0)
             TEST_ERROR

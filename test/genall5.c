@@ -554,7 +554,7 @@ vrfy_ns_grp_c(hid_t fid, const char *group_name, unsigned nlinks) {
             HDfree(slinkval);
         } /* end if */
         else if (1 == (u % 3)) {
-            H5O_info1_t root_oinfo;
+            H5O_info_t root_oinfo;
 
             if (H5L_TYPE_HARD != lnk_info.type) {
                 pass = FALSE;
@@ -963,7 +963,7 @@ vrfy_ns_grp_d(hid_t fid, const char *group_name, unsigned nlinks) {
             HDfree(slinkval);
         } /* end if */
         else if (1 == (u % 3)) {
-            H5O_info1_t root_oinfo;
+            H5O_info_t root_oinfo;
 
             if (H5L_TYPE_HARD != lnk_info.type) {
                 pass = FALSE;
@@ -1557,7 +1557,7 @@ vrfy_os_grp_n(hid_t fid, const char *group_name, int proc_num,
             HDfree(slinkval);
         } /* end if */
         else {
-            H5O_info1_t root_oinfo;
+            H5O_info_t root_oinfo;
 
             HDassert(1 == (u % 2));
 

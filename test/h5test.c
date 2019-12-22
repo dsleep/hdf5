@@ -1698,7 +1698,7 @@ error:
  */
 static herr_t
 h5_verify_cached_stabs_cb(hid_t oid, const char H5_ATTR_UNUSED *name,
-    const H5O_info2_t *oinfo, void H5_ATTR_UNUSED *udata)
+    const H5O_info_t *oinfo, void H5_ATTR_UNUSED *udata)
 {
     if(oinfo->type == H5O_TYPE_GROUP)
         return H5G__verify_cached_stabs_test(oid);

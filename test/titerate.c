@@ -220,12 +220,12 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     VERIFY(ginfo.nlinks, (NDATASETS + 2), "H5Gget_info");
 
     for(i = 0; i< (int)ginfo.nlinks; i++) {
-        H5O_info2_t oinfo;               /* Object info */
+        H5O_info_t oinfo;               /* Object info */
 
         ret = (herr_t)H5Lget_name_by_idx(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, dataset_name, (size_t)NAMELEN, H5P_DEFAULT);
         CHECK(ret, FAIL, "H5Lget_name_by_idx");
 
-        ret = H5Oget_info_by_idx3(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+        ret = H5Oget_info_by_idx2(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
         CHECK(ret, FAIL, "H5Oget_info_by_idx");
     } /* end for */
 
@@ -246,13 +246,13 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     VERIFY(ginfo.nlinks, NDATASETS + 2, "H5Gget_info");
 
     for(i = 0; i< (int)ginfo.nlinks; i++) {
-        H5O_info2_t oinfo;               /* Object info */
+        H5O_info_t oinfo;               /* Object info */
 
         ret = (herr_t)H5Lget_name_by_idx(file, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, dataset_name, (size_t)NAMELEN, H5P_DEFAULT);
         CHECK(ret, FAIL, "H5Lget_name_by_idx");
 
-        ret = H5Oget_info_by_idx3(file, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-        CHECK(ret, FAIL, "H5Oget_info_by_idx3");
+        ret = H5Oget_info_by_idx2(file, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+        CHECK(ret, FAIL, "H5Oget_info_by_idx");
     } /* end for */
 
     H5E_BEGIN_TRY {
@@ -554,7 +554,7 @@ liter_cb2(hid_t loc_id, const char *name, const H5L_info_t H5_ATTR_UNUSED *link_
     void *opdata)
 {
     const iter_info *test_info = (const iter_info *)opdata;
-    H5O_info2_t oinfo;
+    H5O_info_t oinfo;
     herr_t ret;        /* Generic return value        */
 
     if(HDstrcmp(name, test_info->name)) {
@@ -565,8 +565,8 @@ liter_cb2(hid_t loc_id, const char *name, const H5L_info_t H5_ATTR_UNUSED *link_
     /*
      * Get type of the object and check it.
      */
-    ret = H5Oget_info_by_name3(loc_id, name, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Oget_info_by_name3");
+    ret = H5Oget_info_by_name2(loc_id, name, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Oget_info_by_name");
 
     if(test_info->type != oinfo.type) {
         TestErrPrintf("test_info->type = %d, oinfo.type = %d\n", test_info->type, (int)oinfo.type);
@@ -793,7 +793,7 @@ static void test_grp_memb_funcs(hid_t fapl)
     VERIFY(ginfo.nlinks, (NDATASETS + 2), "H5Gget_info");
 
     for(i = 0; i < (int)ginfo.nlinks; i++) {
-        H5O_info2_t oinfo;               /* Object info */
+        H5O_info_t oinfo;               /* Object info */
 
         /* Test with NULL for name, to query length */
         name_len = H5Lget_name_by_idx(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, NULL, (size_t)NAMELEN, H5P_DEFAULT);
@@ -809,8 +809,8 @@ static void test_grp_memb_funcs(hid_t fapl)
         obj_names[i] = HDstrdup(dataset_name);
         CHECK_PTR(obj_names[i], "strdup");
 
-        ret = H5Oget_info_by_idx3(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-        CHECK(ret, FAIL, "H5Oget_info_by_idx3");
+        ret = H5Oget_info_by_idx2(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+        CHECK(ret, FAIL, "H5Oget_info_by_idx");
 
         if(!HDstrcmp(dataset_name, "grp"))
             VERIFY(oinfo.type, H5O_TYPE_GROUP, "H5Lget_name_by_idx");
@@ -890,7 +890,7 @@ static void test_links(hid_t fapl)
 
     /* Test these two functions, H5Oget_info_by_idx and H5Lget_name_by_idx */
     for(i = 0; i < ginfo.nlinks; i++) {
-        H5O_info2_t oinfo;              /* Object info */
+        H5O_info_t oinfo;               /* Object info */
         H5L_info_t linfo;               /* Link info */
 
         /* Get link name */
@@ -903,8 +903,8 @@ static void test_links(hid_t fapl)
 
         /* Get object type */
         if(linfo.type == H5L_TYPE_HARD) {
-            ret = H5Oget_info_by_idx3(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-            CHECK(ret, FAIL, "H5Oget_info_by_idx3");
+            ret = H5Oget_info_by_idx2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+            CHECK(ret, FAIL, "H5Oget_info_by_idx");
         } /* end if */
 
         if(!HDstrcmp(obj_name, "g1.1"))

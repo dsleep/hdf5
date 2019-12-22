@@ -10763,7 +10763,7 @@ test_earray_hdr_fd(const char *env_h5_driver, hid_t fapl)
     const hsize_t maxshape[1] = { H5S_UNLIMITED };
     const hsize_t chunk[1] = { 8 };
     const int buffer[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    H5O_info2_t info;
+    H5O_info_t info;
 
     TESTING("Extensible array chunk index header flush dependencies handled correctly");
 
@@ -10828,9 +10828,9 @@ test_earray_hdr_fd(const char *env_h5_driver, hid_t fapl)
         FAIL_STACK_ERROR;
 
     /* The second call triggered a bug in the library (JIRA issue: SWMR-95) */
-    if(H5Oget_info_by_name3(fid, DSET_EARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
+    if(H5Oget_info_by_name2(fid, DSET_EARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR;
-    if(H5Oget_info_by_name3(fid, DSET_EARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
+    if(H5Oget_info_by_name2(fid, DSET_EARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR;
 
     if(H5Pclose(fapl) < 0)
@@ -10883,7 +10883,7 @@ test_farray_hdr_fd(const char *env_h5_driver, hid_t fapl)
     const hsize_t maxshape[1] = { 64 };
     const hsize_t chunk[1] = { 8 };
     const int buffer[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    H5O_info2_t info;
+    H5O_info_t info;
 
     TESTING("Fixed array chunk index header flush dependencies handled correctly");
 
@@ -10948,9 +10948,9 @@ test_farray_hdr_fd(const char *env_h5_driver, hid_t fapl)
         FAIL_STACK_ERROR;
 
     /* The second call triggered a bug in the library (JIRA issue: SWMR-95) */
-    if(H5Oget_info_by_name3(fid, DSET_FARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
+    if(H5Oget_info_by_name2(fid, DSET_FARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR;
-    if(H5Oget_info_by_name3(fid, DSET_FARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
+    if(H5Oget_info_by_name2(fid, DSET_FARRAY_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR;
 
     if(H5Pclose(fapl) < 0)
@@ -11003,7 +11003,7 @@ test_bt2_hdr_fd(const char *env_h5_driver, hid_t fapl)
     const hsize_t maxshape[2] = { H5S_UNLIMITED, H5S_UNLIMITED };
     const hsize_t chunk[2] = { 8, 8 };
     const int buffer[8] = {0, 1, 2, 3, 4, 5, 6, 7};
-    H5O_info2_t info;
+    H5O_info_t info;
 
     TESTING("Version 2 B-tree chunk index header flush dependencies handled correctly");
 
@@ -11068,9 +11068,9 @@ test_bt2_hdr_fd(const char *env_h5_driver, hid_t fapl)
         FAIL_STACK_ERROR;
 
     /* The second call triggered a bug in the library (JIRA issue: SWMR-95) */
-    if(H5Oget_info_by_name3(fid, DSET_BT2_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
+    if(H5Oget_info_by_name2(fid, DSET_BT2_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR;
-    if(H5Oget_info_by_name3(fid, DSET_BT2_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
+    if(H5Oget_info_by_name2(fid, DSET_BT2_HDR_FD, &info, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR;
 
     if(H5Pclose(fapl) < 0)
@@ -12776,23 +12776,20 @@ error:
 } /* end dls_01_write_data() */
 
 static herr_t
-dls_01_read_stuff(hid_t fid)
+dls_01_read_stuff( hid_t fid )
 {
     int status = 0;
     hid_t did = 0;
-    H5O_info2_t info;
+    H5O_info_t info;
 
-    did = H5Dopen2(fid, DLS_01_DATASET, H5P_DEFAULT);
-    if(did <= 0)
-        TEST_ERROR
+    did = H5Dopen2( fid, DLS_01_DATASET, H5P_DEFAULT );
+    if ( did <= 0 ) TEST_ERROR
 
-    status = H5Oget_info3(did, &info, H5O_INFO_BASIC);
-    if(status != 0)
-        TEST_ERROR
+    status = H5Oget_info2( did, &info, H5O_INFO_BASIC );
+    if ( status != 0 ) TEST_ERROR
 
-    status = H5Dclose(did);
-    if(status != 0)
-        TEST_ERROR
+    status = H5Dclose( did );
+    if ( status != 0 ) TEST_ERROR
 
     return SUCCEED;
 

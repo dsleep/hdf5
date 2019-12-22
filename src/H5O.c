@@ -611,7 +611,7 @@ done:
  */
 herr_t
 H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
-    H5O_info1_t *oinfo, unsigned fields)
+    H5O_info_t *oinfo, unsigned fields)
 {
     unsigned dm_fields;                 /* Fields for data model query */
     unsigned nat_fields;                /* Fields for native query */
@@ -687,7 +687,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Oget_info2(hid_t loc_id, H5O_info1_t *oinfo, unsigned fields)
+H5Oget_info2(hid_t loc_id, H5O_info_t *oinfo, unsigned fields)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
     H5VL_loc_params_t   loc_params;
@@ -734,7 +734,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info1_t *oinfo,
+H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info_t *oinfo,
     unsigned fields, hid_t lapl_id)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
@@ -795,7 +795,7 @@ done:
  */
 herr_t
 H5Oget_info_by_idx2(hid_t loc_id, const char *group_name, H5_index_t idx_type,
-    H5_iter_order_t order, hsize_t n, H5O_info1_t *oinfo, unsigned fields, hid_t lapl_id)
+    H5_iter_order_t order, hsize_t n, H5O_info_t *oinfo, unsigned fields, hid_t lapl_id)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
     H5VL_loc_params_t loc_params;
@@ -1369,6 +1369,41 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* end H5Oget_comment_by_name() */
 
+herr_t
+H5O__iterate2_shim(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2, void *op_data)
+{
+    H5O_shim_data_t *shim_data = (H5O_shim_data_t *)op_data;
+    H5O_info_t oinfo;
+    size_t addr_len = 0;
+    const uint8_t *p = (const uint8_t *)(&(oinfo2->token)); /* Pointer into token   */
+
+    HDmemset(&oinfo, 0, sizeof(H5O_info_t));
+
+    /* Copy the new-style members into the old-style struct
+     * NOTE: All native fields will be full of zero bytes.
+     */
+    if (oinfo2) {
+        oinfo.fileno        = oinfo2->fileno;
+        oinfo.type          = oinfo2->type;
+        oinfo.rc            = oinfo2->rc;
+        oinfo.atime         = oinfo2->atime;
+        oinfo.mtime         = oinfo2->mtime;
+        oinfo.ctime         = oinfo2->ctime;
+        oinfo.btime         = oinfo2->btime;
+        oinfo.num_attrs     = oinfo2->num_attrs;
+
+        if (H5VL_native_get_file_addr_len(obj_id, &addr_len) < 0)
+            return FAIL;
+
+        /* Convert from VOL token to address */
+        H5F_addr_decode_len(addr_len, &p, &(oinfo.addr));
+    }
+
+    /* Invoke the real callback */
+    return shim_data->real_op(obj_id, name, &oinfo, shim_data->real_op_data);
+
+} /* end H5O__iterate2_shim() */
+
 
 /*-------------------------------------------------------------------------
  * Function:    H5Ovisit2
@@ -1407,10 +1442,11 @@ done:
  */
 herr_t
 H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
-    H5O_iterate2_t op, void *op_data, unsigned fields)
+    H5O_iterate_t op, void *op_data, unsigned fields)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
     H5VL_loc_params_t   loc_params;
+    H5O_shim_data_t     shim_data;
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1434,8 +1470,13 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     loc_params.type         = H5VL_OBJECT_BY_SELF;
     loc_params.obj_type     = H5I_get_type(obj_id);
 
+    /* Set up shim */
+    shim_data.real_op = op;
+    shim_data.real_op_data = op_data;
+
     /* Visit the objects */
-    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, op, op_data, fields)) < 0)
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order,
+                    H5O__iterate2_shim, (void *)&shim_data, fields)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
 
 done:
@@ -1480,10 +1521,11 @@ done:
  */
 herr_t
 H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
-    H5_iter_order_t order, H5O_iterate2_t op, void *op_data, unsigned fields, hid_t lapl_id)
+    H5_iter_order_t order, H5O_iterate_t op, void *op_data, unsigned fields, hid_t lapl_id)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
-    H5VL_loc_params_t   loc_params;
+    H5VL_loc_params_t   loc_params; 
+    H5O_shim_data_t     shim_data;
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1518,8 +1560,13 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     loc_params.loc_data.loc_by_name.lapl_id = lapl_id;
     loc_params.obj_type                     = H5I_get_type(loc_id);
 
+    /* Set up shim */
+    shim_data.real_op = op;
+    shim_data.real_op_data = op_data;
+
     /* Visit the objects */
-    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, op, op_data, fields)) < 0)
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order,
+                    H5O__iterate2_shim, (void *)&shim_data, fields)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
 
 done:

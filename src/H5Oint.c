@@ -56,8 +56,9 @@
 /* User data for recursive traversal over objects from a group */
 typedef struct {
     hid_t       obj_id;         /* The ID for the starting group */
-    H5G_loc_t    *start_loc;    /* Location of starting group */
-    H5O_iterate2_t op;          /* Application callback */
+    H5G_loc_t    *start_loc;     /* Location of starting group */
+    H5SL_t     *visited;        /* Skip list for tracking visited nodes */
+    H5O_iterate_t op;           /* Application callback */
     void       *op_data;        /* Application's op data */
     unsigned    fields;         /* Selection of object info */
 } H5O_iter_visit_ud_t;
@@ -75,6 +76,8 @@ typedef struct {
 static herr_t H5O__delete_oh(H5F_t *f, H5O_t *oh);
 static herr_t H5O__obj_type_real(const H5O_t *oh, H5O_type_t *obj_type);
 static herr_t H5O__get_hdr_info_real(const H5O_t *oh, H5O_hdr_info_t *hdr);
+static herr_t H5O__free_visit_visited(void *item, void *key,
+    void *operator_data/*in,out*/);
 static herr_t H5O__visit_cb(hid_t group, const char *name, const H5L_info_t *linfo,
     void *_udata);
 static const H5O_obj_class_t *H5O__obj_class_real(const H5O_t *oh);
@@ -155,6 +158,9 @@ H5FL_SEQ_EXTERN(H5O_cont_t);
 
 /* Declare external the free list for time_t's */
 H5FL_EXTERN(time_t);
+
+/* Declare external the free list for H5_obj_t's */
+H5FL_EXTERN(H5_obj_t);
 
 
 /*******************/
@@ -2147,7 +2153,7 @@ H5O__get_hdr_info_real(const H5O_t *oh, H5O_hdr_info_t *hdr)
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5O_get_info
+ * Function:    H5O_get_dm_info
  *
  * Purpose:     Retrieve the data model information for an object
  *
@@ -2160,7 +2166,7 @@ H5O__get_hdr_info_real(const H5O_t *oh, H5O_hdr_info_t *hdr)
  *-------------------------------------------------------------------------
  */
 herr_t
-H5O_get_info(const H5O_loc_t *loc, H5O_info2_t *oinfo, unsigned fields)
+H5O_get_dm_info(const H5O_loc_t *loc, H5O_info2_t *oinfo, unsigned fields)
 {
     const H5O_obj_class_t *obj_class;   /* Class of object for header */
     H5O_t *oh = NULL;                   /* Object header */
@@ -2251,7 +2257,7 @@ done:
         HDONE_ERROR(H5E_OHDR, H5E_CANTUNPROTECT, FAIL, "unable to release object header")
 
     FUNC_LEAVE_NOAPI_TAG(ret_value)
-} /* end H5O_get_info() */
+} /* end H5O_get_dm_info() */
 
 
 /*-------------------------------------------------------------------------
@@ -2315,6 +2321,136 @@ done:
 
     FUNC_LEAVE_NOAPI_TAG(ret_value)
 } /* end H5O_get_native_info() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5O_get_info
+ *
+ * Purpose:     Retrieve the information for an object
+ *
+ * Note:        Add a parameter "fields" to indicate selection of object info.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ * Programmer:  Quincey Koziol
+ *              November 21 2006
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5O_get_info(const H5O_loc_t *loc, H5O_info_t *oinfo, unsigned fields)
+{
+    const H5O_obj_class_t *obj_class;   /* Class of object for header */
+    H5O_t *oh = NULL;                   /* Object header */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_NOAPI_TAG(loc->addr, FAIL)
+
+    /* Check args */
+    HDassert(loc);
+    HDassert(oinfo);
+
+    /* Get the object header */
+    if(NULL == (oh = H5O_protect(loc, H5AC__READ_ONLY_FLAG, FALSE)))
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTPROTECT, FAIL, "unable to load object header")
+
+    /* Get class for object */
+    if(NULL == (obj_class = H5O__obj_class_real(oh)))
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to determine object class")
+
+    /* Reset the object info structure */
+    HDmemset(oinfo, 0, sizeof(*oinfo));
+
+    /* Get basic information, if requested */
+    if(fields & H5O_INFO_BASIC) {
+        /* Retrieve the file's fileno */
+        H5F_GET_FILENO(loc->file, oinfo->fileno);
+
+        /* Set the object's address */
+        oinfo->addr = loc->addr;
+
+        /* Retrieve the type of the object */
+        oinfo->type = obj_class->type;
+
+        /* Set the object's reference count */
+        oinfo->rc = oh->nlink;
+    } /* end if */
+
+    /* Get time information, if requested */
+    if(fields & H5O_INFO_TIME) {
+        if(oh->version > H5O_VERSION_1) {
+            oinfo->atime = oh->atime;
+            oinfo->mtime = oh->mtime;
+            oinfo->ctime = oh->ctime;
+            oinfo->btime = oh->btime;
+        } /* end if */
+        else {
+            htri_t exists;                 /* Flag if header message of interest exists */
+
+            /* No information for access & modification fields */
+            /* (we stopped updating the "modification time" header message for
+             *      raw data changes, so the "modification time" header message
+             *      is closest to the 'change time', in POSIX terms - QAK)
+             */
+            oinfo->atime = 0;
+            oinfo->mtime = 0;
+            oinfo->btime = 0;
+
+            /* Might be information for modification time */
+            if((exists = H5O_msg_exists_oh(oh, H5O_MTIME_ID)) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "unable to check for MTIME message")
+           if(exists > 0) {
+                /* Get "old style" modification time info */
+                if(NULL == H5O_msg_read_oh(loc->file, oh, H5O_MTIME_ID, &oinfo->ctime))
+                    HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't read MTIME message")
+            } /* end if */
+            else {
+                /* Check for "new style" modification time info */
+                if((exists = H5O_msg_exists_oh(oh, H5O_MTIME_NEW_ID)) < 0)
+                    HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "unable to check for MTIME_NEW message")
+                if(exists > 0) {
+                    /* Get "new style" modification time info */
+                    if(NULL == H5O_msg_read_oh(loc->file, oh, H5O_MTIME_NEW_ID, &oinfo->ctime))
+                        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't read MTIME_NEW message")
+                } /* end if */
+                else
+                    oinfo->ctime = 0;
+            } /* end else */
+         } /* end else */
+    } /* end if */
+
+    /* Get the information for the object header, if requested */
+    if(fields & H5O_INFO_HDR)
+        if(H5O__get_hdr_info_real(oh, &oinfo->hdr) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object header info")
+
+    /* Retrieve # of attributes */
+    if(fields & H5O_INFO_NUM_ATTRS)
+        if(H5O__attr_count_real(loc->file, oh, &oinfo->num_attrs) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve attribute count")
+
+    /* Get B-tree & heap metadata storage size, if requested */
+    if(fields & H5O_INFO_META_SIZE) {
+        /* Check for 'bh_info' callback for this type of object */
+        if(obj_class->bh_info)
+            /* Call the object's class 'bh_info' routine */
+            if((obj_class->bh_info)(loc, oh, &oinfo->meta_size.obj) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object's btree & heap info")
+
+        /* Get B-tree & heap info for any attributes */
+        if(!(fields & H5O_INFO_NUM_ATTRS) || oinfo->num_attrs > 0) {
+            if(H5O__attr_bh_info(loc->file, oh, &oinfo->meta_size.attr) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve attribute btree & heap info")
+        } /* end if */
+    } /* end if */
+
+done:
+    if(oh && H5O_unprotect(loc, oh, H5AC__NO_FLAGS_SET) < 0)
+        HDONE_ERROR(H5E_OHDR, H5E_CANTUNPROTECT, FAIL, "unable to release object header")
+
+    FUNC_LEAVE_NOAPI_TAG(ret_value)
+} /* end H5O_get_info() */
 
 
 /*-------------------------------------------------------------------------
@@ -2592,6 +2728,29 @@ done:
 
 
 /*-------------------------------------------------------------------------
+ * Function:    H5O__free_visit_visited
+ *
+ * Purpose:     Free the key for an object visited during a group traversal
+ *
+ * Return:      Non-negative on success, negative on failure
+ *
+ * Programmer:  Quincey Koziol
+ *            Nov 25, 2007
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5O__free_visit_visited(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED *operator_data/*in,out*/)
+{
+    FUNC_ENTER_STATIC_NOERR
+
+    item = H5FL_FREE(H5_obj_t, item);
+
+    FUNC_LEAVE_NOAPI(SUCCEED)
+} /* end H5O__free_visit_visited() */
+
+
+/*-------------------------------------------------------------------------
  * Function:    H5O__visit_cb
  *
  * Purpose:     Callback function for recursively visiting objects from a group
@@ -2624,7 +2783,7 @@ H5O__visit_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info_t *li
 
     /* Check if this is a hard link */
     if(linfo->type == H5L_TYPE_HARD) {
-        H5O_info2_t oinfo;          /* Object info */
+        H5_obj_t obj_pos;       /* Object "position" for this object */
 
         /* Set up opened group location to fill in */
         obj_loc.oloc = &obj_oloc;
@@ -2637,12 +2796,41 @@ H5O__visit_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info_t *li
             HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, H5_ITER_ERROR, "object not found")
         obj_found = TRUE;
 
-        /* Get the object's info */
-        if(H5O_get_info(&obj_oloc, &oinfo, udata->fields) < 0)
-            HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "unable to get object info")
+        /* Construct unique "position" for this object */
+        H5F_GET_FILENO(obj_oloc.file, obj_pos.fileno);
+        obj_pos.addr = obj_oloc.addr;
 
-        /* Make the application callback */
-        ret_value = (udata->op)(udata->obj_id, name, &oinfo, udata->op_data);
+        /* Check if we've seen the object the link references before */
+        if(NULL == H5SL_search(udata->visited, &obj_pos)) {
+            H5O_info_t oinfo;           /* Object info */
+
+            /* Get the object's info */
+            if(H5O_get_info(&obj_oloc, &oinfo, udata->fields) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "unable to get object info")
+
+            /* Make the application callback */
+            ret_value = (udata->op)(udata->obj_id, name, &oinfo, udata->op_data);
+
+            /* Check for continuing to visit objects */
+            if(ret_value == H5_ITER_CONT) {
+                /* If its ref count is > 1, we add it to the list of visited objects */
+                /* (because it could come up again during traversal) */
+                if(oinfo.rc > 1) {
+                    H5_obj_t *new_node;                  /* New object node for visited list */
+
+                    /* Allocate new object "position" node */
+                    if((new_node = H5FL_MALLOC(H5_obj_t)) == NULL)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOSPACE, H5_ITER_ERROR, "can't allocate object node")
+
+                    /* Set node information */
+                    *new_node = obj_pos;
+
+                    /* Add to list of visited objects */
+                    if(H5SL_insert(udata->visited, new_node, new_node) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_CANTINSERT, H5_ITER_ERROR, "can't insert object node into visited list")
+                } /* end if */
+            } /* end if */
+        } /* end if */
     } /* end if */
 
 done:
@@ -2690,14 +2878,14 @@ done:
  */
 herr_t
 H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
-    H5_iter_order_t order, H5O_iterate2_t op, void *op_data, unsigned fields)
+    H5_iter_order_t order, H5O_iterate_t op, void *op_data, unsigned fields)
 {
     H5O_iter_visit_ud_t udata;  /* User data for callback */
     H5G_loc_t   obj_loc;        /* Location used to open object */
     H5G_name_t  obj_path;       /* Opened object group hier. path */
     H5O_loc_t   obj_oloc;       /* Opened object object location */
     hbool_t     loc_found = FALSE;      /* Entry at 'name' found */
-    H5O_info2_t oinfo;          /* Object info struct */
+    H5O_info_t  oinfo;          /* Object info struct */
     void       *obj = NULL;     /* Object */
     H5I_type_t  opened_type;    /* ID type of object */
     hid_t       obj_id = H5I_INVALID_HID;  /* ID of object */
@@ -2758,6 +2946,28 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
         udata.op_data = op_data;
         udata.fields = fields;
 
+        /* Create skip list to store visited object information */
+        if((udata.visited = H5SL_create(H5SL_TYPE_OBJ, NULL)) == NULL)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTCREATE, FAIL, "can't create skip list for visited objects")
+
+        /* If its ref count is > 1, we add it to the list of visited objects */
+        /* (because it could come up again during traversal) */
+        if(oinfo.rc > 1) {
+            H5_obj_t *obj_pos;                  /* New object node for visited list */
+
+            /* Allocate new object "position" node */
+            if((obj_pos = H5FL_MALLOC(H5_obj_t)) == NULL)
+                HGOTO_ERROR(H5E_OHDR, H5E_NOSPACE, FAIL, "can't allocate object node")
+
+            /* Construct unique "position" for this object */
+            obj_pos->fileno = oinfo.fileno;
+            obj_pos->addr = oinfo.addr;
+
+            /* Add to list of visited objects */
+            if(H5SL_insert(udata.visited, obj_pos, obj_pos) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTINSERT, FAIL, "can't insert object node into visited list")
+        }
+
         /* Get the location of the visited group */
         if(H5G_loc(obj_id, &vis_loc) < 0)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a location")
@@ -2775,6 +2985,9 @@ done:
     }
     else if(loc_found && H5G_loc_free(&obj_loc) < 0)
         HDONE_ERROR(H5E_OHDR, H5E_CANTRELEASE, FAIL, "can't free location")
+
+    if(udata.visited)
+        H5SL_destroy(udata.visited, H5O__free_visit_visited, NULL);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5O__visit() */

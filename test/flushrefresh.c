@@ -843,13 +843,13 @@ herr_t flush_verification(const char * obj_pathname, const char * expected)
     /* Variables */
     hid_t oid = -1, fid = -1;
     herr_t status = 0;
-    H5O_info2_t oinfo;
+    H5O_info_t oinfo;
 
     /* Try to open the testfile and then obj_pathname within the file */
     H5E_BEGIN_TRY {
         fid = H5Fopen(FILENAME, H5F_ACC_SWMR_READ, H5P_DEFAULT);
         oid = H5Oopen(fid, obj_pathname, H5P_DEFAULT);
-        status = H5Oget_info3(oid, &oinfo, H5O_INFO_BASIC);
+        status = H5Oget_info2(oid, &oinfo, H5O_INFO_BASIC);
     } H5E_END_TRY;
 
     /* Compare to expected result */
@@ -978,8 +978,8 @@ herr_t refresh_verification(const char * obj_pathname)
 {
     /* Variables */
     hid_t oid,fid,status = 0;
-    H5O_info1_t flushed_oinfo;
-    H5O_info1_t refreshed_oinfo;
+    H5O_info_t flushed_oinfo;
+    H5O_info_t refreshed_oinfo;
     int tries = 800, sleep_tries = 400;
     hbool_t ok = FALSE;
     
