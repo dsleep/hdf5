@@ -226,6 +226,73 @@ H5VL__native_object_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_obj
                 break;
             }
 
+        /* H5Oget_info(_name|_by_idx)3 */
+        case H5VL_OBJECT_GET_INFO:
+            {
+                H5O_info2_t  *dm_info = HDva_arg(arguments, H5O_info2_t *);
+                unsigned fields         = HDva_arg(arguments, unsigned);
+                H5O_info_t  obj_info;
+                uint8_t *p = NULL;
+
+                /* Use the original H5Oget_info code to get the data */
+
+                if(loc_params->type == H5VL_OBJECT_BY_SELF) { /* H5Oget_info */
+                    /* Retrieve the object's information */
+                    if(H5G_loc_info(&loc, ".", &obj_info, fields) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "object not found")
+                } /* end if */
+                else if(loc_params->type == H5VL_OBJECT_BY_NAME) { /* H5Oget_info_by_name */
+                    /* Retrieve the object's information */
+                    if(H5G_loc_info(&loc, loc_params->loc_data.loc_by_name.name, &obj_info, fields) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "object not found")
+                } /* end else-if */
+                else if(loc_params->type == H5VL_OBJECT_BY_IDX) { /* H5Oget_info_by_idx */
+                    H5G_loc_t   obj_loc;                /* Location used to open group */
+                    H5G_name_t  obj_path;               /* Opened object group hier. path */
+                    H5O_loc_t   obj_oloc;               /* Opened object object location */
+
+                    /* Set up opened group location to fill in */
+                    obj_loc.oloc = &obj_oloc;
+                    obj_loc.path = &obj_path;
+                    H5G_loc_reset(&obj_loc);
+
+                    /* Find the object's location, according to the order in the index */
+                    if(H5G_loc_find_by_idx(&loc, loc_params->loc_data.loc_by_idx.name,
+                                           loc_params->loc_data.loc_by_idx.idx_type,
+                                           loc_params->loc_data.loc_by_idx.order,
+                                           loc_params->loc_data.loc_by_idx.n, &obj_loc/*out*/) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "group not found")
+
+                    /* Retrieve the object's information */
+                    if(H5O_get_info(obj_loc.oloc, &obj_info, fields) < 0) {
+                        H5G_loc_free(&obj_loc);
+                        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object info")
+                    } /* end if */
+
+                    /* Release the object location */
+                    if(H5G_loc_free(&obj_loc) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_CANTRELEASE, FAIL, "can't free location")
+                } /* end else-if */
+                else
+                    HGOTO_ERROR(H5E_OHDR, H5E_UNSUPPORTED, FAIL, "unknown get info parameters")
+
+                /* Copy parameters over */
+                dm_info->fileno = obj_info.fileno;
+                dm_info->type = obj_info.type;
+                dm_info->rc = obj_info.rc;
+                dm_info->atime = obj_info.atime;
+                dm_info->mtime = obj_info.mtime;
+                dm_info->ctime = obj_info.ctime;
+                dm_info->btime = obj_info.btime;
+                dm_info->num_attrs = obj_info.num_attrs;
+
+                /* Have to serialize the address into the struct's token */
+                p = (uint8_t *)&(dm_info->token);
+                H5F_addr_encode(loc.oloc->file, &p, obj_info.addr);
+
+                break;
+            }
+
         default:
             HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get this type of information from object")
     } /* end switch */
@@ -402,6 +469,63 @@ H5VL__native_object_optional(void *obj, H5VL_object_optional_t optional_type,
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a file or file object")
 
     switch(optional_type) {
+        /* H5Oget_native_info(_name|_by_idx) */
+        case H5VL_NATIVE_OBJECT_GET_NATIVE_INFO:
+            {
+                H5O_native_info_t  *native_info = HDva_arg(arguments, H5O_native_info_t *);
+                H5O_info_t  obj_info;
+                unsigned fields         = HDva_arg(arguments, unsigned);
+
+                /* Use the original H5Oget_info code to get the data */
+
+                if(loc_params->type == H5VL_OBJECT_BY_SELF) { /* H5Oget_info */
+                    /* Retrieve the object's information */
+                    if(H5G_loc_info(&loc, ".", &obj_info, fields) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "object not found")
+                } /* end if */
+                else if(loc_params->type == H5VL_OBJECT_BY_NAME) { /* H5Oget_info_by_name */
+                    /* Retrieve the object's information */
+                    if(H5G_loc_info(&loc, loc_params->loc_data.loc_by_name.name, &obj_info, fields) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "object not found")
+                } /* end else-if */
+                else if(loc_params->type == H5VL_OBJECT_BY_IDX) { /* H5Oget_info_by_idx */
+                    H5G_loc_t   obj_loc;                /* Location used to open group */
+                    H5G_name_t  obj_path;               /* Opened object group hier. path */
+                    H5O_loc_t   obj_oloc;               /* Opened object object location */
+
+                    /* Set up opened group location to fill in */
+                    obj_loc.oloc = &obj_oloc;
+                    obj_loc.path = &obj_path;
+                    H5G_loc_reset(&obj_loc);
+
+                    /* Find the object's location, according to the order in the index */
+                    if(H5G_loc_find_by_idx(&loc, loc_params->loc_data.loc_by_idx.name,
+                                           loc_params->loc_data.loc_by_idx.idx_type,
+                                           loc_params->loc_data.loc_by_idx.order,
+                                           loc_params->loc_data.loc_by_idx.n, &obj_loc/*out*/) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "group not found")
+
+                    /* Retrieve the object's information */
+                    if(H5O_get_info(obj_loc.oloc, &obj_info, fields) < 0) {
+                        H5G_loc_free(&obj_loc);
+                        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object info")
+                    } /* end if */
+
+                    /* Release the object location */
+                    if(H5G_loc_free(&obj_loc) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_CANTRELEASE, FAIL, "can't free location")
+                } /* end else-if */
+                else
+                    HGOTO_ERROR(H5E_OHDR, H5E_UNSUPPORTED, FAIL, "unknown get info parameters")
+
+                /* Copy parameters over */
+                HDmemcpy(&(native_info->hdr), &(obj_info.hdr), sizeof(H5O_hdr_info_t));
+                HDmemcpy(&(native_info->meta_size.obj),  &(obj_info.meta_size.obj),  sizeof(H5_ih_info_t));
+                HDmemcpy(&(native_info->meta_size.attr), &(obj_info.meta_size.attr), sizeof(H5_ih_info_t));
+
+                break;
+            }
+
         /* H5Oget_info / H5Oget_info_by_name / H5Oget_info_by_idx */
         case H5VL_NATIVE_OBJECT_GET_INFO:
             {
@@ -429,9 +553,9 @@ H5VL__native_object_optional(void *obj, H5VL_object_optional_t optional_type,
                     H5G_loc_reset(&obj_loc);
 
                     /* Find the object's location, according to the order in the index */
-                    if(H5G_loc_find_by_idx(&loc, loc_params->loc_data.loc_by_idx.name, 
-                                           loc_params->loc_data.loc_by_idx.idx_type, 
-                                           loc_params->loc_data.loc_by_idx.order, 
+                    if(H5G_loc_find_by_idx(&loc, loc_params->loc_data.loc_by_idx.name,
+                                           loc_params->loc_data.loc_by_idx.idx_type,
+                                           loc_params->loc_data.loc_by_idx.order,
                                            loc_params->loc_data.loc_by_idx.n, &obj_loc/*out*/) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "group not found")
 
