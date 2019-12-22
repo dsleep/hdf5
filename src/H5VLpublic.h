@@ -17,9 +17,6 @@
 #ifndef _H5VLpublic_H
 #define _H5VLpublic_H
 
-/* Early typedefs to avoid circular dependencies */
-typedef struct H5VL_token_t H5VL_token_t;
-
 /* Public headers needed by this file */
 #include "H5public.h"           /* Generic Functions                    */
 #include "H5Ipublic.h"          /* IDs                                  */
@@ -36,19 +33,11 @@ typedef struct H5VL_token_t H5VL_token_t;
 #define H5_VOL_RESERVED 256     /* VOL connector IDs below this value are reserved for library use */
 #define H5_VOL_MAX      65535   /* Maximum VOL connector ID */
 
-/* The maximum size allowed for tokens */
-#define H5VL_MAX_TOKEN_SIZE             (16)    /* Allow for 128-bit tokens */
-
 
 /*******************/
 /* Public Typedefs */
 /*******************/
 
-/* type for tokens. Token are unique and permanent identifiers that are
- * used to reference HDF5 objects. */
-struct H5VL_token_t {
-    char __data[H5VL_MAX_TOKEN_SIZE];
-};
 
 /*
  * VOL connector identifiers.  Values 0 through 255 are for connectors defined
@@ -88,8 +77,8 @@ H5_DLL herr_t H5VLunregister_connector(hid_t connector_id);
 #endif
 
 /* Semi-public headers mainly for VOL connector authors */
-#include "H5VLconnector.h"
-#include "H5VLconnector_passthru.h"
+#include "H5VLconnector.h"              /* VOL connector author routines */
+#include "H5VLconnector_passthru.h"     /* Pass-through VOL connector author routines */
 #include "H5VLnative.h"                 /* Native VOL connector macros, for VOL connector authors */
 
 #endif /* _H5VLpublic_H */
