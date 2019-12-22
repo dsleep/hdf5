@@ -1274,7 +1274,7 @@ H5G__node_copy(H5F_t *f, const void H5_ATTR_UNUSED *_lt_key, haddr_t addr,
                 HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "unable to get link name")
 
             /* Check if the object pointed by the soft link exists in the source file */
-            if(H5G_loc_addr(&grp_loc, link_name, &obj_addr) >= 0) {
+            if(H5G__loc_addr(&grp_loc, link_name, &obj_addr) >= 0) {
                 tmp_src_ent.header = obj_addr;
                 src_ent = &tmp_src_ent;
             } /* end if */
