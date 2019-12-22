@@ -321,7 +321,7 @@ test_ohdr_swmr(hbool_t new_format)
     hsize_t dims[1];                /* Dimension sizes */
     size_t u;                       /* Iterator */
     int n;                          /* Data variable */
-    H5O_native_info_t obj_info;     /* Information for the object */
+    H5O_info_t obj_info;            /* Information for the object */
 
     if(new_format) {
         TESTING("exercise the coding for the re-read of the object header for SWMR access: latest-format");
@@ -391,7 +391,7 @@ test_ohdr_swmr(hbool_t new_format)
         FAIL_STACK_ERROR
 
     /* Get the object information */
-    if(H5Oget_native_info(did, &obj_info, H5O_INFO_HDR) < 0)
+    if(H5Oget_info2(did, &obj_info, H5O_INFO_HDR) < 0)
         FAIL_STACK_ERROR
 
     if(new_format)
@@ -756,10 +756,10 @@ error:
  */
 static int
 count_attributes(hid_t dset_id)
-{
-    H5O_info2_t info;
-
-    if(H5Oget_info3(dset_id, &info, H5O_INFO_NUM_ATTRS) < 0)
+{   
+    H5O_info_t info;
+    
+    if(H5Oget_info2(dset_id, &info, H5O_INFO_ALL) < 0)
         return -1;
     else
         return (int)info.num_attrs; /* should never exceed int bounds */
@@ -773,13 +773,10 @@ count_attributes(hid_t dset_id)
 static herr_t
 _oh_getsize(hid_t did, hsize_t *size_out)
 {
-    H5O_native_info_t info;
-
-    if(FAIL == H5Oget_native_info(did, &info, H5O_INFO_HDR))
+    H5O_info_t info;
+    if(FAIL == H5Oget_info2(did, &info, H5O_INFO_HDR))
         return FAIL;
-
     *size_out = info.hdr.space.total;
-
     return SUCCEED;
 } /* _oh_getsize */
 

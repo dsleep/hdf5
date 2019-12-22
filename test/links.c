@@ -499,7 +499,7 @@ static int
 cklinks(hid_t fapl, hbool_t new_format)
 {
     hid_t        file;
-    H5O_info1_t  oinfo1, oinfo2;
+    H5O_info_t   oinfo1, oinfo2;
     H5L_info_t   linfo2;
     char         linkval[LINK_BUF_SIZE];
     char         filename[NAME_BUF_SIZE];
@@ -652,7 +652,7 @@ static int
 ck_new_links(hid_t fapl, hbool_t new_format)
 {
     hid_t         file;
-    H5O_info1_t   oi_dset, oi_hard1, oi_hard2;
+    H5O_info_t    oi_dset, oi_hard1, oi_hard2;
     char          filename[NAME_BUF_SIZE];
 
     if(new_format)
@@ -8877,7 +8877,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-visit_obj_cb(hid_t H5_ATTR_UNUSED group_id, const char *name, const H5O_info2_t *oinfo, void *_op_data)
+visit_obj_cb(hid_t H5_ATTR_UNUSED group_id, const char *name, const H5O_info_t *oinfo, void *_op_data)
 {
     ovisit_ud_t *op_data = (ovisit_ud_t *)_op_data;
 
@@ -9037,7 +9037,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-visit_obj_stop_cb(hid_t H5_ATTR_UNUSED group_id, const char H5_ATTR_UNUSED *name, const H5O_info2_t H5_ATTR_UNUSED *oinfo, void *_op_data)
+visit_obj_stop_cb(hid_t H5_ATTR_UNUSED group_id, const char H5_ATTR_UNUSED *name, const H5O_info_t H5_ATTR_UNUSED *oinfo, void *_op_data)
 {
     unsigned *op_data = (unsigned *)_op_data;
 
@@ -10768,7 +10768,7 @@ link_info_by_idx_old(hid_t fapl)
 
             /* Check for creating hard or soft link */
             if(hard_link) {
-                H5O_info1_t oi;                  /* Buffer for querying object's info */
+                H5O_info_t oi;                  /* Buffer for querying object's info */
 
                 /* Create group */
                 if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
@@ -11248,7 +11248,7 @@ delete_by_idx_old(hid_t fapl)
 
         /* Create several links */
         for(u = 0; u < CORDER_NLINKS; u++) {
-            H5O_info1_t oi;                  /* Buffer for querying object's info */
+            H5O_info_t oi;                  /* Buffer for querying object's info */
 
             /* Make name for link */
             HDsnprintf(objname, sizeof(objname), "filler %02u", u);
@@ -11319,7 +11319,7 @@ delete_by_idx_old(hid_t fapl)
 
         /* Create several links */
         for(u = 0; u < CORDER_NLINKS; u++) {
-            H5O_info1_t oi;                  /* Buffer for querying object's info */
+            H5O_info_t oi;                  /* Buffer for querying object's info */
 
             /* Make name for link */
             HDsnprintf(objname, sizeof(objname), "filler %02u", u);
@@ -12248,7 +12248,7 @@ open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
 {
     char        mntname[NAME_BUF_SIZE]; /* Link value */
     hid_t       group_id = -1;  /* ID of group to test */
-    H5O_info1_t oi;             /* Buffer for querying object's info */
+    H5O_info_t  oi;             /* Buffer for querying object's info */
     haddr_t     mnt_root_addr;  /* Address of root group in file to mount */
     hid_t       obj_id;         /* ID of object opened */
     unsigned    mnt_idx;        /* Index to mount group on */
@@ -12346,7 +12346,7 @@ open_by_idx(hid_t fapl)
     unsigned    use_index;              /* Use index on creation order values */
     unsigned    max_compact;            /* Maximum # of links to store in group compactly */
     unsigned    min_dense;              /* Minimum # of links to store in group "densely" */
-    H5O_info1_t oi;                     /* Buffer for querying object's info */
+    H5O_info_t  oi;                     /* Buffer for querying object's info */
     char        filename[NAME_BUF_SIZE];/* File name */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */
@@ -12563,7 +12563,7 @@ open_by_idx_old(hid_t fapl)
     hid_t       group_id = -1;          /* Group ID */
     hid_t       soft_group_id = -1;     /* Group ID for soft links */
     H5_iter_order_t order;              /* Order within in the index */
-    H5O_info1_t oi;                     /* Buffer for querying object's info */
+    H5O_info_t  oi;                     /* Buffer for querying object's info */
     char        filename[NAME_BUF_SIZE];/* File name */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */
@@ -12689,7 +12689,7 @@ object_info_check(hid_t main_group_id, hid_t soft_group_id, H5_index_t idx_type,
 {
     char        objname[NAME_BUF_SIZE]; /* Object name */
     hid_t       group_id = -1;  /* ID of group to test */
-    H5O_info1_t oinfo;          /* Buffer for querying object's info */
+    H5O_info_t  oinfo;          /* Buffer for querying object's info */
     unsigned    u, v;           /* Local index variables */
 
     /* Work through main & soft link groups */
@@ -12764,7 +12764,7 @@ object_info(hid_t fapl)
     unsigned    use_index;              /* Use index on creation order values */
     unsigned    max_compact;            /* Maximum # of links to store in group compactly */
     unsigned    min_dense;              /* Minimum # of links to store in group "densely" */
-    H5O_info1_t oinfo;                  /* Buffer for querying object's info */
+    H5O_info_t  oinfo;                  /* Buffer for querying object's info */
     char        filename[NAME_BUF_SIZE];/* File name */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */
@@ -13005,7 +13005,7 @@ object_info_old(hid_t fapl)
     hid_t       soft_group_id = -1;     /* Group ID for soft links */
     hid_t       space_id = -1;          /* Dataspace ID (for attributes) */
     H5_iter_order_t order;              /* Order within in the index */
-    H5O_info1_t oinfo;                  /* Buffer for querying object's info */
+    H5O_info_t  oinfo;                  /* Buffer for querying object's info */
     char        filename[NAME_BUF_SIZE];/* File name */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */

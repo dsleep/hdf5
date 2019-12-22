@@ -870,7 +870,7 @@ test_basic_object_operation(void)
     hid_t oid       = H5I_INVALID_HID;
 
     char filename[1024];
-    H5O_info2_t object_info;
+    H5O_info_t object_info;
 
     TESTING("Basic VOL object operations");
 
@@ -884,11 +884,11 @@ test_basic_object_operation(void)
         TEST_ERROR;
 
     /* H5Oget_info */
-    if (H5Oget_info3(fid, &object_info, H5O_INFO_ALL) < 0)
+    if (H5Oget_info2(fid, &object_info, H5O_INFO_ALL) < 0)
         TEST_ERROR;
 
     /* H5Oget_info_by_name */
-    if (H5Oget_info_by_name3(fid, NATIVE_VOL_TEST_GROUP_NAME, &object_info, H5O_INFO_ALL, H5P_DEFAULT) < 0)
+    if (H5Oget_info_by_name2(fid, NATIVE_VOL_TEST_GROUP_NAME, &object_info, H5O_INFO_ALL, H5P_DEFAULT) < 0)
         TEST_ERROR;
 
     /* H5Oexists_by_name */

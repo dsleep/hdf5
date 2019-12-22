@@ -649,7 +649,7 @@ static void
 test_misc4(void)
 {
     hid_t file1, file2, group1, group2, group3;
-    H5O_info2_t oinfo1, oinfo2, oinfo3;
+    H5O_info_t oinfo1, oinfo2, oinfo3;
     herr_t ret;
 
     /* Output message about test being performed */
@@ -674,12 +674,12 @@ test_misc4(void)
     CHECK(group3, FAIL, "H5Gcreate2");
 
     /* Get the stat information for each group */
-    ret = H5Oget_info_by_name3(file1, MISC4_GROUP_1, &oinfo1, H5O_INFO_BASIC, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Oget_info_by_name3");
-    ret = H5Oget_info_by_name3(file1, MISC4_GROUP_2, &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Oget_info_by_name3");
-    ret = H5Oget_info_by_name3(file2, MISC4_GROUP_1, &oinfo3, H5O_INFO_BASIC, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Oget_info_by_name3");
+    ret = H5Oget_info_by_name2(file1, MISC4_GROUP_1, &oinfo1, H5O_INFO_BASIC, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Oget_info_by_name");
+    ret = H5Oget_info_by_name2(file1, MISC4_GROUP_2, &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Oget_info_by_name");
+    ret = H5Oget_info_by_name2(file2, MISC4_GROUP_1, &oinfo3, H5O_INFO_BASIC, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Oget_info_by_name");
 
     /* Verify that the fileno values are the same for groups from file1 */
     VERIFY(oinfo1.fileno, oinfo2.fileno, "H5Oget_info_by_name");
@@ -2911,7 +2911,7 @@ test_misc18(void)
     hid_t sid;          /* 'Space ID */
     hid_t did1, did2;   /* Dataset IDs */
     hid_t aid;          /* Attribute ID */
-    H5O_info1_t oinfo;  /* Information about object */
+    H5O_info_t oinfo;   /* Information about object */
     char attr_name[32]; /* Attribute name buffer */
     unsigned u;         /* Local index variable */
     herr_t ret;         /* Generic return value */
@@ -3915,7 +3915,7 @@ test_misc23(void)
     hid_t       file_id=0, group_id=0, type_id=0, space_id=0,
                 tmp_id=0, create_id=H5P_DEFAULT, access_id=H5P_DEFAULT;
     char        objname[MISC23_NAME_BUF_SIZE];  /* Name of object */
-    H5O_info2_t oinfo;
+    H5O_info_t  oinfo;
     htri_t      tri_status;
     ssize_t     namelen;
     herr_t      status;
@@ -3998,9 +3998,9 @@ test_misc23(void)
     tmp_id = H5Gopen2(file_id, "/A/B01", H5P_DEFAULT);
     CHECK(tmp_id, FAIL, "H5Gopen2");
 
-    status = H5Oget_info3(tmp_id, &oinfo, H5O_INFO_BASIC);
-    CHECK(status, FAIL, "H5Oget_info3");
-    VERIFY(oinfo.rc, 1, "H5Oget_info3");
+    status = H5Oget_info2(tmp_id, &oinfo, H5O_INFO_BASIC);
+    CHECK(status, FAIL, "H5Oget_info");
+    VERIFY(oinfo.rc, 1, "H5Oget_info");
 
     status = H5Gclose(tmp_id);
     CHECK(status, FAIL, "H5Gclose");
@@ -5277,9 +5277,9 @@ static int
 test_misc30_get_info_cb(hid_t loc_id, const char *name, const H5L_info_t H5_ATTR_UNUSED *info,
     void H5_ATTR_UNUSED *op_data)
 {
-    H5O_info2_t object_info;
+    H5O_info_t object_info;
 
-    return H5Oget_info_by_name3(loc_id, name, &object_info, H5O_INFO_BASIC, H5P_DEFAULT);
+    return H5Oget_info_by_name2(loc_id, name, &object_info, H5O_INFO_BASIC, H5P_DEFAULT);
 }
 
 static int
@@ -5533,7 +5533,7 @@ test_misc33(void)
 {
     hid_t   fid = -1;   /* File ID */
     const char *testfile = H5_get_srcdir_filename(MISC33_FILE); /* Corrected test file name */
-    H5O_info2_t oinfo;  /* Structure for object metadata information */
+    H5O_info_t oinfo;   /* Structure for object metadata information */
     herr_t  ret;        /* Generic return value */
 
     /* Output message about test being performed */
@@ -5545,21 +5545,21 @@ test_misc33(void)
 
     /* Case (1) */
     H5E_BEGIN_TRY {
-        ret = H5Oget_info_by_name3(fid, "/soft_two", &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+        ret = H5Oget_info_by_name2(fid, "/soft_two", &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
     } H5E_END_TRY;
-    VERIFY(ret, FAIL, "H5Oget_info_by_name3");
+    VERIFY(ret, FAIL, "H5Oget_info_by_name");
 
     /* Case (2) */
     H5E_BEGIN_TRY {
-        ret = H5Oget_info_by_name3(fid, "/dsetA", &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+        ret = H5Oget_info_by_name2(fid, "/dsetA", &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
     } H5E_END_TRY;
-    VERIFY(ret, FAIL, "H5Oget_info_by_name3");
+    VERIFY(ret, FAIL, "H5Oget_info_by_name");
 
     /* Case (3) */
     H5E_BEGIN_TRY {
-        ret = H5Oget_info_by_name3(fid, "/soft_one", &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+        ret = H5Oget_info_by_name2(fid, "/soft_one", &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
     } H5E_END_TRY;
-    VERIFY(ret, FAIL, "H5Oget_info_by_name3");
+    VERIFY(ret, FAIL, "H5Oget_info_by_name");
 
     /* Close the file */
     ret = H5Fclose(fid);

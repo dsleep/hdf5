@@ -796,7 +796,7 @@ H5G__loc_info_cb(H5G_loc_t H5_ATTR_UNUSED *grp_loc/*in*/, const char H5_ATTR_UNU
         HGOTO_ERROR(H5E_SYM, H5E_NOTFOUND, FAIL, "name doesn't exist")
 
     /* Query object information */
-    if(H5O_get_info(obj_loc->oloc, udata->oinfo, udata->fields) < 0)
+    if(H5O_get_dm_info(obj_loc->oloc, udata->oinfo, udata->fields) < 0)
         HGOTO_ERROR(H5E_SYM, H5E_CANTGET, FAIL, "can't get object info")
 
 done:

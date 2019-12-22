@@ -557,7 +557,7 @@ H5_DLLVAR const H5O_obj_class_t H5O_OBJ_DATATYPE[1];
 H5_DLL const H5O_obj_class_t *H5O__obj_class(const H5O_loc_t *loc);
 H5_DLL int H5O__link_oh(H5F_t *f, int adjust, H5O_t *oh, hbool_t *deleted);
 H5_DLL herr_t H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
-    H5_iter_order_t order, H5O_iterate2_t op, void *op_data, unsigned fields);
+    H5_iter_order_t order, H5O_iterate_t op, void *op_data, unsigned fields);
 H5_DLL herr_t H5O__inc_rc(H5O_t *oh);
 H5_DLL herr_t H5O__dec_rc(H5O_t *oh);
 H5_DLL herr_t H5O__free(H5O_t *oh);
@@ -593,7 +593,7 @@ H5_DLL herr_t H5O__chunk_dest(H5O_chunk_proxy_t *chunk_proxy);
 
 /* Collect storage info for btree and heap */
 H5_DLL herr_t H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
-    H5O_info1_t *oinfo, unsigned fields);
+    H5O_info_t *oinfo, unsigned fields);
 H5_DLL herr_t H5O__attr_bh_info(H5F_t *f, H5O_t *oh, H5_ih_info_t *bh_info);
 
 /* Object header allocation routines */
