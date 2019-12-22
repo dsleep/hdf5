@@ -231,6 +231,17 @@ H5_GCC_DIAG_ON(long-long)
 #endif
 #define HADDR_MAX		(HADDR_UNDEF-1)
 
+/* Tokens are unique and permanent identifiers that are
+ * used to reference HDF5 objects in a container. */
+
+/* The maximum size allowed for tokens */
+#define H5VL_MAX_TOKEN_SIZE       (16)    /* Allow for 128-bit tokens */
+
+/* Type for tokens */
+typedef struct H5VL_token_t {
+    char __data[H5VL_MAX_TOKEN_SIZE];
+} H5VL_token_t;
+
 /* uint32_t type is used for creation order field for messages.  It may be
  * defined in Posix.1g, otherwise it is defined here.
  */

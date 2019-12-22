@@ -24,33 +24,10 @@
 #ifndef _H5Lpublic_H
 #define _H5Lpublic_H
 
-/* Early typedefs to avoid circular dependencies */
-
-/* Link class types.
- * Values less than 64 are reserved for the HDF5 library's internal use.
- * Values 64 to 255 are for "user-defined" link class types; these types are
- * defined by HDF5 but their behavior can be overridden by users.
- * Users who want to create new classes of links should contact the HDF5
- * development team at hdfhelp@ncsa.uiuc.edu .
- * These values can never change because they appear in HDF5 files.
- */
-typedef enum {
-    H5L_TYPE_ERROR = (-1),      /* Invalid link type id         */
-    H5L_TYPE_HARD = 0,          /* Hard link id                 */
-    H5L_TYPE_SOFT = 1,          /* Soft link id                 */
-    H5L_TYPE_EXTERNAL = 64,     /* External link id             */
-    H5L_TYPE_MAX = 255	        /* Maximum link type id         */
-} H5L_type_t;
-#define H5L_TYPE_BUILTIN_MAX H5L_TYPE_SOFT      /* Maximum value link value for "built-in" link types */
-#define H5L_TYPE_UD_MIN      H5L_TYPE_EXTERNAL  /* Link ids at or above this value are "user-defined" link types. */
-
-
-
 /* Public headers needed by this file */
 #include "H5public.h"		/* Generic Functions			*/
 #include "H5Ipublic.h"		/* IDs			  		*/
 #include "H5Tpublic.h"		/* Datatypes				*/
-#include "H5VLpublic.h"         /* Virtual Object Layer                 */
 
 /*****************/
 /* Public Macros */
@@ -76,6 +53,24 @@ extern "C" {
 /*******************/
 /* Public Typedefs */
 /*******************/
+
+/* Link class types.
+ * Values less than 64 are reserved for the HDF5 library's internal use.
+ * Values 64 to 255 are for "user-defined" link class types; these types are
+ * defined by HDF5 but their behavior can be overridden by users.
+ * Users who want to create new classes of links should contact the HDF5
+ * development team at hdfhelp@ncsa.uiuc.edu .
+ * These values can never change because they appear in HDF5 files.
+ */
+typedef enum {
+    H5L_TYPE_ERROR = (-1),      /* Invalid link type id         */
+    H5L_TYPE_HARD = 0,          /* Hard link id                 */
+    H5L_TYPE_SOFT = 1,          /* Soft link id                 */
+    H5L_TYPE_EXTERNAL = 64,     /* External link id             */
+    H5L_TYPE_MAX = 255	        /* Maximum link type id         */
+} H5L_type_t;
+#define H5L_TYPE_BUILTIN_MAX H5L_TYPE_SOFT      /* Maximum value link value for "built-in" link types */
+#define H5L_TYPE_UD_MIN      H5L_TYPE_EXTERNAL  /* Link ids at or above this value are "user-defined" link types. */
 
 /* Information struct for link (for H5Lget_info/H5Lget_info_by_idx)
  * Soon to be deprecated haddr_t version used in current public API calls
