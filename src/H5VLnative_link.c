@@ -242,7 +242,7 @@ H5VL__native_link_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_link_
         case H5VL_LINK_GET_INFO:
             {
                 H5L_info2_t *linfo2  = HDva_arg(arguments, H5L_info2_t *);
-                H5L_info_t  linfo;
+                H5L_info1_t  linfo;
 
                 /* Get the link information */
                 if(loc_params->type == H5VL_OBJECT_BY_NAME) { /* H5Lget_info */
@@ -364,7 +364,7 @@ H5VL__native_link_specific(void *obj, const H5VL_loc_params_t *loc_params, H5VL_
                 void *op_data               = HDva_arg(arguments, void *);
                 H5L_shim_data_t *shim_data  = (H5L_shim_data_t *)op_data;
 
-                H5L_iterate_t real_op       = shim_data->real_op;
+                H5L_iterate1_t real_op      = shim_data->real_op;
                 void *real_op_data          = shim_data->real_op_data;
 
                 /* Get the location */

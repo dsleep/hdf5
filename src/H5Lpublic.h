@@ -234,28 +234,28 @@ typedef struct {
         haddr_t         address;        /* Address hard link points to    */
         size_t          val_size;       /* Size of a soft link or UD link value */
     } u;
-} H5L_info_t;
+} H5L_info1_t;
 
 /* Prototype for H5Literate1/H5Literate_by_name1() operator (deprecated) */
-typedef herr_t (*H5L_iterate_t)(hid_t group, const char *name, const H5L_info_t *info,
+typedef herr_t (*H5L_iterate1_t)(hid_t group, const char *name, const H5L_info1_t *info,
     void *op_data);
 
 /* Function prototypes */
 H5_DLL herr_t H5Lget_info1(hid_t loc_id, const char *name,
-    H5L_info_t *linfo /*out*/, hid_t lapl_id);
+    H5L_info1_t *linfo /*out*/, hid_t lapl_id);
 H5_DLL herr_t H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
-    H5L_info_t *linfo /*out*/, hid_t lapl_id);
+    H5L_info1_t *linfo /*out*/, hid_t lapl_id);
 
 H5_DLL herr_t H5Literate1(hid_t grp_id, H5_index_t idx_type,
-    H5_iter_order_t order, hsize_t *idx, H5L_iterate_t op, void *op_data);
+    H5_iter_order_t order, hsize_t *idx, H5L_iterate1_t op, void *op_data);
 H5_DLL herr_t H5Literate_by_name1(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx,
-    H5L_iterate_t op, void *op_data, hid_t lapl_id);
+    H5L_iterate1_t op, void *op_data, hid_t lapl_id);
 H5_DLL herr_t H5Lvisit1(hid_t grp_id, H5_index_t idx_type, H5_iter_order_t order,
-    H5L_iterate_t op, void *op_data);
+    H5L_iterate1_t op, void *op_data);
 H5_DLL herr_t H5Lvisit_by_name1(hid_t loc_id, const char *group_name,
-    H5_index_t idx_type, H5_iter_order_t order, H5L_iterate_t op,
+    H5_index_t idx_type, H5_iter_order_t order, H5L_iterate1_t op,
     void *op_data, hid_t lapl_id);
 
 #endif /* H5_NO_DEPRECATED_SYMBOLS */

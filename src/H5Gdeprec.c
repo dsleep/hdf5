@@ -1084,7 +1084,7 @@ H5G__get_objinfo(const H5G_loc_t *loc, const char *name, hbool_t follow_link,
 
     /* If we're pointing at a soft or UD link, get the real link length and type */
     if (statbuf && follow_link == 0) {
-        H5L_info_t linfo;           /* Link information buffer */
+        H5L_info1_t linfo;           /* Link information buffer */
         herr_t ret;
 
         /* Get information about link to the object. If this fails, e.g.

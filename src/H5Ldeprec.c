@@ -31,6 +31,7 @@
 /* Headers */
 /***********/
 #include "H5private.h"          /* Generic Functions                        */
+#include "H5CXprivate.h"        /* API Contexts                             */
 #include "H5Eprivate.h"         /* Error handling                           */
 #include "H5Iprivate.h"         /* IDs                                      */
 #include "H5Lpkg.h"             /* Links                                    */
@@ -75,11 +76,26 @@
 
 #ifndef H5_NO_DEPRECATED_SYMBOLS
 
+/*-------------------------------------------------------------------------
+ * Function:    H5L__iterate2_shim
+ *
+ * Purpose:     Shim function for translating between H5L_info2_t and
+ *              H5L_info_t structures, as used by H5Literate2/H5Lvisit2 and
+ *              H5Literate1/H5Lvisit1, respectively.
+ *
+ * Return:      Success:    H5_ITER_CONT or H5_ITER_STOP
+ *              Failure:    H5_ITER_ERROR
+ *
+ *-------------------------------------------------------------------------
+ */
 static herr_t
 H5L__iterate2_shim(hid_t group_id, const char *name, const H5L_info2_t *linfo2, void *op_data)
 {
     H5L_shim_data_t *shim_data = (H5L_shim_data_t *)op_data;
-    H5L_info_t linfo;
+    H5L_info1_t linfo;
+    herr_t ret_value = H5_ITER_CONT;
+
+    FUNC_ENTER_STATIC
 
     /* Copy the new-style members into the old-style struct */
     if (linfo2) {
@@ -94,7 +110,7 @@ H5L__iterate2_shim(hid_t group_id, const char *name, const H5L_info2_t *linfo2, 
             /* IF NATIVE */
             /* Get the size of an haddr_t in this file */
             if (H5VL_native_get_file_addr_len(group_id, &addr_len) < 0)
-                return FAIL;
+                HGOTO_ERROR(H5E_FILE, H5E_CANTGET, H5_ITER_ERROR, "can't get address size from file")
 
             /* Convert from VOL token to address */
             H5F_addr_decode_len(addr_len, &p, &(linfo.u.address));
@@ -106,8 +122,10 @@ H5L__iterate2_shim(hid_t group_id, const char *name, const H5L_info2_t *linfo2, 
     }
 
     /* Invoke the real callback */
-    return shim_data->real_op(group_id, name, &linfo, shim_data->real_op_data);
+    ret_value = shim_data->real_op(group_id, name, &linfo, shim_data->real_op_data);
 
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5L__iterate2_shim() */
 
 
@@ -127,7 +145,7 @@ H5L__iterate2_shim(hid_t group_id, const char *name, const H5L_info2_t *linfo2, 
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Lget_info1(hid_t loc_id, const char *name, H5L_info_t *linfo /*out*/,
+H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
     hid_t lapl_id)
 {
     H5VL_object_t       *vol_obj = NULL;        /* object token of loc_id */
@@ -207,7 +225,7 @@ done:
 herr_t
 H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
-    H5L_info_t *linfo /*out*/, hid_t lapl_id)
+    H5L_info1_t *linfo /*out*/, hid_t lapl_id)
 {
     H5VL_object_t       *vol_obj = NULL;        /* object token of loc_id */
     H5VL_loc_params_t   loc_params;
@@ -297,7 +315,7 @@ done:
  */
 herr_t
 H5Literate1(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
-    hsize_t *idx_p, H5L_iterate_t op, void *op_data)
+    hsize_t *idx_p, H5L_iterate1_t op, void *op_data)
 {
     H5VL_object_t       *vol_obj        = NULL;     /* Object token of loc_id */
     H5VL_loc_params_t   loc_params;
@@ -368,7 +386,7 @@ done:
 herr_t
 H5Literate_by_name1(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx_p,
-    H5L_iterate_t op, void *op_data, hid_t lapl_id)
+    H5L_iterate1_t op, void *op_data, hid_t lapl_id)
 {
     H5VL_object_t      *vol_obj         = NULL;     /* Object token of loc_id */
     H5VL_loc_params_t   loc_params;
@@ -451,7 +469,7 @@ done:
  */
 herr_t
 H5Lvisit1(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
-    H5L_iterate_t op, void *op_data)
+    H5L_iterate1_t op, void *op_data)
 {
     H5VL_object_t      *vol_obj         = NULL;     /* Object token of loc_id */
     H5VL_loc_params_t   loc_params;
@@ -527,7 +545,7 @@ done:
  */
 herr_t
 H5Lvisit_by_name1(hid_t loc_id, const char *group_name, H5_index_t idx_type,
-    H5_iter_order_t order, H5L_iterate_t op, void *op_data, hid_t lapl_id)
+    H5_iter_order_t order, H5L_iterate1_t op, void *op_data, hid_t lapl_id)
 {
     H5VL_object_t      *vol_obj = NULL;         /* Object token of loc_id */
     H5VL_loc_params_t   loc_params;

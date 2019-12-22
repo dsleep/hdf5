@@ -290,7 +290,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5G_link_to_info(const H5O_link_t *lnk, H5L_info_t *info)
+H5G_link_to_info(const H5O_link_t *lnk, H5L_info1_t *info)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 

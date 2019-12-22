@@ -68,7 +68,7 @@ typedef struct {
     hsize_t n;                          /* Offset of link within index */
 
     /* Out */
-    H5L_info_t      *linfo;             /* Buffer to return to user */
+    H5L_info1_t      *linfo;            /* Buffer to return to user */
 } H5L_trav_gibi_t;
 
 /* User data for path traversal routine for getting name by index */
@@ -98,15 +98,11 @@ typedef struct H5L_elink_cb_t {
     void                      *user_data;
 } H5L_elink_cb_t;
 
-#ifndef H5_NO_DEPRECATED_SYMBOLS
-
 /* Shim data for using native H5Literate/visit callbacks with the VOL */
 typedef struct H5L_shim_data_t {
-    H5L_iterate_t   real_op;
+    H5L_iterate1_t   real_op;
     void            *real_op_data;
 } H5L_shim_data_t;
-
-#endif
 
 /*****************************/
 /* Library Private Variables */
@@ -133,13 +129,13 @@ H5_DLL herr_t H5L_move(const H5G_loc_t *src_loc, const char *src_name,
 H5_DLL htri_t H5L_exists_tolerant(const H5G_loc_t *loc, const char *name);
 H5_DLL htri_t H5L_exists(const H5G_loc_t *loc, const char *name);
 H5_DLL herr_t H5L_get_info(const H5G_loc_t *loc, const char *name,
-    H5L_info_t *linkbuf/*out*/);
+    H5L_info1_t *linkbuf/*out*/);
 H5_DLL herr_t H5L_delete(const H5G_loc_t *loc, const char *name);
 H5_DLL herr_t H5L_delete_by_idx(const H5G_loc_t *loc, const char *name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n);
 H5_DLL herr_t H5L_get_info_by_idx(const H5G_loc_t *loc, const char *name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
-    H5L_info_t *linfo /*out*/);
+    H5L_info1_t *linfo /*out*/);
 H5_DLL ssize_t H5L_get_name_by_idx(const H5G_loc_t *loc, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
     char *name /*out*/, size_t size);
@@ -151,7 +147,7 @@ H5_DLL herr_t H5L_get_val_by_idx(const H5G_loc_t *loc, const char *name,
 H5_DLL herr_t H5L_register_external(void);
 H5_DLL herr_t H5L_iterate(H5G_loc_t *loc, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx_p,
-    H5L_iterate_t op, void *op_data);
+    H5L_iterate1_t op, void *op_data);
 
 /* User-defined link functions */
 H5_DLL herr_t H5L_register(const H5L_class_t *cls);

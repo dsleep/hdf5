@@ -72,7 +72,7 @@ typedef struct {
     char       *path;           /* Path name of the link */
     size_t      curr_path_len;  /* Current length of the path in the buffer */
     size_t      path_buf_size;  /* Size of path buffer */
-    H5L_iterate_t op;           /* Application callback */
+    H5L_iterate1_t op;          /* Application callback */
     void       *op_data;        /* Application's op data */
 } H5G_iter_visit_ud_t;
 
@@ -752,7 +752,7 @@ H5G_iterate_cb(const H5O_link_t *lnk, void *_udata)
 
         case H5G_LINK_OP_NEW:
             {
-                H5L_info_t info;    /* Link info */
+                H5L_info1_t info;    /* Link info */
 
                 /* Retrieve the info for the link */
                 if(H5G_link_to_info(lnk, &info) < 0)
@@ -872,7 +872,7 @@ static herr_t
 H5G_visit_cb(const H5O_link_t *lnk, void *_udata)
 {
     H5G_iter_visit_ud_t *udata = (H5G_iter_visit_ud_t *)_udata;     /* User data for callback */
-    H5L_info_t info;                    /* Link info */
+    H5L_info1_t info;                   /* Link info */
     H5G_loc_t   obj_loc;                /* Location of object */
     H5G_name_t  obj_path;            	/* Object's group hier. path */
     H5O_loc_t   obj_oloc;            	/* Object's object location */
@@ -1044,7 +1044,7 @@ done:
  */
 herr_t
 H5G_visit(H5G_loc_t *loc, const char *group_name, H5_index_t idx_type,
-    H5_iter_order_t order, H5L_iterate_t op, void *op_data)
+    H5_iter_order_t order, H5L_iterate1_t op, void *op_data)
 {
     H5G_iter_visit_ud_t udata;      /* User data for callback */
     H5O_linfo_t	linfo;		    /* Link info message */

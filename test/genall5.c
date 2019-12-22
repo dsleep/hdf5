@@ -479,7 +479,7 @@ vrfy_ns_grp_c(hid_t fid, const char *group_name, unsigned nlinks) {
 
     u = 0;
     while ((pass) && (u < nlinks)) {
-        H5L_info_t lnk_info;
+        H5L_info1_t lnk_info;
         char linkname[16];
         htri_t link_exists;
 
@@ -493,7 +493,7 @@ vrfy_ns_grp_c(hid_t fid, const char *group_name, unsigned nlinks) {
         HDassert(link_exists >= 0);
 
         HDmemset(&lnk_info, 0, sizeof(grp_info));
-        ret = H5Lget_info(gid, linkname, &lnk_info, H5P_DEFAULT);
+        ret = H5Lget_info1(gid, linkname, &lnk_info, H5P_DEFAULT);
 
         if (ret < 0) {
             pass = FALSE;
@@ -888,7 +888,7 @@ vrfy_ns_grp_d(hid_t fid, const char *group_name, unsigned nlinks) {
 
     u = 0;
     while ((pass) && (u < nlinks)) {
-        H5L_info_t lnk_info;
+        H5L_info1_t lnk_info;
         char linkname[16];
         htri_t link_exists;
 
@@ -902,7 +902,7 @@ vrfy_ns_grp_d(hid_t fid, const char *group_name, unsigned nlinks) {
         HDassert(link_exists >= 0);
 
         HDmemset(&lnk_info, 0, sizeof(grp_info));
-        ret = H5Lget_info(gid, linkname, &lnk_info, H5P_DEFAULT);
+        ret = H5Lget_info1(gid, linkname, &lnk_info, H5P_DEFAULT);
 
         if (ret < 0) {
             pass = FALSE;
@@ -1486,7 +1486,7 @@ vrfy_os_grp_n(hid_t fid, const char *group_name, int proc_num,
 
     u = 0;
     while ((pass) && (u < nlinks)) {
-        H5L_info_t lnk_info;
+        H5L_info1_t lnk_info;
         char linkname[32];
         htri_t link_exists;
 
@@ -1500,7 +1500,7 @@ vrfy_os_grp_n(hid_t fid, const char *group_name, int proc_num,
         HDassert(link_exists >= 0);
 
         HDmemset(&lnk_info, 0, sizeof(grp_info));
-        ret = H5Lget_info(gid, linkname, &lnk_info, H5P_DEFAULT);
+        ret = H5Lget_info1(gid, linkname, &lnk_info, H5P_DEFAULT);
 
         if (ret < 0) {
             pass = FALSE;

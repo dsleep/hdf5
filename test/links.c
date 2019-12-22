@@ -385,6 +385,23 @@ const H5L_class_t UD_cb_class[1] = {{
     UD_cb_query               /* Query callback                 */
 }};
 
+static hid_t
+UD_plist_traverse(const char *link_name, hid_t cur_group,
+    const void *udata, size_t udata_size, hid_t lapl_id,
+    hid_t dxpl_id);
+
+const H5L_class_t UD_plist_class[1] = {{
+    H5L_LINK_CLASS_T_VERS,    /* H5L_class_t version       */
+    (H5L_type_t)UD_PLIST_TYPE, /* Link type id number            */
+    "UD_plist_link",          /* Link class name for debugging  */
+    NULL,                     /* Creation callback              */
+    NULL,                     /* Move/rename callback           */
+    NULL,                     /* Copy callback                  */
+    UD_plist_traverse,        /* The actual traversal function  */
+    NULL,                     /* Deletion callback              */
+    NULL                      /* Query callback                 */
+}};
+
 /*-------------------------------------------------------------------------
  * Function:    fix_ext_filename
  *
@@ -1710,7 +1727,7 @@ cklinks_deprec(hid_t fapl, hbool_t new_format)
 {
     hid_t        file;
     H5O_info_t   oinfo1, oinfo2;
-    H5L_info_t   linfo;
+    H5L_info1_t  linfo;
     char         linkval[LINK_BUF_SIZE];
     char         filename[NAME_BUF_SIZE];
     herr_t       status;
@@ -1865,7 +1882,7 @@ test_lcpl_deprec(hid_t fapl, hbool_t new_format)
     hid_t         dset_id = -1;
     hid_t         type_id = -1;
     hid_t         lcpl_id = -1;
-    H5L_info_t    linfo;
+    H5L_info1_t   linfo;
     char          filename[1024];
     hsize_t       dims[2];
 
@@ -2019,7 +2036,7 @@ test_move_preserves_deprec(hid_t fapl_id, hbool_t new_format)
     hid_t lcpl_id=-1;
     hid_t lcpl2_id=-1;
     H5O_info_t oinfo;
-    H5L_info_t linfo;
+    H5L_info1_t linfo;
     H5T_cset_t old_cset;
     int64_t old_corder;         /* Creation order value of link */
     time_t old_modification_time;
@@ -2182,7 +2199,7 @@ external_link_root_deprec(hid_t fapl, hbool_t new_format)
 {
     hid_t        fid = -1;                   /* File ID */
     hid_t        gid = -1, gid2 = -1;        /* Group IDs */
-    H5L_info_t   linfo;                      /* Link information */
+    H5L_info1_t  linfo;                      /* Link information */
     char         objname[NAME_BUF_SIZE];     /* Object name */
     char         filename1[NAME_BUF_SIZE];
     char         filename2[NAME_BUF_SIZE];
@@ -2356,15 +2373,15 @@ error:
 static int
 external_link_query_deprec(hid_t fapl, hbool_t new_format)
 {
-    hid_t       fid = -1;                       /* File ID */
-    hid_t       gid = -1;                       /* Group IDs */
-    const char *file_name;                      /* Name of the file the external link points to */
-    const char *object_name;                    /* Name of the object the external link points to */
-    H5O_info_t  oi;                             /* Object information */
-    H5L_info_t  li;                             /* Link information */
-    char        filename1[NAME_BUF_SIZE],
-                filename2[NAME_BUF_SIZE],       /* Names of files to externally link across */
-                query_buf[NAME_BUF_SIZE];       /* Buffer to hold query result */
+    hid_t        fid = -1;                       /* File ID */
+    hid_t        gid = -1;                       /* Group IDs */
+    const char  *file_name;                      /* Name of the file the external link points to */
+    const char  *object_name;                    /* Name of the object the external link points to */
+    H5O_info_t   oi;                             /* Object information */
+    H5L_info1_t  li;                             /* Link information */
+    char         filename1[NAME_BUF_SIZE],
+                 filename2[NAME_BUF_SIZE],       /* Names of files to externally link across */
+                 query_buf[NAME_BUF_SIZE];       /* Buffer to hold query result */
 
     if(new_format)
         TESTING("query aspects of external link using deprecated routines (w/new group format)")
@@ -2487,7 +2504,7 @@ external_link_closing_deprec(hid_t fapl, hbool_t new_format)
                 filename3[NAME_BUF_SIZE],
                 filename4[NAME_BUF_SIZE],       /* Names of files to externally link across */
                 buf[NAME_BUF_SIZE];             /* misc. buffer */
-    H5L_info_t  li;
+    H5L_info1_t li;
     H5O_info_t  oi;
     hobj_ref_t  obj_ref;
 
@@ -2698,7 +2715,7 @@ ud_hard_links_deprec(hid_t fapl)
 {
     hid_t          fid = -1;                    /* File ID */
     hid_t          gid = -1, gid2 = -1;         /* Group IDs */
-    H5L_info_t     li;                          /* Link information */
+    H5L_info1_t    li;                          /* Link information */
     char           objname[NAME_BUF_SIZE];      /* Object name */
     h5_stat_size_t empty_size;                  /* Size of an empty file */
     char           filename[NAME_BUF_SIZE];
@@ -2817,7 +2834,7 @@ ud_link_reregister_deprec(hid_t fapl)
 {
     hid_t           fid = -1;                   /* File ID */
     hid_t           gid = -1, gid2 = -1;        /* Group IDs */
-    H5L_info_t      li;                         /* Link information */
+    H5L_info1_t     li;                         /* Link information */
     char            objname[NAME_BUF_SIZE];     /* Object name */
     char            filename[NAME_BUF_SIZE];
     h5_stat_size_t  empty_size;                 /* Size of an empty file */
@@ -2957,7 +2974,7 @@ ud_callbacks_deprec(hid_t fapl, hbool_t new_format)
     hid_t       fid = -1;                        /* File ID */
     hid_t       gid = -1;                        /* Group ID */
     hid_t       lcpl = -1;                       /* Link Creation PL */
-    H5L_info_t  li;                              /* Link information */
+    H5L_info1_t li;                              /* Link information */
     char        ud_target_name[] = UD_CB_TARGET; /* Link target name */
     char        filename[NAME_BUF_SIZE];
     char        query_buf[NAME_BUF_SIZE];
@@ -3311,12 +3328,12 @@ error:
 static int
 linkinfo_deprec(hid_t fapl, hbool_t new_format)
 {
-    hid_t      fid = -1;              /* File ID */
-    hid_t      gid = -1;              /* Group ID */
-    hid_t      tid = -1;              /* Type ID */
-    hid_t      sid = -1, did = -1;    /* Dataspace and dataset IDs */
-    H5L_info_t li;                    /* Link information */
-    char       filename[NAME_BUF_SIZE];
+    hid_t       fid = -1;              /* File ID */
+    hid_t       gid = -1;              /* Group ID */
+    hid_t       tid = -1;              /* Type ID */
+    hid_t       sid = -1, did = -1;    /* Dataspace and dataset IDs */
+    H5L_info1_t li;                    /* Link information */
+    char        filename[NAME_BUF_SIZE];
 
     if(new_format)
         TESTING("link type field in H5Lget_info using deprecated routines (w/new group format)")
@@ -3464,7 +3481,7 @@ corder_create_compact_deprec(hid_t fapl)
     /* Loop through links, checking their creation order values */
     /* (the name index is used, but the creation order value is in the same order) */
     for(u = 0; u < max_compact; u++) {
-        H5L_info_t linfo;           /* Link information */
+        H5L_info1_t linfo;           /* Link information */
 
         /* Retrieve information for link */
         HDsnprintf(objname, sizeof(objname), "filler %u", u);
@@ -3591,7 +3608,7 @@ corder_create_dense_deprec(hid_t fapl)
     /* Loop through links, checking their creation order values */
     /* (the name index is used, but the creation order value is in the same order) */
     for(u = 0; u < (max_compact + 1); u++) {
-        H5L_info_t linfo;           /* Link information */
+        H5L_info1_t linfo;           /* Link information */
 
         /* Retrieve information for link */
         HDsnprintf(objname, sizeof(objname), "filler %u", u);
@@ -3640,7 +3657,7 @@ link_info_by_idx_check_deprec(hid_t group_id, const char *linkname, hsize_t n,
     char tmpname[NAME_BUF_SIZE];        /* Temporary link name */
     char valname[NAME_BUF_SIZE];        /* Link value name */
     char tmpval[NAME_BUF_SIZE];         /* Temporary link value */
-    H5L_info_t  linfo;                  /* Link info struct */
+    H5L_info1_t  linfo;                 /* Link info struct */
 
     /* Make link value for increasing/native order queries */
     HDsnprintf(valname, sizeof(valname), "value %02u", (unsigned)n);
@@ -3794,7 +3811,7 @@ link_info_by_idx_deprec(hid_t fapl)
     unsigned    use_index;              /* Use index on creation order values */
     unsigned    max_compact;            /* Maximum # of links to store in group compactly */
     unsigned    min_dense;              /* Minimum # of links to store in group "densely" */
-    H5L_info_t  linfo;                  /* Link info struct */
+    H5L_info1_t linfo;                  /* Link info struct */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[NAME_BUF_SIZE]; /* Link value name */
     char        filename[NAME_BUF_SIZE];/* File name */
@@ -3970,7 +3987,7 @@ link_info_by_idx_old_deprec(hid_t fapl)
     hid_t       file_id = -1;           /* File ID */
     hid_t       group_id = -1, group_id2 = -1;    /* Group IDs */
     unsigned    hard_link;              /* Create hard or soft link? */
-    H5L_info_t  linfo;                  /* Link info struct */
+    H5L_info1_t linfo;                  /* Link info struct */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[NAME_BUF_SIZE]; /* Link value name */
     char        filename[NAME_BUF_SIZE];/* File name */
@@ -4137,7 +4154,7 @@ delete_by_idx_deprec(hid_t fapl)
     unsigned    use_index;              /* Use index on creation order values */
     unsigned    max_compact;            /* Maximum # of links to store in group compactly */
     unsigned    min_dense;              /* Minimum # of links to store in group "densely" */
-    H5L_info_t  linfo;                  /* Link info struct */
+    H5L_info1_t linfo;                  /* Link info struct */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        filename[NAME_BUF_SIZE];/* File name */
     char        tmpname[NAME_BUF_SIZE]; /* Temporary link name */
@@ -4446,7 +4463,7 @@ delete_by_idx_old_deprec(hid_t fapl)
 {
     hid_t       file_id = -1;           /* File ID */
     hid_t       group_id = -1, group_id2 = -1;    /* Group IDs */
-    H5L_info_t  linfo;                  /* Link info struct */
+    H5L_info1_t linfo;                  /* Link info struct */
     H5_iter_order_t order;              /* Order within in the index */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        filename[NAME_BUF_SIZE];/* File name */
@@ -10808,18 +10825,6 @@ error:
     return FAIL;
 } /* end UD_plist_traverse() */
 
-const H5L_class_t UD_plist_class[1] = {{
-    H5L_LINK_CLASS_T_VERS,    /* H5L_class_t version       */
-    (H5L_type_t)UD_PLIST_TYPE, /* Link type id number            */
-    "UD_plist_link",          /* Link class name for debugging  */
-    NULL,                     /* Creation callback              */
-    NULL,                     /* Move/rename callback           */
-    NULL,                     /* Copy callback                  */
-    UD_plist_traverse,        /* The actual traversal function  */
-    NULL,                     /* Deletion callback              */
-    NULL                      /* Query callback                 */
-}};
-
 static int
 lapl_udata(hid_t fapl, hbool_t new_format)
 {
@@ -13747,11 +13752,9 @@ link_info_by_idx_old(hid_t fapl)
 
         /* Need the file struct to address encoding */
         /* Retrieve VOL object */
-        vol_obj_file = H5VL_vol_object(file_id);
-        CHECK(vol_obj_file, NULL, "H5VL_vol_object");
+        if(NULL == (vol_obj_file = H5VL_vol_object(file_id))) TEST_ERROR
         /* Retrieve file from VOL object */
-        f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file);
-        CHECK(f, NULL, "H5VL_object_data");
+        if(NULL == (f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file))) TEST_ERROR
 
         /* Create group to operate on */
         if((group_id = H5Gcreate2(file_id, CORDER_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
@@ -14242,11 +14245,9 @@ delete_by_idx_old(hid_t fapl)
 
         /* Need the file struct to address encoding */
         /* Retrieve VOL object */
-        vol_obj_file = H5VL_vol_object(file_id);
-        CHECK(vol_obj_file, NULL, "H5VL_vol_object");
+        if(NULL == (vol_obj_file = H5VL_vol_object(file_id))) TEST_ERROR
         /* Retrieve file from VOL object */
-        f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file);
-        CHECK(f, NULL, "H5VL_object_data");
+        if(NULL == (f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file))) TEST_ERROR
 
         /* Create group to operate on */
         if((group_id = H5Gcreate2(file_id, CORDER_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
@@ -14445,18 +14446,18 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-link_iterate_cb(hid_t group_id, const char *link_name, const H5L_info_t *info,
+link_iterate_cb(hid_t group_id, const char *link_name, const H5L_info1_t *info,
     void *_op_data)
 {
     link_iter_info_t *op_data = (link_iter_info_t *)_op_data;   /* User data */
     char objname[NAME_BUF_SIZE]; /* Object name */
-    H5L_info_t my_info;          /* Local link info */
+    H5L_info1_t my_info;         /* Local link info */
 
     /* Increment # of times the callback was called */
     op_data->ncalled++;
 
     /* Get the link information directly to compare */
-    if(H5Lget_info(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
+    if(H5Lget_info1(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
         return H5_ITER_ERROR;
 
     /* Check more things for link iteration (vs. group iteration) */
@@ -14571,7 +14572,7 @@ link_iterate_check(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -14601,7 +14602,7 @@ link_iterate_check(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     iter_info->ncalled = 0;
     iter_info->curr = (int64_t)(order != H5_ITER_DEC ? skip : ((max_links - 1) - skip));
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -14663,7 +14664,7 @@ link_iterate_check(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if((ret = H5Literate(group_id, idx_type, order, &skip, link_iterate_cb, iter_info)) < 0) TEST_ERROR
+    if((ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, iter_info)) < 0) TEST_ERROR
     if(ret != CORDER_ITER_STOP) TEST_ERROR
     if(iter_info->ncalled != 3) TEST_ERROR
 
@@ -14801,7 +14802,7 @@ link_iterate(hid_t fapl)
 
                 /* Check for iteration on empty group */
                 /* (should be OK) */
-                if(H5Literate(group_id, idx_type, order, NULL, link_iterate_cb, NULL) < 0) TEST_ERROR
+                if(H5Literate1(group_id, idx_type, order, NULL, link_iterate_cb, NULL) < 0) TEST_ERROR
 
                 /* Create several links, up to limit of compact form */
                 for(u = 0; u < max_compact; u++) {
@@ -14821,7 +14822,7 @@ link_iterate(hid_t fapl)
                 /* Check for out of bound iteration on compact group */
                 skip = (hsize_t)u;
                 H5E_BEGIN_TRY {
-                    ret = H5Literate(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
+                    ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
@@ -14846,7 +14847,7 @@ link_iterate(hid_t fapl)
                 /* Check for out of bound iteration on dense group */
                 skip = (hsize_t)u;
                 H5E_BEGIN_TRY {
-                    ret = H5Literate(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
+                    ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
@@ -14899,17 +14900,17 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-link_iterate_old_cb(hid_t group_id, const char *link_name, const H5L_info_t *info, void *_op_data)
+link_iterate_old_cb(hid_t group_id, const char *link_name, const H5L_info1_t *info, void *_op_data)
 {
     link_iter_info_t *op_data = (link_iter_info_t *)_op_data;   /* User data */
     char objname[NAME_BUF_SIZE]; /* Object name */
-    H5L_info_t  my_info;         /* Local link info */
+    H5L_info1_t my_info;         /* Local link info */
 
     /* Increment # of times the callback was called */
     op_data->ncalled++;
 
     /* Get the link information directly to compare */
-    if(H5Lget_info(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
+    if(H5Lget_info1(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
         return H5_ITER_ERROR;
 
     /* Check more things for link iteration (vs. group iteration) */
@@ -14999,7 +15000,7 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order, unsigned max_links
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -15029,7 +15030,7 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order, unsigned max_links
     iter_info->ncalled = 0;
     iter_info->curr = (int64_t)(order != H5_ITER_DEC ? skip : ((max_links - 1) - skip));
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -15091,7 +15092,7 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order, unsigned max_links
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if((ret = H5Literate(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info)) < 0) TEST_ERROR
+    if((ret = H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info)) < 0) TEST_ERROR
     if(ret != CORDER_ITER_STOP) TEST_ERROR
     if(iter_info->ncalled != 3) TEST_ERROR
 
@@ -15188,7 +15189,7 @@ link_iterate_old(hid_t fapl)
 
         /* Check for iteration on empty group */
         /* (should be OK) */
-        if(H5Literate(group_id, H5_INDEX_NAME, order, NULL, link_iterate_old_cb, NULL) < 0) TEST_ERROR
+        if(H5Literate1(group_id, H5_INDEX_NAME, order, NULL, link_iterate_old_cb, NULL) < 0) TEST_ERROR
 
         /* Create several links */
         for(u = 0; u < CORDER_NLINKS; u++) {
@@ -15208,7 +15209,7 @@ link_iterate_old(hid_t fapl)
         /* Check for out of bound iteration on old-style group */
         skip = (hsize_t)u;
         H5E_BEGIN_TRY {
-            ret = H5Literate(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, NULL);
+            ret = H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, NULL);
         } H5E_END_TRY;
         if(ret >= 0) TEST_ERROR
 
@@ -15216,7 +15217,7 @@ link_iterate_old(hid_t fapl)
         /* (should fail) */
         skip = (hsize_t)0;
         H5E_BEGIN_TRY {
-            ret = H5Literate(group_id, H5_INDEX_CRT_ORDER, order, &skip, link_iterate_old_cb, NULL);
+            ret = H5Literate1(group_id, H5_INDEX_CRT_ORDER, order, &skip, link_iterate_old_cb, NULL);
         } H5E_END_TRY;
         if(ret >= 0) TEST_ERROR
 

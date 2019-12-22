@@ -1204,7 +1204,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5G_get_name_by_addr_cb(hid_t gid, const char *path, const H5L_info_t *linfo,
+H5G_get_name_by_addr_cb(hid_t gid, const char *path, const H5L_info1_t *linfo,
     void *_udata)
 {
     H5G_gnba_iter_t *udata = (H5G_gnba_iter_t *)_udata; /* User data for iteration */

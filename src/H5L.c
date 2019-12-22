@@ -49,7 +49,7 @@
 
 /* User data for path traversal routine for getting link info by name */
 typedef struct {
-    H5L_info_t      *linfo;             /* Buffer to return to user */
+    H5L_info1_t      *linfo;            /* Buffer to return to user */
 } H5L_trav_gi_t;
 
 /* User data for path traversal callback to creating a link */
@@ -983,7 +983,6 @@ H5Lget_info2(hid_t loc_id, const char *name, H5L_info2_t *linfo /*out*/,
 {
     H5VL_object_t       *vol_obj = NULL;        /* object token of loc_id */
     H5VL_loc_params_t   loc_params;
-    H5L_info2_t         linfo2;                 /* New-style link info */
     herr_t              ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -3186,7 +3185,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5L_get_info(const H5G_loc_t *loc, const char *name, H5L_info_t *linfo/*out*/)
+H5L_get_info(const H5G_loc_t *loc, const char *name, H5L_info1_t *linfo/*out*/)
 {
     H5L_trav_gi_t udata;               /* User data for callback */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -3267,7 +3266,7 @@ done:
  */
 herr_t
 H5L_get_info_by_idx(const H5G_loc_t *loc, const char *name, H5_index_t idx_type,
-    H5_iter_order_t order, hsize_t n, H5L_info_t *linfo /*out*/)
+    H5_iter_order_t order, hsize_t n, H5L_info1_t *linfo /*out*/)
 {
     H5L_trav_gibi_t udata;              /* User data for callback */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -3520,7 +3519,7 @@ done:
  */
 herr_t
 H5L_iterate(H5G_loc_t *loc, const char *group_name, H5_index_t idx_type,
-    H5_iter_order_t order, hsize_t *idx_p, H5L_iterate_t op, void *op_data)
+    H5_iter_order_t order, hsize_t *idx_p, H5L_iterate1_t op, void *op_data)
 {
     H5G_link_iterate_t  lnk_op;             /* Link operator                    */
     hsize_t             last_lnk;           /* Index of last object looked at   */

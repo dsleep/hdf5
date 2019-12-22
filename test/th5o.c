@@ -395,7 +395,7 @@ test_h5o_open_by_token(void)
 {
     hid_t       fid;                        /* HDF5 File ID      */
     hid_t       grp, dset, dtype, dspace;   /* Object identifiers */
-    H5L_info_t li;                          /* Buffer for H5Lget_info */
+    H5L_info1_t li;                         /* Buffer for H5Lget_info */
     haddr_t grp_addr;                       /* Addresses for objects */
     haddr_t dset_addr;
     haddr_t dtype_addr;
@@ -444,13 +444,13 @@ test_h5o_open_by_token(void)
     CHECK(ret, FAIL, "H5Sclose");
 
     /* Get address for each object */
-    ret = H5Lget_info(fid, "group", &li, H5P_DEFAULT);
+    ret = H5Lget_info1(fid, "group", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");
     grp_addr = li.u.address;
-    ret = H5Lget_info(fid, "group/datatype", &li, H5P_DEFAULT);
+    ret = H5Lget_info1(fid, "group/datatype", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");
     dtype_addr = li.u.address;
-    ret = H5Lget_info(fid, "dataset", &li, H5P_DEFAULT);
+    ret = H5Lget_info1(fid, "dataset", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");
     dset_addr = li.u.address;
 
@@ -1530,7 +1530,7 @@ test_h5o_open_by_addr_deprec(void)
 {
     hid_t       fid;                        /* HDF5 File ID      */
     hid_t       grp, dset, dtype, dspace;   /* Object identifiers */
-    H5L_info_t  li;                         /* Buffer for H5Lget_info1 */
+    H5L_info1_t li;                         /* Buffer for H5Lget_info1 */
     haddr_t     grp_addr;                   /* Addresses for objects */
     haddr_t     dset_addr;
     haddr_t     dtype_addr;
