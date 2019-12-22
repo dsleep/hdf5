@@ -75,7 +75,7 @@
 
 /* Flags for H5Oget_info.
  * Theses flags determine which fields will be filled in in the H5O_info_t
- * struct.  
+ * struct.
  */
 #define H5O_INFO_BASIC          0x0001u         /* Fill in the fileno, addr, type, and rc fields */
 #define H5O_INFO_TIME           0x0002u         /* Fill in the atime, mtime, ctime, and btime fields */
@@ -117,7 +117,7 @@ typedef struct H5O_hdr_info_t {
 } H5O_hdr_info_t;
 
 /* Information struct for object (for H5Oget_info/H5Oget_info_by_name/H5Oget_info_by_idx) */
-typedef struct H5O_info_t {
+typedef struct H5O_info1_t {
     unsigned long 	fileno;		/* File number that object is located in */
     haddr_t 		addr;		/* Object address in file	*/
     H5O_type_t 		type;		/* Basic object type (group, dataset, etc.) */
@@ -133,7 +133,7 @@ typedef struct H5O_info_t {
         H5_ih_info_t   obj;             /* v1/v2 B-tree & local/fractal heap for groups, B-tree for chunked datasets */
         H5_ih_info_t   attr;            /* v2 B-tree & heap for attributes */
     } meta_size;
-} H5O_info_t;
+} H5O_info1_t;
 
 /* Data model information struct for objects */
 typedef struct H5O_info2_t {
@@ -162,10 +162,10 @@ typedef struct H5O_native_info_t {
 typedef uint32_t H5O_msg_crt_idx_t;
 
 /* Prototype for H5Ovisit/H5Ovisit_by_name() operator */
-typedef herr_t (*H5O_iterate_t)(hid_t obj, const char *name, const H5O_info_t *info,
+typedef herr_t (*H5O_iterate1_t)(hid_t obj, const char *name, const H5O_info1_t *info,
     void *op_data);
 
-/* Prototype for H5Ovisit/H5Ovisit_by_name() operator */
+/* Prototype for H5Ovisit2/H5Ovisit_by_name2() operator */
 typedef herr_t (*H5O_iterate2_t)(hid_t obj, const char *name, const H5O_info2_t *info,
     void *op_data);
 
@@ -197,11 +197,11 @@ H5_DLL hid_t H5Oopen_by_token(hid_t loc_id, H5VL_token_t token);
 H5_DLL hid_t H5Oopen_by_idx(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id);
 H5_DLL htri_t H5Oexists_by_name(hid_t loc_id, const char *name, hid_t lapl_id);
-H5_DLL herr_t H5Oget_info2(hid_t loc_id, H5O_info_t *oinfo, unsigned fields);
-H5_DLL herr_t H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info_t *oinfo,
+H5_DLL herr_t H5Oget_info2(hid_t loc_id, H5O_info1_t *oinfo, unsigned fields);
+H5_DLL herr_t H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info1_t *oinfo,
     unsigned fields, hid_t lapl_id);
 H5_DLL herr_t H5Oget_info_by_idx2(hid_t loc_id, const char *group_name,
-    H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5O_info_t *oinfo,
+    H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5O_info1_t *oinfo,
     unsigned fields, hid_t lapl_id);
 
 H5_DLL herr_t H5Oget_info3(hid_t loc_id, H5O_info2_t *oinfo, unsigned fields);
@@ -231,9 +231,9 @@ H5_DLL ssize_t H5Oget_comment(hid_t obj_id, char *comment, size_t bufsize);
 H5_DLL ssize_t H5Oget_comment_by_name(hid_t loc_id, const char *name,
     char *comment, size_t bufsize, hid_t lapl_id);
 H5_DLL herr_t H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
-    H5O_iterate_t op, void *op_data, unsigned fields);
+    H5O_iterate2_t op, void *op_data, unsigned fields);
 H5_DLL herr_t H5Ovisit_by_name2(hid_t loc_id, const char *obj_name,
-    H5_index_t idx_type, H5_iter_order_t order, H5O_iterate_t op,
+    H5_index_t idx_type, H5_iter_order_t order, H5O_iterate2_t op,
     void *op_data, unsigned fields, hid_t lapl_id);
 H5_DLL herr_t H5Oclose(hid_t object_id);
 H5_DLL herr_t H5Oflush(hid_t obj_id);
@@ -261,17 +261,17 @@ typedef struct H5O_stat_t {
 } H5O_stat_t;
 
 /* Function prototypes */
-H5_DLL herr_t H5Oget_info1(hid_t loc_id, H5O_info_t *oinfo);
-H5_DLL herr_t H5Oget_info_by_name1(hid_t loc_id, const char *name, H5O_info_t *oinfo,
+H5_DLL herr_t H5Oget_info1(hid_t loc_id, H5O_info1_t *oinfo);
+H5_DLL herr_t H5Oget_info_by_name1(hid_t loc_id, const char *name, H5O_info1_t *oinfo,
     hid_t lapl_id);
 H5_DLL herr_t H5Oget_info_by_idx1(hid_t loc_id, const char *group_name,
-    H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5O_info_t *oinfo,
+    H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5O_info1_t *oinfo,
     hid_t lapl_id);
 
 H5_DLL herr_t H5Ovisit1(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
-    H5O_iterate_t op, void *op_data);
+    H5O_iterate1_t op, void *op_data);
 H5_DLL herr_t H5Ovisit_by_name1(hid_t loc_id, const char *obj_name,
-    H5_index_t idx_type, H5_iter_order_t order, H5O_iterate_t op,
+    H5_index_t idx_type, H5_iter_order_t order, H5O_iterate1_t op,
     void *op_data, hid_t lapl_id);
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
 

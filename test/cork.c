@@ -101,7 +101,7 @@ verify_old_dset_cork(void)
     hsize_t chunk_dims[2] = {2, 5};     /* Dataset chunked dimension sizes */
     int buf[100][20];               /* Data buffer */
     int i = 0, j = 0;               /* Local index variable */
-    H5O_info_t oinfo, oinfo2, oinfo3;       /* Object metadata information */
+    H5O_info1_t oinfo, oinfo2, oinfo3;       /* Object metadata information */
     hsize_t dims2[2] = {8, 16};         /* Dataset dimension sizes */
 
     /* Testing Macro */
@@ -296,7 +296,7 @@ verify_obj_dset_cork(hbool_t swmr)
     int i = 0;                  /* Local index variable */
     hsize_t dim[1] = {100};     /* Dataset dimension size */
     hsize_t chunk_dim[1] = {7}; /* Dataset chunk dimension size */
-    H5O_info_t oinfo, oinfo2;   /* Object metadata information */
+    H5O_info1_t oinfo, oinfo2;   /* Object metadata information */
     char attrname[500];         /* Name of attribute */
     unsigned flags;             /* File access flags */
 
@@ -497,7 +497,7 @@ verify_dset_cork(hbool_t swmr, hbool_t new_format)
     hsize_t max_dims[2] = {100, H5S_UNLIMITED}; /* Dataset maximum dimension sizes */
     hsize_t chunk_dims[2] = {2, 5};     /* Dataset chunked dimension sizes */
     int buf[100][20]; int i = 0, j = 0;         /* Data buffer */
-    H5O_info_t oinfo, oinfo2, oinfo3;       /* Object metadata information */
+    H5O_info1_t oinfo, oinfo2, oinfo3;       /* Object metadata information */
     unsigned flags;             /* File access flags */
 
     /* Testing Macro */
@@ -729,7 +729,7 @@ verify_group_cork(hbool_t swmr)
     hid_t fid = -1;                     /* File ID */
     hid_t fapl = -1;                    /* File access property list */
     hid_t gid = -1, gid2 = -1, gid3 = -1;   /* Group IDs */
-    H5O_info_t oinfo, oinfo2, oinfo3;       /* Object metadata information */
+    H5O_info1_t oinfo, oinfo2, oinfo3;       /* Object metadata information */
     hid_t aid;                  /* Attribute ID */
     hid_t sid;                  /* Dataspace ID */
     char attrname[500];                 /* Name of attribute */
@@ -897,7 +897,7 @@ verify_named_cork(hbool_t swmr)
     hid_t fapl = -1;                    /* File access property list */
     hid_t tid = -1, tid2 = -1, tid3 = -1;   /* Datatype IDs */
     hid_t gid = -1, gid2 = -1;          /* Group IDs */
-    H5O_info_t oinfo, oinfo2, oinfo3, oinfo4;   /* Object metadata information */
+    H5O_info1_t oinfo, oinfo2, oinfo3, oinfo4;   /* Object metadata information */
     hid_t aid = -1;             /* Attribute ID */
     hid_t sid;                  /* Dataspace ID */
     hid_t did;                  /* Dataset ID */
@@ -1178,7 +1178,7 @@ verify_multiple_cork(hbool_t swmr)
     hid_t aidd1 = -1, aidd2 = -1;   /* Attribute ID */
     hid_t aidt1 = -1, aidt2 = -1;   /* Attribute ID */
     hid_t sid = -1;         /* Dataspace ID */
-    H5O_info_t oinfo1, oinfo2, oinfo3;  /* Object metadata information */
+    H5O_info1_t oinfo1, oinfo2, oinfo3;  /* Object metadata information */
     hsize_t dim[1] = {5};       /* Dimension sizes */
     unsigned flags;         /* File access flags */
     hbool_t corked;         /* Cork status */
