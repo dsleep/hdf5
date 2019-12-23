@@ -316,7 +316,7 @@ static void hard_link_example(void)
 {
     hid_t file_id;
     hid_t group_id;
-    H5L_info1_t li;
+    H5L_info2_t li;
     /* Define the link class that we'll use to register "user-defined hard
      * links" using the callbacks we defined above.
      * A link class can have NULL for any callback except its traverse
@@ -361,13 +361,13 @@ static void hard_link_example(void)
      * the target group's address. We do this by calling H5Lget_info
      * on a hard link to the object.
      */
-    H5Lget_info1(file_id, TARGET_GROUP, &li, H5P_DEFAULT);
+    H5Lget_info2(file_id, TARGET_GROUP, &li, H5P_DEFAULT);
 
     /* Now create a user-defined link.  We give it the group's address
      * as its udata.
      */
-    H5Lcreate_ud(file_id, UD_HARD_LINK_NAME, (H5L_type_t)UD_HARD_CLASS, &(li.u.address),
-                 sizeof(li.u.address), H5P_DEFAULT, H5P_DEFAULT);
+    H5Lcreate_ud(file_id, UD_HARD_LINK_NAME, (H5L_type_t)UD_HARD_CLASS, &(li.u.token),
+                 H5VL_MAX_TOKEN_SIZE, H5P_DEFAULT, H5P_DEFAULT);
 
     /* The UD hard link has now incremented the group's reference count
      * like a normal hard link would.  This means that we can unlink the

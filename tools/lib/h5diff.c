@@ -402,7 +402,7 @@ trav_grp_objs(const char *path, const H5O_info_t *oinfo,
  *           Track and extra checkings while visiting all symbolic-links.
  *------------------------------------------------------------------------*/
 static herr_t
-trav_grp_symlinks(const char *path, const H5L_info_t *linfo, void *udata)
+trav_grp_symlinks(const char *path, const H5L_info2_t *linfo, void *udata)
 {
     H5TOOLS_ERR_INIT(herr_t, 0)
     trav_info_t   *tinfo = (trav_info_t *)udata;
@@ -541,8 +541,8 @@ h5diff(const char *fname1,
     trav_info_t  *info1_lp = NULL;
     trav_info_t  *info2_lp = NULL;
     /* link info from specified object */
-    H5L_info1_t   src_linfo1;
-    H5L_info1_t   src_linfo2;
+    H5L_info2_t   src_linfo1;
+    H5L_info2_t   src_linfo2;
     /* link info from member object */
     h5tool_link_info_t trg_linfo1;
     h5tool_link_info_t trg_linfo2;
@@ -643,7 +643,7 @@ h5diff(const char *fname1,
                 H5TOOLS_GOTO_ERROR(1, H5E_tools_min_id_g, "Error: Object could not be found");
             }
             /* get info from link */
-            if(H5Lget_info1(file1_id, obj1fullname, &src_linfo1, H5P_DEFAULT) < 0) {
+            if(H5Lget_info2(file1_id, obj1fullname, &src_linfo1, H5P_DEFAULT) < 0) {
                 parallel_print("Unable to get link info from <%s>\n", obj1fullname);
                 H5TOOLS_GOTO_ERROR(1, H5E_tools_min_id_g, "H5Lget_info failed");
             }
@@ -693,7 +693,7 @@ h5diff(const char *fname1,
                 H5TOOLS_GOTO_ERROR(1, H5E_tools_min_id_g, "Error: Object could not be found");
             }
             /* get info from link */
-            if(H5Lget_info1(file2_id, obj2fullname, &src_linfo2, H5P_DEFAULT) < 0) {
+            if(H5Lget_info2(file2_id, obj2fullname, &src_linfo2, H5P_DEFAULT) < 0) {
                 parallel_print("Unable to get link info from <%s>\n", obj2fullname);
                 H5TOOLS_GOTO_ERROR(1, H5E_tools_min_id_g, "H5Lget_info failed");
             }

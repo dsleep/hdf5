@@ -31,10 +31,12 @@
 
 #include "h5test.h"
 #include "H5srcdir.h"
-#include "H5FDpkg.h"           /* File drivers                         */
-#include "H5Gpkg.h"            /* Groups                 */
-#include "H5Iprivate.h"        /* IDs                      */
-#include "H5Lprivate.h"        /* Links                                */
+#include "H5FDpkg.h"            /* File drivers                         */
+#include "H5Gpkg.h"             /* Groups                 */
+#include "H5Iprivate.h"         /* IDs                      */
+#include "H5Lprivate.h"         /* Links                                */
+
+#include "H5VLnative_private.h" /* Native VOL connector                     */
 
 /* File for external link test.  Created with gen_udlinks.c */
 #define LINKED_FILE  "be_extlink2.h5"
@@ -337,6 +339,32 @@ const H5L_class_t UD_hard_class[1] = {{
     UD_hard_delete,             /* Deletion callback              */
     NULL                        /* Query callback                 */
 }};
+
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+static herr_t
+UD_hard_create_deprec(const char *link_name, hid_t loc_group, const void *udata,
+    size_t udata_size, hid_t lcpl_id);
+static hid_t
+UD_hard_traverse_deprec(const char *link_name, hid_t cur_group,
+    const void *udata, size_t udata_size, hid_t lapl_id,
+    hid_t dxpl_id);
+static herr_t
+UD_hard_delete_deprec(const char *link_name, hid_t file, const void *udata,
+    size_t udata_size);
+
+/* User-defined link class */
+const H5L_class_t UD_hard_class_deprec[1] = {{
+    H5L_LINK_CLASS_T_VERS,      /* H5L_class_t version            */
+    (H5L_type_t)UD_HARD_TYPE,   /* Link type id number            */
+    "UD_hard_link_deprec",      /* Link class name for debugging  */
+    UD_hard_create_deprec,      /* Creation callback              */
+    NULL,                       /* Move/rename callback           */
+    NULL,                       /* Copy callback                  */
+    UD_hard_traverse_deprec,    /* The actual traversal function  */
+    UD_hard_delete_deprec,      /* Deletion callback              */
+    NULL                        /* Query callback                 */
+}};
+#endif
 
 static hid_t
 UD_rereg_traverse(const char *link_name, hid_t cur_group,
@@ -2710,6 +2738,172 @@ error:
     return FAIL;
 } /* external_link_closing_deprec() */
 
+/* Callback functions for UD hard links. */
+/* UD_hard_create increments the object's reference count */
+static herr_t
+UD_hard_create_deprec(const char H5_ATTR_UNUSED * link_name, hid_t loc_group, const void *udata,
+    size_t udata_size, hid_t H5_ATTR_UNUSED lcpl_id)
+{
+    haddr_t addr;
+    hid_t target_obj = -1;
+    herr_t ret_value = 0;
+
+    if(udata_size != sizeof(haddr_t)) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+    addr = *((const haddr_t *)udata);
+
+    /* Open the object this link points to */
+    target_obj= H5Oopen_by_addr(loc_group, addr);
+    if(target_obj < 0) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+    /* Increment the reference count of the target object */
+    if(H5Oincr_refcount(target_obj) < 0) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+done:
+    /* Close the target object if we opened it */
+    if(target_obj >= 0) {
+        switch(H5Iget_type(target_obj)) {
+            case H5I_GROUP:
+                if(H5Gclose(target_obj) < 0)
+                    ret_value = -1;
+                break;
+
+            case H5I_DATASET:
+                if(H5Dclose(target_obj) < 0)
+                    ret_value = -1;
+                break;
+
+            case H5I_DATATYPE:
+                if(H5Tclose(target_obj) < 0)
+                    ret_value = -1;
+                break;
+
+            case H5I_MAP:
+                /* TODO: Not supported in native file format yet */
+
+            case H5I_UNINIT:
+            case H5I_BADID:
+            case H5I_FILE:
+            case H5I_DATASPACE:
+            case H5I_ATTR:
+            case H5I_VFL:
+            case H5I_VOL:
+            case H5I_GENPROP_CLS:
+            case H5I_GENPROP_LST:
+            case H5I_ERROR_CLASS:
+            case H5I_ERROR_MSG:
+            case H5I_ERROR_STACK:
+            case H5I_SPACE_SEL_ITER:
+            case H5I_NTYPES:
+            default:
+              return FAIL;
+        } /* end switch */
+    } /* end if */
+
+    return ret_value;
+} /* end UD_hard_create() */
+
+/* Traverse a hard link by opening the object */
+static hid_t
+UD_hard_traverse_deprec(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
+    const void *udata, size_t udata_size, hid_t H5_ATTR_UNUSED lapl_id,
+    hid_t H5_ATTR_UNUSED dxpl_id)
+{
+    haddr_t addr;
+    hid_t ret_value = -1;
+
+    if(udata_size != sizeof(haddr_t))
+        return FAIL;
+
+    addr = *((const haddr_t *) udata);
+
+    ret_value = H5Oopen_by_addr(cur_group, addr); /* If this fails, our return value will be negative. */
+
+    return ret_value;
+} /* end UD_hard_traverse() */
+
+/* UD_hard_delete decrements the object's reference count */
+static herr_t
+UD_hard_delete_deprec(const char H5_ATTR_UNUSED * link_name, hid_t file, const void *udata,
+    size_t udata_size)
+{
+    haddr_t addr;
+    hid_t target_obj = -1;
+    herr_t ret_value = 0;
+
+    if(udata_size != sizeof(haddr_t)) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+    addr = *((const haddr_t *) udata);
+
+    /* Open the object this link points to */
+    target_obj= H5Oopen_by_addr(file, addr);
+    if(target_obj < 0) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+    /* Decrement the reference count of the target object */
+    if(H5Odecr_refcount(target_obj) < 0) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+done:
+    /* Close the target object if we opened it */
+    if(target_obj >= 0) {
+        switch(H5Iget_type(target_obj)) {
+            case H5I_GROUP:
+                if(H5Gclose(target_obj) < 0)
+                    ret_value = -1;
+                break;
+
+            case H5I_DATASET:
+                if(H5Dclose(target_obj) < 0)
+                    ret_value = -1;
+                break;
+
+            case H5I_DATATYPE:
+                if(H5Tclose(target_obj) < 0)
+                    ret_value = -1;
+                break;
+
+            case H5I_MAP:
+                /* TODO: Not supported in native file format yet */
+
+            case H5I_UNINIT:
+            case H5I_BADID:
+            case H5I_FILE:
+            case H5I_DATASPACE:
+            case H5I_ATTR:
+            case H5I_VFL:
+            case H5I_VOL:
+            case H5I_GENPROP_CLS:
+            case H5I_GENPROP_LST:
+            case H5I_ERROR_CLASS:
+            case H5I_ERROR_MSG:
+            case H5I_ERROR_STACK:
+            case H5I_SPACE_SEL_ITER:
+            case H5I_NTYPES:
+            default:
+                return FAIL;
+        } /* end switch */
+    } /* end if */
+
+    return ret_value;
+} /* end UD_hard_delete() */
+
 static int
 ud_hard_links_deprec(hid_t fapl)
 {
@@ -2738,7 +2932,7 @@ ud_hard_links_deprec(hid_t fapl)
     if(H5Lis_registered((H5L_type_t)UD_HARD_TYPE) != FALSE) TEST_ERROR
 
     /* Register "user-defined hard links" with the library */
-    if(H5Lregister(UD_hard_class) < 0) TEST_ERROR
+    if(H5Lregister(UD_hard_class_deprec) < 0) TEST_ERROR
 
     /* Check that UD hard links are now registered */
     if(H5Lis_registered(H5L_TYPE_EXTERNAL) != TRUE) TEST_ERROR
@@ -2753,7 +2947,7 @@ ud_hard_links_deprec(hid_t fapl)
     if(H5Gclose(gid) < 0) TEST_ERROR
 
     /* Create a user-defined "hard link" to the group using the address we got
-     * from H5Lget_info2 */
+     * from H5Lget_info1 */
     if(H5Lcreate_ud(fid, "ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.address), (size_t)sizeof(haddr_t), H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
 
     /* Close and re-open file to ensure that data is written to disk */
@@ -2856,7 +3050,7 @@ ud_link_reregister_deprec(hid_t fapl)
     if(H5Lis_registered((H5L_type_t)UD_HARD_TYPE) != FALSE) TEST_ERROR
 
     /* Register "user-defined hard links" with the library */
-    if(H5Lregister(UD_hard_class) < 0) TEST_ERROR
+    if(H5Lregister(UD_hard_class_deprec) < 0) TEST_ERROR
 
     /* Check that UD hard links are registered */
     if(H5Lis_registered((H5L_type_t)UD_HARD_TYPE) != TRUE) TEST_ERROR
@@ -2931,7 +3125,7 @@ ud_link_reregister_deprec(hid_t fapl)
     /* What a mess! Re-register user-defined links to clean up the
      * reference counts.  We shouldn't actually need to unregister the
      * other link type */
-    if(H5Lregister(UD_hard_class) < 0) FAIL_STACK_ERROR
+    if(H5Lregister(UD_hard_class_deprec) < 0) FAIL_STACK_ERROR
     if(H5Lis_registered((H5L_type_t)UD_HARD_TYPE) != TRUE) FAIL_STACK_ERROR
 
     /* Ensure we can open the group through the UD link (now that UD hard
@@ -2997,7 +3191,7 @@ ud_callbacks_deprec(hid_t fapl, hbool_t new_format)
     /* Hit two birds with one stone: register UD hard links from previous
      * test to check that having two UD links registered at once presents
      * no problems. */
-    if(H5Lregister(UD_hard_class) < 0) TEST_ERROR
+    if(H5Lregister(UD_hard_class_deprec) < 0) TEST_ERROR
 
     /* Register user-defined link class.  This is the one we'll actually be using. */
     if(H5Lregister(UD_cb_class) < 0) TEST_ERROR
@@ -4663,6 +4857,792 @@ error:
 
     return FAIL;
 } /* end delete_by_idx_old_deprec() */
+
+/*-------------------------------------------------------------------------
+ * Function:    link_iterate_deprec_cb
+ *
+ * Purpose:     Callback routine for iterating over links in group
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+link_iterate_deprec_cb(hid_t group_id, const char *link_name, const H5L_info1_t *info,
+    void *_op_data)
+{
+    link_iter_info_t *op_data = (link_iter_info_t *)_op_data;   /* User data */
+    char objname[NAME_BUF_SIZE]; /* Object name */
+    H5L_info1_t my_info;         /* Local link info */
+
+    /* Increment # of times the callback was called */
+    op_data->ncalled++;
+
+    /* Get the link information directly to compare */
+    if(H5Lget_info1(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
+        return H5_ITER_ERROR;
+
+    /* Check more things for link iteration (vs. group iteration) */
+    if(info) {
+        /* Check for correct order of iteration */
+        /* (if we are operating in increasing or decreasing order) */
+        if(op_data->order != H5_ITER_NATIVE)
+            if(info->corder != op_data->curr)
+                return H5_ITER_ERROR;
+
+        /* Compare link info structs */
+        if(info->type != my_info.type)
+            return H5_ITER_ERROR;
+        if(info->corder_valid != my_info.corder_valid)
+            return H5_ITER_ERROR;
+        if(info->corder != my_info.corder)
+            return H5_ITER_ERROR;
+        if(info->cset != my_info.cset)
+            return H5_ITER_ERROR;
+        if(H5F_addr_ne(info->u.address, my_info.u.address))
+            return H5_ITER_ERROR;
+    } /* end if */
+
+    /* Verify name of link */
+    HDsnprintf(objname, sizeof(objname), "filler %02u", (unsigned)my_info.corder);
+    if(HDstrcmp(link_name, objname))
+        return H5_ITER_ERROR;
+
+    /* Check if we've visited this link before */
+    if((size_t)op_data->curr >= op_data->max_visit)
+        return H5_ITER_ERROR;
+    if(op_data->visited[op_data->curr])
+        return H5_ITER_ERROR;
+    op_data->visited[op_data->curr] = TRUE;
+
+    /* Advance to next value, in correct direction */
+    if(op_data->order != H5_ITER_DEC)
+        op_data->curr++;
+    else
+        op_data->curr--;
+
+    /* Check for stopping in the middle of iterating */
+    if(op_data->stop > 0)
+        if(--op_data->stop == 0)
+            return CORDER_ITER_STOP;
+
+    return H5_ITER_CONT;
+} /* end link_iterate_deprec_cb() */
+
+/*-------------------------------------------------------------------------
+ * Function:    group_iterate_deprec_cb
+ *
+ * Purpose:     Callback routine for iterating over links in group with
+ *              H5Giterate()
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+group_iterate_deprec_cb(hid_t group_id, const char *link_name, void *_op_data)
+{
+    return link_iterate_deprec_cb(group_id, link_name, NULL, _op_data);
+} /* end group_iterate_deprec_cb() */
+
+/*-------------------------------------------------------------------------
+ * Function:    link_iterate_fail_deprec_cb
+ *
+ * Purpose:     Callback routine for iterating over links in group that
+ *              always returns failure
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+link_iterate_fail_deprec_cb(hid_t H5_ATTR_UNUSED group_id, const char H5_ATTR_UNUSED *link_name,
+    const H5L_info1_t H5_ATTR_UNUSED *info, void H5_ATTR_UNUSED *_op_data)
+{
+    return H5_ITER_ERROR;
+} /* end link_iterate_fail_deprec_cb() */
+
+/*-------------------------------------------------------------------------
+ * Function:    link_iterate_check_deprec
+ *
+ * Purpose:     Check iteration over links in a group
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+link_iterate_check_deprec(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
+    unsigned max_links, link_iter_info_t *iter_info)
+{
+    unsigned    v;                      /* Local index variable */
+    hsize_t     skip;                   /* # of links to skip in group */
+    int         gskip;                  /* # of links to skip in group, with H5Giterate */
+    herr_t      ret;                    /* Generic return value */
+
+    /* Iterate over links in group */
+    iter_info->nskipped = (unsigned)(skip = 0);
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Literate1(group_id, idx_type, order, &skip, link_iterate_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(skip != max_links) TEST_ERROR
+    for(v = 0; v < max_links; v++)
+        if(iter_info->visited[v] == FALSE) TEST_ERROR
+
+    /* Iterate over links in group, with H5Giterate */
+    iter_info->nskipped = (unsigned)(gskip = 0);
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Giterate(group_id, ".", &gskip, group_iterate_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(gskip != (int)max_links) TEST_ERROR
+    for(v = 0; v < max_links; v++)
+        if(iter_info->visited[v] == FALSE) TEST_ERROR
+
+    /* Skip over some links in group */
+    iter_info->nskipped = (unsigned)(skip = max_links / 2);
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = (int64_t)(order != H5_ITER_DEC ? skip : ((max_links - 1) - skip));
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Literate1(group_id, idx_type, order, &skip, link_iterate_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(skip != max_links) TEST_ERROR
+    if(order == H5_ITER_INC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v + (max_links / 2)] == FALSE) TEST_ERROR
+    } /* end if */
+    else if(order == H5_ITER_DEC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v] == FALSE) TEST_ERROR
+    } /* end if */
+    else {
+        unsigned nvisit = 0;        /* # of links visited */
+
+        HDassert(order == H5_ITER_NATIVE);
+        for(v = 0; v < max_links; v++)
+            if(iter_info->visited[v] == TRUE)
+                nvisit++;
+
+        if(nvisit != (max_links / 2)) TEST_ERROR
+    } /* end else */
+
+    /* Skip over some links in group, with H5Giterate */
+    iter_info->nskipped = (unsigned)(gskip = (int)(max_links / 2));
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? (unsigned)gskip : ((max_links - 1) - (unsigned)gskip);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Giterate(group_id, ".", &gskip, group_iterate_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(gskip != (int)max_links) TEST_ERROR
+    if(order == H5_ITER_INC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v + (max_links / 2)] == FALSE) TEST_ERROR
+    } /* end if */
+    else if(order == H5_ITER_DEC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v] == FALSE) TEST_ERROR
+    } /* end if */
+    else {
+        unsigned nvisit = 0;        /* # of links visited */
+
+        HDassert(order == H5_ITER_NATIVE);
+        for(v = 0; v < max_links; v++)
+            if(iter_info->visited[v] == TRUE)
+                nvisit++;
+
+        if(nvisit != (max_links / 2)) TEST_ERROR
+    } /* end else */
+
+    /* Iterate over links in group, stopping in the middle */
+    iter_info->nskipped = (unsigned)(skip = 0);
+    iter_info->order = order;
+    iter_info->stop = 3;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if((ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_deprec_cb, iter_info)) < 0) TEST_ERROR
+    if(ret != CORDER_ITER_STOP) TEST_ERROR
+    if(iter_info->ncalled != 3) TEST_ERROR
+
+    /* Iterate over links in group, stopping in the middle, with H5Giterate() */
+    iter_info->nskipped = (unsigned)(gskip = 0);
+    iter_info->order = order;
+    iter_info->stop = 3;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if((ret = H5Giterate(group_id, ".", &gskip, group_iterate_deprec_cb, iter_info)) < 0) TEST_ERROR
+    if(ret != CORDER_ITER_STOP) TEST_ERROR
+    if(iter_info->ncalled != 3) TEST_ERROR
+
+    /* Check for iteration routine indicating failure */
+    skip = 0;
+    H5E_BEGIN_TRY {
+        ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_fail_deprec_cb, NULL);
+    } H5E_END_TRY;
+    if(ret >= 0) TEST_ERROR
+
+    /* Success */
+    return SUCCEED;
+
+error:
+    return FAIL;
+} /* end link_iterate_check_deprec() */
+
+/*-------------------------------------------------------------------------
+ * Function:    link_iterate_deprec
+ *
+ * Purpose:     Create a group with creation order indices and test iterating over
+ *              links by index.
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *
+ * Programmer:  Quincey Koziol
+ *              Tuesday, November 14, 2006
+ *
+ *-------------------------------------------------------------------------
+ */
+static int
+link_iterate_deprec(hid_t fapl)
+{
+    hid_t    file_id = (-1);     /* File ID */
+    hid_t    group_id = (-1);    /* Group ID */
+    hid_t       gcpl_id = (-1);     /* Group creation property list ID */
+    H5_index_t idx_type;               /* Type of index to operate on */
+    H5_iter_order_t order;              /* Order within in the index */
+    unsigned    use_index;              /* Use index on creation order values */
+    unsigned    max_compact;            /* Maximum # of links to store in group compactly */
+    unsigned    min_dense;              /* Minimum # of links to store in group "densely" */
+    char        objname[NAME_BUF_SIZE]; /* Object name */
+    char        filename[NAME_BUF_SIZE];/* File name */
+    link_iter_info_t iter_info;         /* Iterator info */
+    hbool_t     *visited = NULL;        /* Array of flags for visiting links */
+    hsize_t     skip;                   /* # of links to skip in group */
+    unsigned    u;                      /* Local index variable */
+    herr_t      ret;                    /* Generic return value */
+
+    /* Create group creation property list */
+    if((gcpl_id = H5Pcreate(H5P_GROUP_CREATE)) < 0) TEST_ERROR
+
+    /* Query the group creation properties */
+    if(H5Pget_link_phase_change(gcpl_id, &max_compact, &min_dense) < 0) TEST_ERROR
+
+    /* Allocate the "visited link" array */
+    iter_info.max_visit = max_compact * 2;
+    if(NULL == (visited = (hbool_t *)HDmalloc(sizeof(hbool_t) * iter_info.max_visit))) TEST_ERROR
+    iter_info.visited = visited;
+
+    /* Loop over operating on different indices on link fields */
+    for(idx_type = H5_INDEX_NAME; idx_type <= H5_INDEX_CRT_ORDER; idx_type++) {
+        /* Loop over operating in different orders */
+        for(order = H5_ITER_INC; order <=H5_ITER_NATIVE; order++) {
+            /* Loop over using index for creation order value */
+            for(use_index = FALSE; use_index <= TRUE; use_index++) {
+                /* Print appropriate test message */
+                if(idx_type == H5_INDEX_CRT_ORDER) {
+                    if(order == H5_ITER_INC) {
+                        if(use_index)
+                            TESTING("iterating over links by creation order index in increasing order w/creation order index using deprecated routines")
+                        else
+                            TESTING("iterating over links by creation order index in increasing order w/o creation order index using deprecated routines")
+                    } /* end if */
+                    else if(order == H5_ITER_DEC) {
+                        if(use_index)
+                            TESTING("iterating over links by creation order index in decreasing order w/creation order index using deprecated routines")
+                        else
+                            TESTING("iterating over links by creation order index in decreasing order w/o creation order index using deprecated routines")
+                    } /* end else */
+                    else {
+                        HDassert(order == H5_ITER_NATIVE);
+                        if(use_index)
+                            TESTING("iterating over links by creation order index in native order w/creation order index using deprecated routines")
+                        else
+                            TESTING("iterating over links by creation order index in native order w/o creation order index using deprecated routines")
+                    } /* end else */
+                } /* end if */
+                else {
+                    if(order == H5_ITER_INC) {
+                        if(use_index)
+                            TESTING("iterating over links by name index in increasing order w/creation order index using deprecated routines")
+                        else
+                            TESTING("iterating over links by name index in increasing order w/o creation order index using deprecated routines")
+                    } /* end if */
+                    else if(order == H5_ITER_DEC) {
+                        if(use_index)
+                            TESTING("iterating over links by name index in decreasing order w/creation order index using deprecated routines")
+                        else
+                            TESTING("iterating over links by name index in decreasing order w/o creation order index using deprecated routines")
+                    } /* end else */
+                    else {
+                        HDassert(order == H5_ITER_NATIVE);
+                        if(use_index)
+                            TESTING("iterating over links by name index in native order w/creation order index using deprecated routines")
+                        else
+                            TESTING("iterating over links by name index in native order w/o creation order index using deprecated routines")
+                    } /* end else */
+                } /* end else */
+
+                /* Create file */
+                h5_fixname(FILENAME[0], fapl, filename, sizeof filename);
+                if((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0) TEST_ERROR
+
+                /* Set creation order tracking & indexing on group */
+                if(H5Pset_link_creation_order(gcpl_id, (H5P_CRT_ORDER_TRACKED | (use_index ? H5P_CRT_ORDER_INDEXED : (unsigned)0))) < 0) TEST_ERROR
+
+                /* Create group with creation order tracking on */
+                if((group_id = H5Gcreate2(file_id, CORDER_GROUP_NAME, H5P_DEFAULT, gcpl_id, H5P_DEFAULT)) < 0) TEST_ERROR
+
+                /* Check for iteration on empty group */
+                /* (should be OK) */
+                if(H5Literate1(group_id, idx_type, order, NULL, link_iterate_deprec_cb, NULL) < 0) TEST_ERROR
+
+                /* Create several links, up to limit of compact form */
+                for(u = 0; u < max_compact; u++) {
+                    hid_t group_id2;            /* Group ID */
+
+                    /* Make name for link */
+                    HDsnprintf(objname, sizeof(objname), "filler %02u", u);
+
+                    /* Create hard link, with group object */
+                    if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
+                    if(H5Gclose(group_id2) < 0) TEST_ERROR
+                } /* end for */
+
+                /* Verify state of group (compact) */
+                if(H5G__has_links_test(group_id, NULL) != TRUE) TEST_ERROR
+
+                /* Check for out of bound iteration on compact group */
+                skip = (hsize_t)u;
+                H5E_BEGIN_TRY {
+                    ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_deprec_cb, NULL);
+                } H5E_END_TRY;
+                if(ret >= 0) TEST_ERROR
+
+                /* Test iteration over links in compact group */
+                if(link_iterate_check_deprec(group_id, idx_type, order, u, &iter_info) < 0) TEST_ERROR
+
+                /* Create more links, to push group into dense form */
+                for(; u < (max_compact * 2); u++) {
+                    hid_t group_id2;            /* Group ID */
+
+                    /* Make name for link */
+                    HDsnprintf(objname, sizeof(objname), "filler %02u", u);
+
+                    /* Create hard link, with group object */
+                    if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
+                    if(H5Gclose(group_id2) < 0) TEST_ERROR
+                } /* end for */
+
+                /* Verify state of group (dense) */
+                if(H5G__is_new_dense_test(group_id) != TRUE) TEST_ERROR
+
+                /* Check for out of bound iteration on dense group */
+                skip = (hsize_t)u;
+                H5E_BEGIN_TRY {
+                    ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_deprec_cb, NULL);
+                } H5E_END_TRY;
+                if(ret >= 0) TEST_ERROR
+
+                /* Test iteration over links in dense group */
+                if(link_iterate_check_deprec(group_id, idx_type, order, u, &iter_info) < 0) TEST_ERROR
+
+
+                /* Close the group */
+                if(H5Gclose(group_id) < 0) TEST_ERROR
+
+                /* Close the file */
+                if(H5Fclose(file_id) < 0) TEST_ERROR
+
+                PASSED();
+            } /* end for */
+        } /* end for */
+    } /* end for */
+
+    /* Close the group creation property list */
+    if(H5Pclose(gcpl_id) < 0) TEST_ERROR
+
+    /* Free resources */
+    if(visited)
+        HDfree(visited);
+
+    return SUCCEED;
+
+error:
+    /* Free resources */
+    H5E_BEGIN_TRY {
+        H5Pclose(gcpl_id);
+        H5Gclose(group_id);
+        H5Fclose(file_id);
+    } H5E_END_TRY;
+
+    if(visited)
+        HDfree(visited);
+
+    return FAIL;
+} /* end link_iterate_deprec() */
+
+/*-------------------------------------------------------------------------
+ * Function:    link_iterate_old_deprec_cb
+ *
+ * Purpose:     Callback routine for iterating over [old] links in group
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+link_iterate_old_deprec_cb(hid_t group_id, const char *link_name, const H5L_info1_t *info, void *_op_data)
+{
+    link_iter_info_t *op_data = (link_iter_info_t *)_op_data;   /* User data */
+    char objname[NAME_BUF_SIZE]; /* Object name */
+    H5L_info1_t my_info;         /* Local link info */
+
+    /* Increment # of times the callback was called */
+    op_data->ncalled++;
+
+    /* Get the link information directly to compare */
+    if(H5Lget_info1(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
+        return H5_ITER_ERROR;
+
+    /* Check more things for link iteration (vs. group iteration) */
+    if(info) {
+        /* Compare link info structs */
+        if(info->type != my_info.type)
+            return H5_ITER_ERROR;
+        if(info->corder_valid != my_info.corder_valid)
+            return H5_ITER_ERROR;
+        if(info->corder != my_info.corder)
+            return H5_ITER_ERROR;
+        if(info->cset != my_info.cset)
+            return H5_ITER_ERROR;
+        if(H5F_addr_ne(info->u.address, my_info.u.address))
+            return H5_ITER_ERROR;
+    } /* end if */
+
+    /* Verify name of link */
+    HDsnprintf(objname, sizeof(objname), "filler %02u", (info ? (unsigned)op_data->curr : (unsigned)((op_data->ncalled - 1) + op_data->nskipped)));
+    if(HDstrcmp(link_name, objname))
+        return H5_ITER_ERROR;
+
+    /* Check if we've visited this link before */
+    if((size_t)op_data->curr >= op_data->max_visit)
+        return H5_ITER_ERROR;
+    if(op_data->visited[op_data->curr])
+        return H5_ITER_ERROR;
+    op_data->visited[op_data->curr] = TRUE;
+
+    /* Advance to next value, in correct direction */
+    if(op_data->order != H5_ITER_DEC)
+        op_data->curr++;
+    else
+        op_data->curr--;
+
+    /* Check for stopping in the middle of iterating */
+    if(op_data->stop > 0)
+        if(--op_data->stop == 0)
+            return CORDER_ITER_STOP;
+
+    return H5_ITER_CONT;
+} /* end link_iterate_old_deprec_cb() */
+
+/*-------------------------------------------------------------------------
+ * Function:    group_iterate_old_deprec_cb
+ *
+ * Purpose:     Callback routine for iterating over links in group with
+ *              H5Giterate()
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+group_iterate_old_deprec_cb(hid_t group_id, const char *link_name, void *_op_data)
+{
+    return link_iterate_old_deprec_cb(group_id, link_name, NULL, _op_data);
+} /* end group_iterate_old_deprec_cb() */
+
+/*-------------------------------------------------------------------------
+ * Function:    link_iterate_old_check_deprec
+ *
+ * Purpose:     Check iteration over [old] links in a group
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+link_iterate_old_check_deprec(hid_t group_id, H5_iter_order_t order, unsigned max_links, link_iter_info_t *iter_info)
+{
+    unsigned    v;                      /* Local index variable */
+    hsize_t     skip;                   /* # of links to skip in group */
+    int         gskip;                  /* # of links to skip in group, with H5Giterate */
+    herr_t      ret;                    /* Generic return value */
+
+    /* Iterate over links in group */
+    iter_info->nskipped = (unsigned)(skip = 0);
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(skip != max_links) TEST_ERROR
+    for(v = 0; v < max_links; v++)
+        if(iter_info->visited[v] == FALSE) TEST_ERROR
+
+    /* Iterate over links in group, with H5Giterate */
+    iter_info->nskipped = (unsigned)(gskip = 0);
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Giterate(group_id, ".", &gskip, group_iterate_old_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(gskip != (int)max_links) TEST_ERROR
+    for(v = 0; v < max_links; v++)
+        if(iter_info->visited[v] == FALSE) TEST_ERROR
+
+    /* Skip over some links in group */
+    iter_info->nskipped = (unsigned)(skip = max_links / 2);
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = (int64_t)(order != H5_ITER_DEC ? skip : ((max_links - 1) - skip));
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(skip != max_links) TEST_ERROR
+    if(order == H5_ITER_INC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v + (max_links / 2)] == FALSE) TEST_ERROR
+    } /* end if */
+    else if(order == H5_ITER_DEC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v] == FALSE) TEST_ERROR
+    } /* end if */
+    else {
+        unsigned nvisit = 0;        /* # of links visited */
+
+        HDassert(order == H5_ITER_NATIVE);
+        for(v = 0; v < max_links; v++)
+            if(iter_info->visited[v] == TRUE)
+                nvisit++;
+
+        if(nvisit != (max_links / 2)) TEST_ERROR
+    } /* end else */
+
+    /* Skip over some links in group, with H5Giterate */
+    iter_info->nskipped = (unsigned)(gskip = (int)(max_links / 2));
+    iter_info->order = order;
+    iter_info->stop = -1;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? (unsigned)gskip : ((max_links - 1) - (unsigned)gskip);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if(H5Giterate(group_id, ".", &gskip, group_iterate_old_deprec_cb, iter_info) < 0) TEST_ERROR
+
+    /* Verify that we visited all the links */
+    if(gskip != (int)max_links) TEST_ERROR
+    if(order == H5_ITER_INC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v + (max_links / 2)] == FALSE) TEST_ERROR
+    } /* end if */
+    else if(order == H5_ITER_DEC) {
+        for(v = 0; v < (max_links / 2); v++)
+            if(iter_info->visited[v] == FALSE) TEST_ERROR
+    } /* end if */
+    else {
+        unsigned nvisit = 0;        /* # of links visited */
+
+        HDassert(order == H5_ITER_NATIVE);
+        for(v = 0; v < max_links; v++)
+            if(iter_info->visited[v] == TRUE)
+                nvisit++;
+
+        if(nvisit != (max_links / 2)) TEST_ERROR
+    } /* end else */
+
+    /* Iterate over links in group, stopping in the middle */
+    iter_info->nskipped = (unsigned)(skip = 0);
+    iter_info->order = order;
+    iter_info->stop = 3;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if((ret = H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_deprec_cb, iter_info)) < 0) TEST_ERROR
+    if(ret != CORDER_ITER_STOP) TEST_ERROR
+    if(iter_info->ncalled != 3) TEST_ERROR
+
+    /* Iterate over links in group, stopping in the middle, with H5Giterate() */
+    iter_info->nskipped = (unsigned)(gskip = 0);
+    iter_info->order = order;
+    iter_info->stop = 3;
+    iter_info->ncalled = 0;
+    iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
+    HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
+    if((ret = H5Giterate(group_id, ".", &gskip, group_iterate_old_deprec_cb, iter_info)) < 0) TEST_ERROR
+    if(ret != CORDER_ITER_STOP) TEST_ERROR
+    if(iter_info->ncalled != 3) TEST_ERROR
+
+    /* Check for iteration routine indicating failure */
+    skip = 0;
+    H5E_BEGIN_TRY {
+        ret = H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_fail_deprec_cb, NULL);
+    } H5E_END_TRY;
+    if(ret >= 0) TEST_ERROR
+
+    /* Check for iteration w/bad location ID */
+    skip = 0;
+    H5E_BEGIN_TRY {
+        ret = H5Literate1((hid_t)(-1), H5_INDEX_NAME, order, &skip, link_iterate_fail_deprec_cb, NULL);
+    } H5E_END_TRY;
+    if(ret >= 0) TEST_ERROR
+
+    H5E_BEGIN_TRY {
+        ret = H5Giterate((hid_t)(-1), ".", &gskip, group_iterate_old_deprec_cb, iter_info);
+    } H5E_END_TRY;
+    if(ret >= 0) TEST_ERROR
+
+    /* Success */
+    return SUCCEED;
+
+error:
+    return FAIL;
+} /* end link_iterate_old_check_deprec() */
+
+/*-------------------------------------------------------------------------
+ * Function:    link_iterate_old_deprec
+ *
+ * Purpose:     Create a "old-style" group and test iterating over links by index.
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+link_iterate_old_deprec(hid_t fapl)
+{
+    hid_t       file_id = -1;     /* File ID */
+    hid_t       group_id = -1;    /* Group ID */
+    H5_iter_order_t order;              /* Order within in the index */
+    char        objname[NAME_BUF_SIZE]; /* Object name */
+    char        filename[NAME_BUF_SIZE];/* File name */
+    link_iter_info_t iter_info;         /* Iterator info */
+    hbool_t     *visited = NULL;        /* Array of flags for visiting links */
+    hsize_t     skip;                   /* # of links to skip in group */
+    unsigned    u;                      /* Local index variable */
+    herr_t      ret;                    /* Generic return value */
+
+    /* Allocate the "visited link" array */
+    iter_info.max_visit = CORDER_NLINKS;
+    if(NULL == (visited = (hbool_t *)HDmalloc(sizeof(hbool_t) * iter_info.max_visit))) TEST_ERROR
+    iter_info.visited = visited;
+
+    /* Loop over operating in different orders */
+    for(order = H5_ITER_INC; order <=H5_ITER_NATIVE; order++) {
+        /* Print appropriate test message */
+        if(order == H5_ITER_INC) {
+            TESTING("iterating over links by name index in increasing order in old-style group using deprecated routines")
+        } /* end if */
+        else if(order == H5_ITER_DEC) {
+            TESTING("iterating over links by name index in decreasing order in old-style group using deprecated routines")
+        } /* end else */
+        else {
+            HDassert(order == H5_ITER_NATIVE);
+            TESTING("iterating over links by name index in native order in old-style group using deprecated routines")
+        } /* end else */
+
+        /* Create file */
+        h5_fixname(FILENAME[0], fapl, filename, sizeof filename);
+        if((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, fapl)) < 0) TEST_ERROR
+
+        /* Create group with creation order tracking on */
+        if((group_id = H5Gcreate2(file_id, CORDER_GROUP_NAME, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
+
+        /* Check for iteration on empty group */
+        /* (should be OK) */
+        if(H5Literate1(group_id, H5_INDEX_NAME, order, NULL, link_iterate_old_deprec_cb, NULL) < 0) TEST_ERROR
+
+        /* Create several links */
+        for(u = 0; u < CORDER_NLINKS; u++) {
+            hid_t group_id2;            /* Group ID */
+
+            /* Make name for link */
+            HDsnprintf(objname, sizeof(objname), "filler %02u", u);
+
+            /* Create hard link, with group object */
+            if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
+            if(H5Gclose(group_id2) < 0) TEST_ERROR
+        } /* end for */
+
+        /* Verify state of group (symbol table) */
+        if(H5G__has_stab_test(group_id) != TRUE) TEST_ERROR
+
+        /* Check for out of bound iteration on old-style group */
+        skip = (hsize_t)u;
+        H5E_BEGIN_TRY {
+            ret = H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_deprec_cb, NULL);
+        } H5E_END_TRY;
+        if(ret >= 0) TEST_ERROR
+
+        /* Check for iteration on creation order */
+        /* (should fail) */
+        skip = (hsize_t)0;
+        H5E_BEGIN_TRY {
+            ret = H5Literate1(group_id, H5_INDEX_CRT_ORDER, order, &skip, link_iterate_old_deprec_cb, NULL);
+        } H5E_END_TRY;
+        if(ret >= 0) TEST_ERROR
+
+        /* Test iteration over links in group */
+        if(link_iterate_old_check_deprec(group_id, order, u, &iter_info) < 0) TEST_ERROR
+
+        /* Close the group */
+        if(H5Gclose(group_id) < 0) TEST_ERROR
+
+        /* Close the file */
+        if(H5Fclose(file_id) < 0) TEST_ERROR
+
+        PASSED();
+    } /* end for */
+
+    /* Free resources */
+    if(visited)
+        HDfree(visited);
+
+    return SUCCEED;
+
+error:
+    /* Free resources */
+    H5E_BEGIN_TRY {
+        H5Gclose(group_id);
+        H5Fclose(file_id);
+    } H5E_END_TRY;
+
+    if(visited)
+        HDfree(visited);
+
+    return FAIL;
+} /* end link_iterate_old_deprec() */
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 
@@ -10107,19 +11087,27 @@ static herr_t
 UD_hard_create(const char H5_ATTR_UNUSED * link_name, hid_t loc_group, const void *udata,
     size_t udata_size, hid_t H5_ATTR_UNUSED lcpl_id)
 {
+    const uint8_t *p = (const uint8_t *)udata; /* Pointer into token   */
     haddr_t addr;
+    size_t addr_len;
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
-    if(udata_size != sizeof(haddr_t)) {
+    if(udata_size != H5VL_MAX_TOKEN_SIZE) {
         ret_value = -1;
         goto done;
     } /* end if */
 
-    addr = *((const haddr_t *)udata);
+    if(H5VL_native_get_file_addr_len(loc_group, &addr_len) < 0) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+    /* Convert from VOL token to address */
+    H5F_addr_decode_len(addr_len, &p, &addr);
 
     /* Open the object this link points to */
-    target_obj= H5Oopen_by_addr(loc_group, addr);
+    target_obj = H5Oopen_by_addr(loc_group, addr);
     if(target_obj < 0) {
         ret_value = -1;
         goto done;
@@ -10181,13 +11169,19 @@ UD_hard_traverse(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t H5_ATTR_UNUSED lapl_id,
     hid_t H5_ATTR_UNUSED dxpl_id)
 {
+    const uint8_t *p = (const uint8_t *)udata; /* Pointer into token   */
     haddr_t addr;
+    size_t addr_len;
     hid_t ret_value = -1;
 
-    if(udata_size != sizeof(haddr_t))
+    if(udata_size != H5VL_MAX_TOKEN_SIZE)
         return FAIL;
 
-    addr = *((const haddr_t *) udata);
+    if(H5VL_native_get_file_addr_len(cur_group, &addr_len) < 0)
+        return FAIL;
+
+    /* Convert from VOL token to address */
+    H5F_addr_decode_len(addr_len, &p, &addr);
 
     ret_value = H5Oopen_by_addr(cur_group, addr); /* If this fails, our return value will be negative. */
 
@@ -10199,19 +11193,27 @@ static herr_t
 UD_hard_delete(const char H5_ATTR_UNUSED * link_name, hid_t file, const void *udata,
     size_t udata_size)
 {
+    const uint8_t *p = (const uint8_t *)udata; /* Pointer into token   */
     haddr_t addr;
+    size_t addr_len;
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
-    if(udata_size != sizeof(haddr_t)) {
+    if(udata_size != H5VL_MAX_TOKEN_SIZE) {
         ret_value = -1;
         goto done;
     } /* end if */
 
-    addr = *((const haddr_t *) udata);
+    if(H5VL_native_get_file_addr_len(file, &addr_len) < 0) {
+        ret_value = -1;
+        goto done;
+    } /* end if */
+
+    /* Convert from VOL token to address */
+    H5F_addr_decode_len(addr_len, &p, &addr);
 
     /* Open the object this link points to */
-    target_obj= H5Oopen_by_addr(file, addr);
+    target_obj = H5Oopen_by_addr(file, addr);
     if(target_obj < 0) {
         ret_value = -1;
         goto done;
@@ -14446,18 +15448,18 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-link_iterate_cb(hid_t group_id, const char *link_name, const H5L_info1_t *info,
+link_iterate_cb(hid_t group_id, const char *link_name, const H5L_info2_t *info,
     void *_op_data)
 {
     link_iter_info_t *op_data = (link_iter_info_t *)_op_data;   /* User data */
     char objname[NAME_BUF_SIZE]; /* Object name */
-    H5L_info1_t my_info;         /* Local link info */
+    H5L_info2_t my_info;         /* Local link info */
 
     /* Increment # of times the callback was called */
     op_data->ncalled++;
 
     /* Get the link information directly to compare */
-    if(H5Lget_info1(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
+    if(H5Lget_info2(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
         return H5_ITER_ERROR;
 
     /* Check more things for link iteration (vs. group iteration) */
@@ -14477,7 +15479,7 @@ link_iterate_cb(hid_t group_id, const char *link_name, const H5L_info1_t *info,
             return H5_ITER_ERROR;
         if(info->cset != my_info.cset)
             return H5_ITER_ERROR;
-        if(H5F_addr_ne(info->u.address, my_info.u.address))
+        if(HDmemcmp(&info->u.token, &my_info.u.token, H5VL_MAX_TOKEN_SIZE))
             return H5_ITER_ERROR;
     } /* end if */
 
@@ -14539,7 +15541,7 @@ group_iterate_cb(hid_t group_id, const char *link_name, void *_op_data)
  */
 static int
 link_iterate_fail_cb(hid_t H5_ATTR_UNUSED group_id, const char H5_ATTR_UNUSED *link_name,
-    const H5L_info_t H5_ATTR_UNUSED *info, void H5_ATTR_UNUSED *_op_data)
+    const H5L_info2_t H5_ATTR_UNUSED *info, void H5_ATTR_UNUSED *_op_data)
 {
     return H5_ITER_ERROR;
 } /* end link_iterate_fail_cb() */
@@ -14572,7 +15574,7 @@ link_iterate_check(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate2(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -14602,7 +15604,7 @@ link_iterate_check(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     iter_info->ncalled = 0;
     iter_info->curr = (int64_t)(order != H5_ITER_DEC ? skip : ((max_links - 1) - skip));
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate2(group_id, idx_type, order, &skip, link_iterate_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -14664,7 +15666,7 @@ link_iterate_check(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if((ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, iter_info)) < 0) TEST_ERROR
+    if((ret = H5Literate2(group_id, idx_type, order, &skip, link_iterate_cb, iter_info)) < 0) TEST_ERROR
     if(ret != CORDER_ITER_STOP) TEST_ERROR
     if(iter_info->ncalled != 3) TEST_ERROR
 
@@ -14684,7 +15686,7 @@ link_iterate_check(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     /* Check for iteration routine indicating failure */
     skip = 0;
     H5E_BEGIN_TRY {
-        ret = H5Literate(group_id, idx_type, order, &skip, link_iterate_fail_cb, NULL);
+        ret = H5Literate2(group_id, idx_type, order, &skip, link_iterate_fail_cb, NULL);
     } H5E_END_TRY;
     if(ret >= 0) TEST_ERROR
 
@@ -14802,7 +15804,7 @@ link_iterate(hid_t fapl)
 
                 /* Check for iteration on empty group */
                 /* (should be OK) */
-                if(H5Literate1(group_id, idx_type, order, NULL, link_iterate_cb, NULL) < 0) TEST_ERROR
+                if(H5Literate2(group_id, idx_type, order, NULL, link_iterate_cb, NULL) < 0) TEST_ERROR
 
                 /* Create several links, up to limit of compact form */
                 for(u = 0; u < max_compact; u++) {
@@ -14822,7 +15824,7 @@ link_iterate(hid_t fapl)
                 /* Check for out of bound iteration on compact group */
                 skip = (hsize_t)u;
                 H5E_BEGIN_TRY {
-                    ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
+                    ret = H5Literate2(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
@@ -14847,7 +15849,7 @@ link_iterate(hid_t fapl)
                 /* Check for out of bound iteration on dense group */
                 skip = (hsize_t)u;
                 H5E_BEGIN_TRY {
-                    ret = H5Literate1(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
+                    ret = H5Literate2(group_id, idx_type, order, &skip, link_iterate_cb, NULL);
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
@@ -14900,17 +15902,17 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-link_iterate_old_cb(hid_t group_id, const char *link_name, const H5L_info1_t *info, void *_op_data)
+link_iterate_old_cb(hid_t group_id, const char *link_name, const H5L_info2_t *info, void *_op_data)
 {
     link_iter_info_t *op_data = (link_iter_info_t *)_op_data;   /* User data */
     char objname[NAME_BUF_SIZE]; /* Object name */
-    H5L_info1_t my_info;         /* Local link info */
+    H5L_info2_t my_info;         /* Local link info */
 
     /* Increment # of times the callback was called */
     op_data->ncalled++;
 
     /* Get the link information directly to compare */
-    if(H5Lget_info1(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
+    if(H5Lget_info2(group_id, link_name, &my_info, H5P_DEFAULT) < 0)
         return H5_ITER_ERROR;
 
     /* Check more things for link iteration (vs. group iteration) */
@@ -14924,7 +15926,7 @@ link_iterate_old_cb(hid_t group_id, const char *link_name, const H5L_info1_t *in
             return H5_ITER_ERROR;
         if(info->cset != my_info.cset)
             return H5_ITER_ERROR;
-        if(H5F_addr_ne(info->u.address, my_info.u.address))
+        if(HDmemcmp(&info->u.token, &my_info.u.token, H5VL_MAX_TOKEN_SIZE))
             return H5_ITER_ERROR;
     } /* end if */
 
@@ -15000,7 +16002,7 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order, unsigned max_links
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate2(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -15030,7 +16032,7 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order, unsigned max_links
     iter_info->ncalled = 0;
     iter_info->curr = (int64_t)(order != H5_ITER_DEC ? skip : ((max_links - 1) - skip));
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if(H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
+    if(H5Literate2(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info) < 0) TEST_ERROR
 
     /* Verify that we visited all the links */
     if(skip != max_links) TEST_ERROR
@@ -15092,7 +16094,7 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order, unsigned max_links
     iter_info->ncalled = 0;
     iter_info->curr = order != H5_ITER_DEC ? 0 : (max_links - 1);
     HDmemset(iter_info->visited, 0, sizeof(hbool_t) * iter_info->max_visit);
-    if((ret = H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info)) < 0) TEST_ERROR
+    if((ret = H5Literate2(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, iter_info)) < 0) TEST_ERROR
     if(ret != CORDER_ITER_STOP) TEST_ERROR
     if(iter_info->ncalled != 3) TEST_ERROR
 
@@ -15112,14 +16114,14 @@ link_iterate_old_check(hid_t group_id, H5_iter_order_t order, unsigned max_links
     /* Check for iteration routine indicating failure */
     skip = 0;
     H5E_BEGIN_TRY {
-        ret = H5Literate(group_id, H5_INDEX_NAME, order, &skip, link_iterate_fail_cb, NULL);
+        ret = H5Literate2(group_id, H5_INDEX_NAME, order, &skip, link_iterate_fail_cb, NULL);
     } H5E_END_TRY;
     if(ret >= 0) TEST_ERROR
 
     /* Check for iteration w/bad location ID */
     skip = 0;
     H5E_BEGIN_TRY {
-        ret = H5Literate((hid_t)(-1), H5_INDEX_NAME, order, &skip, link_iterate_fail_cb, NULL);
+        ret = H5Literate2((hid_t)(-1), H5_INDEX_NAME, order, &skip, link_iterate_fail_cb, NULL);
     } H5E_END_TRY;
     if(ret >= 0) TEST_ERROR
 
@@ -15189,7 +16191,7 @@ link_iterate_old(hid_t fapl)
 
         /* Check for iteration on empty group */
         /* (should be OK) */
-        if(H5Literate1(group_id, H5_INDEX_NAME, order, NULL, link_iterate_old_cb, NULL) < 0) TEST_ERROR
+        if(H5Literate2(group_id, H5_INDEX_NAME, order, NULL, link_iterate_old_cb, NULL) < 0) TEST_ERROR
 
         /* Create several links */
         for(u = 0; u < CORDER_NLINKS; u++) {
@@ -15209,7 +16211,7 @@ link_iterate_old(hid_t fapl)
         /* Check for out of bound iteration on old-style group */
         skip = (hsize_t)u;
         H5E_BEGIN_TRY {
-            ret = H5Literate1(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, NULL);
+            ret = H5Literate2(group_id, H5_INDEX_NAME, order, &skip, link_iterate_old_cb, NULL);
         } H5E_END_TRY;
         if(ret >= 0) TEST_ERROR
 
@@ -15217,7 +16219,7 @@ link_iterate_old(hid_t fapl)
         /* (should fail) */
         skip = (hsize_t)0;
         H5E_BEGIN_TRY {
-            ret = H5Literate1(group_id, H5_INDEX_CRT_ORDER, order, &skip, link_iterate_old_cb, NULL);
+            ret = H5Literate2(group_id, H5_INDEX_CRT_ORDER, order, &skip, link_iterate_old_cb, NULL);
         } H5E_END_TRY;
         if(ret >= 0) TEST_ERROR
 
@@ -16998,6 +18000,9 @@ main(void)
             /* General tests... (on both old & new format groups */
             nerrors += mklinks(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += cklinks(my_fapl, new_format) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+            nerrors += cklinks_deprec(my_fapl, new_format) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
             nerrors += new_links(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += ck_new_links(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += long_links(my_fapl, new_format) < 0 ? 1 : 0;
@@ -17005,15 +18010,17 @@ main(void)
 
             /* Test new H5L link creation routine */
             nerrors += test_lcpl(my_fapl, new_format);
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+            nerrors += test_lcpl_deprec(my_fapl, new_format);
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
             nerrors += test_move(my_fapl, new_format);
             nerrors += test_copy(my_fapl, new_format);
             nerrors += test_move_preserves(my_fapl, new_format);
 #ifndef H5_NO_DEPRECATED_SYMBOLS
-            nerrors += test_deprec(my_fapl, new_format);
-            nerrors += cklinks_deprec(my_fapl, new_format) < 0 ? 1 : 0;
-            nerrors += test_lcpl_deprec(my_fapl, new_format);
             nerrors += test_move_preserves_deprec(my_fapl, new_format);
+            nerrors += test_deprec(my_fapl, new_format);
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
+
 
             /* tests for external link */
             /* Test external file cache first, so it sees the default efc setting on the fapl
@@ -17042,6 +18049,9 @@ main(void)
                 } /* end else */
 
                 nerrors += external_link_root(my_fapl, new_format) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+                nerrors += external_link_root_deprec(my_fapl, new_format) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
                 nerrors += external_link_path(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_self(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_pingpong(my_fapl, new_format) < 0 ? 1 : 0;
@@ -17049,11 +18059,17 @@ main(void)
                 nerrors += external_link_dangling(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_recursive(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_query(my_fapl, new_format) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+                nerrors += external_link_query_deprec(my_fapl, new_format) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
                 nerrors += external_link_unlink_compact(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_unlink_dense(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_move(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_ride(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_closing(my_fapl, new_format) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+                nerrors += external_link_closing_deprec(my_fapl, new_format) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
                 nerrors += external_link_endian(new_format) < 0 ? 1 : 0;
                 nerrors += external_link_strong(my_fapl, new_format) < 0 ? 1 : 0;
 
@@ -17085,12 +18101,6 @@ main(void)
                 nerrors += external_dont_fail_to_source(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_open_twice(my_fapl, new_format) < 0 ? 1 : 0;
                 nerrors += external_link_with_committed_datatype(my_fapl, new_format) < 0 ? 1 : 0;
-
-#ifndef H5_NO_DEPRECATED_SYMBOLS
-                nerrors += external_link_root_deprec(my_fapl, new_format) < 0 ? 1 : 0;
-                nerrors += external_link_query_deprec(my_fapl, new_format) < 0 ? 1 : 0;
-                nerrors += external_link_closing_deprec(my_fapl, new_format) < 0 ? 1 : 0;
-#endif /* H5_NO_DEPRECATED_SYMBOLS */
             } /* with/without external file cache */
 
             /* These tests assume that external links are a form of UD links,
@@ -17099,20 +18109,26 @@ main(void)
              */
             if(new_format == TRUE) {
                 nerrors += ud_hard_links(fapl2) < 0 ? 1 : 0;              /* requires new format groups */
-                nerrors += ud_link_reregister(fapl2) < 0 ? 1 : 0;         /* requires new format groups */
 #ifndef H5_NO_DEPRECATED_SYMBOLS
                 nerrors += ud_hard_links_deprec(fapl2) < 0 ? 1 : 0;       /* requires new format groups */
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
+                nerrors += ud_link_reregister(fapl2) < 0 ? 1 : 0;         /* requires new format groups */
+#ifndef H5_NO_DEPRECATED_SYMBOLS
                 nerrors += ud_link_reregister_deprec(fapl2) < 0 ? 1 : 0;  /* requires new format groups */
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
             } /* end if */
             nerrors += ud_callbacks(my_fapl, new_format) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+            nerrors += ud_callbacks_deprec(my_fapl, new_format) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
             nerrors += ud_link_errors(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += lapl_udata(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += lapl_nlinks(my_fapl, new_format) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+            nerrors += lapl_nlinks_deprec(my_fapl, new_format) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
             nerrors += linkinfo(my_fapl, new_format) < 0 ? 1 : 0;
 #ifndef H5_NO_DEPRECATED_SYMBOLS
-            nerrors += ud_callbacks_deprec(my_fapl, new_format) < 0 ? 1 : 0;
-            nerrors += lapl_nlinks_deprec(my_fapl, new_format) < 0 ? 1 : 0;
             nerrors += linkinfo_deprec(my_fapl, new_format) < 0 ? 1 : 0;
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
 
@@ -17138,12 +18154,27 @@ main(void)
  *      correct.
  */
         nerrors += corder_create_compact(fapl2) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += corder_create_compact_deprec(fapl2) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += corder_create_dense(fapl2) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += corder_create_dense_deprec(fapl2) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += corder_transition(fapl2) < 0 ? 1 : 0;
         nerrors += corder_delete(fapl2) < 0 ? 1 : 0;
         nerrors += link_info_by_idx(fapl2) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += link_info_by_idx_deprec(fapl2) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += delete_by_idx(fapl2) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += delete_by_idx_deprec(fapl2) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += link_iterate(fapl2) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += link_iterate_deprec(fapl2) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += open_by_idx(fapl2) < 0 ? 1 : 0;
         nerrors += object_info(fapl2) < 0 ? 1 : 0;
         nerrors += group_info(fapl2) < 0 ? 1 : 0;
@@ -17151,20 +18182,20 @@ main(void)
 
         /* Test new API calls on old-style groups */
         nerrors += link_info_by_idx_old(fapl) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += link_info_by_idx_old_deprec(fapl) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += delete_by_idx_old(fapl) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += delete_by_idx_old_deprec(fapl) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += link_iterate_old(fapl) < 0 ? 1 : 0;
+#ifndef H5_NO_DEPRECATED_SYMBOLS
+        nerrors += link_iterate_old_deprec(fapl) < 0 ? 1 : 0;
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
         nerrors += open_by_idx_old(fapl) < 0 ? 1 : 0;
         nerrors += object_info_old(fapl) < 0 ? 1 : 0;
         nerrors += group_info_old(fapl) < 0 ? 1 : 0;
-
-#ifndef H5_NO_DEPRECATED_SYMBOLS
-        nerrors += corder_create_compact_deprec(fapl2) < 0 ? 1 : 0;
-        nerrors += corder_create_dense_deprec(fapl2) < 0 ? 1 : 0;
-        nerrors += link_info_by_idx_deprec(fapl2) < 0 ? 1 : 0;
-        nerrors += link_info_by_idx_old_deprec(fapl) < 0 ? 1 : 0;
-        nerrors += delete_by_idx_deprec(fapl2) < 0 ? 1 : 0;
-        nerrors += delete_by_idx_old_deprec(fapl) < 0 ? 1 : 0;
-#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
         if (minimize_dset_oh) {
             if (H5Pclose(dcpl_g) < 0)

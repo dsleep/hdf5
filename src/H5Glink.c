@@ -290,13 +290,14 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5G_link_to_info(const H5O_link_t *lnk, H5L_info1_t *info)
+H5G_link_to_info(const H5O_loc_t *link_loc, const H5O_link_t *lnk, H5L_info2_t *info)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Sanity check */
+    HDassert(link_loc);
     HDassert(lnk);
 
     /* Get information from the link */
@@ -308,8 +309,16 @@ H5G_link_to_info(const H5O_link_t *lnk, H5L_info1_t *info)
 
         switch(lnk->type) {
             case H5L_TYPE_HARD:
-                info->u.address = lnk->u.hard.addr;
+            {
+                uint8_t *p = NULL;
+
+                /* Serialize the address into a VOL token */
+                HDmemset(&info->u.token, 0, sizeof(H5VL_token_t));
+                p = (uint8_t *)&info->u.token;
+                H5F_addr_encode_len(H5F_SIZEOF_ADDR(link_loc->file), &p, lnk->u.hard.addr);
+
                 break;
+            } /* end case */
 
             case H5L_TYPE_SOFT:
                 info->u.val_size = HDstrlen(lnk->u.soft.name) + 1; /*count the null terminator*/

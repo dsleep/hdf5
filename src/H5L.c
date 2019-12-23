@@ -49,7 +49,7 @@
 
 /* User data for path traversal routine for getting link info by name */
 typedef struct {
-    H5L_info1_t      *linfo;            /* Buffer to return to user */
+    H5L_info2_t      *linfo;            /* Buffer to return to user */
 } H5L_trav_gi_t;
 
 /* User data for path traversal callback to creating a link */
@@ -3146,7 +3146,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5L__get_info_cb(H5G_loc_t H5_ATTR_UNUSED *grp_loc/*in*/, const char H5_ATTR_UNUSED *name,
+H5L__get_info_cb(H5G_loc_t *grp_loc/*in*/, const char H5_ATTR_UNUSED *name,
     const H5O_link_t *lnk, H5G_loc_t H5_ATTR_UNUSED *obj_loc, void *_udata/*in,out*/,
     H5G_own_loc_t *own_loc/*out*/)
 {
@@ -3160,7 +3160,7 @@ H5L__get_info_cb(H5G_loc_t H5_ATTR_UNUSED *grp_loc/*in*/, const char H5_ATTR_UNU
         HGOTO_ERROR(H5E_LINK, H5E_NOTFOUND, FAIL, "name doesn't exist")
 
     /* Get information from the link */
-    if(H5G_link_to_info(lnk, udata->linfo) < 0)
+    if(H5G_link_to_info(grp_loc->oloc, lnk, udata->linfo) < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't get link info")
 
 done:
@@ -3175,9 +3175,9 @@ done:
 /*-------------------------------------------------------------------------
  * Function:	H5L_get_info
  *
- * Purpose:	Returns metadata about a link.
+ * Purpose:	    Returns metadata about a link.
  *
- * Return:	Non-negative on success/Negative on failure
+ * Return:      Non-negative on success/Negative on failure
  *
  * Programmer:	James Laird
  *              Monday, April 17 2006
@@ -3185,7 +3185,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5L_get_info(const H5G_loc_t *loc, const char *name, H5L_info1_t *linfo/*out*/)
+H5L_get_info(const H5G_loc_t *loc, const char *name, H5L_info2_t *linfo/*out*/)
 {
     H5L_trav_gi_t udata;               /* User data for callback */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -3238,7 +3238,7 @@ H5L__get_info_by_idx_cb(H5G_loc_t H5_ATTR_UNUSED *grp_loc/*in*/, const char H5_A
     lnk_copied = TRUE;
 
     /* Get information from the link */
-    if(H5G_link_to_info(&fnd_lnk, udata->linfo) < 0)
+    if(H5G_link_to_info(obj_loc->oloc, &fnd_lnk, udata->linfo) < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't get link info")
 
 done:
@@ -3266,7 +3266,7 @@ done:
  */
 herr_t
 H5L_get_info_by_idx(const H5G_loc_t *loc, const char *name, H5_index_t idx_type,
-    H5_iter_order_t order, hsize_t n, H5L_info1_t *linfo /*out*/)
+    H5_iter_order_t order, hsize_t n, H5L_info2_t *linfo /*out*/)
 {
     H5L_trav_gibi_t udata;              /* User data for callback */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -3519,7 +3519,7 @@ done:
  */
 herr_t
 H5L_iterate(H5G_loc_t *loc, const char *group_name, H5_index_t idx_type,
-    H5_iter_order_t order, hsize_t *idx_p, H5L_iterate1_t op, void *op_data)
+    H5_iter_order_t order, hsize_t *idx_p, H5L_iterate2_t op, void *op_data)
 {
     H5G_link_iterate_t  lnk_op;             /* Link operator                    */
     hsize_t             last_lnk;           /* Index of last object looked at   */

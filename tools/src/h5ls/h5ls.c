@@ -2456,7 +2456,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-list_lnk(const char *name, const H5L_info_t *linfo, void *_iter)
+list_lnk(const char *name, const H5L_info2_t *linfo, void *_iter)
 {
     char   *buf = NULL;
     iter_t *iter = (iter_t*)_iter;
@@ -3293,7 +3293,7 @@ main(int argc, const char *argv[])
      * doesn't exist). */
     show_file_name_g = (argc-argno > 1); /*show file names if more than one*/
     while(argno < argc) {
-        H5L_info_t li;
+        H5L_info2_t li;
         iter_t iter;
         symlink_trav_t symlink_list;
         size_t u;
@@ -3374,7 +3374,7 @@ main(int argc, const char *argv[])
         /* Check for root group as object name */
         if (HDstrcmp(oname, root_name)) {
             /* Check the type of link given */
-            if (H5Lget_info(file, oname, &li, H5P_DEFAULT) < 0) {
+            if (H5Lget_info2(file, oname, &li, H5P_DEFAULT) < 0) {
                 hsize_t             curr_pos = 0;        /* total data element position   */
                 h5tools_str_t       buffer;          /* string into which to render   */
                 h5tools_context_t   ctx;             /* print context  */

@@ -38,6 +38,7 @@
 
 #include "H5VLnative_private.h" /* Native VOL connector                     */
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 
 /****************/
 /* Local Macros */
@@ -47,6 +48,12 @@
 /******************/
 /* Local Typedefs */
 /******************/
+
+/* Shim data for using native H5Literate/visit callbacks with the VOL */
+typedef struct H5L_shim_data_t {
+    H5L_iterate1_t   real_op;
+    void            *real_op_data;
+} H5L_shim_data_t;
 
 
 /********************/
@@ -74,14 +81,13 @@
 /*******************/
 
 
-#ifndef H5_NO_DEPRECATED_SYMBOLS
-
+
 /*-------------------------------------------------------------------------
  * Function:    H5L__iterate2_shim
  *
  * Purpose:     Shim function for translating between H5L_info2_t and
- *              H5L_info_t structures, as used by H5Literate2/H5Lvisit2 and
- *              H5Literate1/H5Lvisit1, respectively.
+ *              H5L_info1_t structures, as used by H5Literate2/H5Lvisit2
+ *              and H5Literate1/H5Lvisit1, respectively.
  *
  * Return:      Success:    H5_ITER_CONT or H5_ITER_STOP
  *              Failure:    H5_ITER_ERROR
@@ -148,7 +154,7 @@ herr_t
 H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
     hid_t lapl_id)
 {
-    H5VL_object_t       *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t      *vol_obj = NULL;         /* object token of loc_id */
     H5VL_loc_params_t   loc_params;
     H5L_info2_t         linfo2;                 /* New-style link info */
     herr_t              ret_value = SUCCEED;    /* Return value */
@@ -227,10 +233,10 @@ H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
     H5L_info1_t *linfo /*out*/, hid_t lapl_id)
 {
-    H5VL_object_t       *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t      *vol_obj = NULL;         /* object token of loc_id */
     H5VL_loc_params_t   loc_params;
     H5L_info2_t         linfo2;                 /* New-style link info */
-    herr_t              ret_value = SUCCEED;         /* Return value */
+    herr_t              ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE7("e", "i*sIiIohxi", loc_id, group_name, idx_type, order, n, linfo,

@@ -395,15 +395,10 @@ test_h5o_open_by_token(void)
 {
     hid_t       fid;                        /* HDF5 File ID      */
     hid_t       grp, dset, dtype, dspace;   /* Object identifiers */
-    H5L_info1_t li;                         /* Buffer for H5Lget_info */
-    haddr_t grp_addr;                       /* Addresses for objects */
-    haddr_t dset_addr;
-    haddr_t dtype_addr;
-    size_t addr_len = 0;                    /* Size of haddr_t in this file */
-    H5VL_token_t grp_token;                 /* VOL tokens for objects */
-    H5VL_token_t dset_token;
-    H5VL_token_t dtype_token;
-    uint8_t *p = NULL;                      /* Pointer for serialization */
+    H5L_info2_t li;                         /* Buffer for H5Lget_info */
+    size_t      addr_len;
+    haddr_t     grp_addr;                   /* Addresses for objects */
+    haddr_t     dtype_addr;
     hsize_t     dims[RANK];
     H5I_type_t  id_type;                    /* Type of IDs returned from H5Oopen */
     H5G_info_t  ginfo;                      /* Group info struct */
@@ -443,36 +438,34 @@ test_h5o_open_by_token(void)
     ret = H5Sclose(dspace);
     CHECK(ret, FAIL, "H5Sclose");
 
-    /* Get address for each object */
-    ret = H5Lget_info1(fid, "group", &li, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Lget_info");
-    grp_addr = li.u.address;
-    ret = H5Lget_info1(fid, "group/datatype", &li, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Lget_info");
-    dtype_addr = li.u.address;
-    ret = H5Lget_info1(fid, "dataset", &li, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Lget_info");
-    dset_addr = li.u.address;
-
-    /* Need the length of a haddr_t in the file to encode the address */
-    ret = H5VL_native_get_file_addr_len(fid, &addr_len); 
+    /* Need the length of a haddr_t in the file to decode the address */
+    ret = H5VL_native_get_file_addr_len(fid, &addr_len);
     CHECK(ret, FAIL, "H5VL_native_get_file_addr_len");
 
-    /* Serialize the addresses into VOL tokens */
-    p = (uint8_t *)&grp_token;
-    H5F_addr_encode_len(addr_len, &p, grp_addr);
-    p = (uint8_t *)&dtype_token;
-    H5F_addr_encode_len(addr_len, &p, dtype_addr);
-    p = (uint8_t *)&dset_token;
-    H5F_addr_encode_len(addr_len, &p, dset_addr);
-
-    /* Now make sure that H5Oopen_by_token can open all three types of objects */
-    grp = H5Oopen_by_token(fid, grp_token);
+    /* Get address for each object and make sure that H5Oopen_by_token
+     * can open all three types of objects */
+    ret = H5Lget_info2(fid, "group", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info");
+    grp = H5Oopen_by_token(fid, li.u.token);
     CHECK(grp, FAIL, "H5Oopen_by_token");
-    dtype = H5Oopen_by_token(fid, dtype_token);
+    {
+        const uint8_t *p = (const uint8_t *)&li.u.token;
+        H5F_addr_decode_len(addr_len, &p, &grp_addr);
+    }
+
+    ret = H5Lget_info2(fid, "group/datatype", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info");
+    dtype = H5Oopen_by_token(fid, li.u.token);
     CHECK(dtype, FAIL, "H5Oopen_by_token");
+    {
+        const uint8_t *p = (const uint8_t *)&li.u.token;
+        H5F_addr_decode_len(addr_len, &p, &dtype_addr);
+    }
+
+    ret = H5Lget_info2(fid, "dataset", &li, H5P_DEFAULT);
+    CHECK(ret, FAIL, "H5Lget_info");
     /* Check that we can use the group ID as a valid location */
-    dset = H5Oopen_by_token(grp, dset_token);
+    dset = H5Oopen_by_token(grp, li.u.token);
     CHECK(dset, FAIL, "H5Oopen_by_token");
 
     /* Make sure that each is the right kind of ID */
