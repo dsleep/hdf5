@@ -24,6 +24,7 @@
 
 #include "H5CXprivate.h"        /* API Contexts                         */
 #include "H5HLprivate.h"
+#include "H5VLnative_private.h" /* Native VOL connector                     */
 
 /* ============ */
 /* Test Defines */
@@ -374,14 +375,14 @@ error:
 static int
 get_object_header_tag(hid_t loc_id, haddr_t *tag)
 {
-    H5O_info1_t oinfo;           /* Object info */
+    H5O_info2_t oinfo;           /* Object info */
 
     /* Retrieve the info for the object */
-    if(H5Oget_info2(loc_id, &oinfo, H5O_INFO_BASIC) < 0)
+    if(H5Oget_info3(loc_id, &oinfo, H5O_INFO_BASIC) < 0)
         TEST_ERROR;
 
     /* Set the tag to return */
-    *tag = oinfo.addr;
+    H5VL_token_to_addr(loc_id, oinfo.token, tag);
 
     return 0;
 
