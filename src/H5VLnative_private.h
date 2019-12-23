@@ -18,7 +18,8 @@
 #define _H5VLnative_private_H
 
 /* Private headers needed by this file */
-#include "H5VLnative.h"             /* Native VOL connector                 */
+#include "H5Fprivate.h"         /* Files                                    */
+#include "H5VLnative.h"         /* Native VOL connector                     */
 
 
 /**************************/
@@ -114,6 +115,7 @@ H5_DLL herr_t H5VL__native_blob_specific(void *obj, void *blob_id, H5VL_blob_spe
 H5_DLL herr_t H5VL_native_get_file_addr_len(hid_t loc_id, size_t *addr_len);
 H5_DLL herr_t H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token);
 H5_DLL herr_t H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr);
+H5_DLL herr_t H5VL_native_get_file_struct(void *obj, H5I_type_t type, H5F_t **file);
 
 #ifdef __cplusplus
 }
