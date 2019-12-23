@@ -274,7 +274,6 @@ herr_t
 H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token)
 {
     size_t          addr_len = 0;                   /* Size of haddr_t      */
-    uint8_t         *p = (uint8_t *)token;          /* Pointer into token   */
     herr_t          ret_value = SUCCEED;            /* Return value         */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -287,7 +286,7 @@ H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token)
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from loc_id")
 
     /* Encode token */
-    H5F_addr_encode_len(addr_len, &p, addr);
+    HDmemcpy(token, &addr, addr_len);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -307,7 +306,6 @@ herr_t
 H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr)
 {
     size_t          addr_len = 0;                   /* Size of haddr_t      */
-    const uint8_t   *p = (const uint8_t *)(&token); /* Pointer into token   */
     herr_t          ret_value = SUCCEED;            /* Return value         */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -320,7 +318,7 @@ H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr)
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from loc_id")
 
     /* Decode token */
-    H5F_addr_decode_len(addr_len, &p, addr);
+    HDmemcpy(addr, &token, addr_len);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
