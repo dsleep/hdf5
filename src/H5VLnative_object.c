@@ -229,19 +229,19 @@ H5VL__native_object_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_obj
         /* H5Oget_info(_name|_by_idx)3 */
         case H5VL_OBJECT_GET_INFO:
             {
-                H5O_info2_t  *dm_info = HDva_arg(arguments, H5O_info2_t *);
+                H5O_info2_t  *oinfo = HDva_arg(arguments, H5O_info2_t *);
                 unsigned fields         = HDva_arg(arguments, unsigned);
 
                 /* Use the original H5Oget_info code to get the data */
 
                 if(loc_params->type == H5VL_OBJECT_BY_SELF) { /* H5Oget_info */
                     /* Retrieve the object's information */
-                    if(H5G_loc_info(&loc, ".", dm_info, fields) < 0)
+                    if(H5G_loc_info(&loc, ".", oinfo, fields) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "object not found")
                 } /* end if */
                 else if(loc_params->type == H5VL_OBJECT_BY_NAME) { /* H5Oget_info_by_name */
                     /* Retrieve the object's information */
-                    if(H5G_loc_info(&loc, loc_params->loc_data.loc_by_name.name, dm_info, fields) < 0)
+                    if(H5G_loc_info(&loc, loc_params->loc_data.loc_by_name.name, oinfo, fields) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "object not found")
                 } /* end else-if */
                 else if(loc_params->type == H5VL_OBJECT_BY_IDX) { /* H5Oget_info_by_idx */
@@ -262,7 +262,7 @@ H5VL__native_object_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_obj
                         HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, FAIL, "group not found")
 
                     /* Retrieve the object's information */
-                    if(H5O_get_dm_info(obj_loc.oloc, dm_info, fields) < 0) {
+                    if(H5O_get_info(obj_loc.oloc, oinfo, fields) < 0) {
                         H5G_loc_free(&obj_loc);
                         HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object info")
                     } /* end if */
@@ -375,21 +375,16 @@ H5VL__native_object_specific(void *obj, const H5VL_loc_params_t *loc_params, H5V
                 H5O_iterate2_t op       = HDva_arg(arguments, H5O_iterate2_t);
                 void *op_data           = HDva_arg(arguments, void *);
                 unsigned fields         = HDva_arg(arguments, unsigned);
-                H5O_shim_data_t *shim_data  = (H5O_shim_data_t *)op_data;
-
-                H5O_iterate_t real_op       = shim_data->real_op;
-                void *real_op_data          = shim_data->real_op_data;
-
 
                 /* Call internal object visitation routine */
                 if(loc_params->type == H5VL_OBJECT_BY_SELF) {
                     /* H5Ovisit */
-                    if((ret_value = H5O__visit(&loc, ".", idx_type, order, real_op, real_op_data, fields)) < 0)
+                    if((ret_value = H5O__visit(&loc, ".", idx_type, order, op, op_data, fields)) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
                 } /* end if */
                 else if(loc_params->type == H5VL_OBJECT_BY_NAME) {
                     /* H5Ovisit_by_name */
-                    if((ret_value = H5O__visit(&loc, loc_params->loc_data.loc_by_name.name, idx_type, order, real_op, real_op_data, fields)) < 0)
+                    if((ret_value = H5O__visit(&loc, loc_params->loc_data.loc_by_name.name, idx_type, order, op, op_data, fields)) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
                 } /* end else-if */
                 else

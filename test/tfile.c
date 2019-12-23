@@ -6059,7 +6059,7 @@ test_libver_bounds_obj(hid_t fapl)
 
     /* Get root group's object info */
     ret = H5Oget_native_info_by_name(fid, "/", &ninfo, H5O_INFO_HDR, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Oget_native)info_by_name");
+    CHECK(ret, FAIL, "H5Oget_native_info_by_name");
 
     /* Verify object header version is 2 because shared message is enabled */
     VERIFY(ninfo.hdr.version, H5O_VERSION_2, "H5O_obj_ver_bounds");

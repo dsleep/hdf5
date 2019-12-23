@@ -225,7 +225,7 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
     H5TOOLS_ERR_INIT(hid_t, H5I_INVALID_HID)
     named_dt_t *dt = *named_dt_head_p; /* Stack pointer */
     named_dt_t *dt_ret = NULL;         /* Datatype to return */
-    H5O_info_t  oinfo;                 /* Object info of input dtype */
+    H5O_info1_t  oinfo;                 /* Object info of input dtype */
 
     if (H5Oget_info2(type_in, &oinfo, H5O_INFO_BASIC) < 0)
         H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Oget_info failed");
@@ -356,13 +356,13 @@ copy_attr(hid_t loc_in, hid_t loc_out, named_dt_t **named_dt_head_p, trav_table_
     htri_t      is_named;      /* Whether the datatype is named */
     hsize_t     dims[H5S_MAX_RANK];/* dimensions of dataset */
     char        name[255];
-    H5O_info_t  oinfo;         /* object info */
+    H5O_info2_t oinfo;         /* object info */
     int         j;
     unsigned    u;
     hbool_t     is_ref = 0;
     H5T_class_t type_class = -1;
 
-    if (H5Oget_info2(loc_in, &oinfo, H5O_INFO_NUM_ATTRS) < 0)
+    if(H5Oget_info3(loc_in, &oinfo, H5O_INFO_NUM_ATTRS) < 0)
         H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Oget_info failed");
 
     /*-------------------------------------------------------------------------

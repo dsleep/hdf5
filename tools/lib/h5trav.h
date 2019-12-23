@@ -17,7 +17,7 @@
 #include "hdf5.h"
 
 /* Typedefs for visiting objects */
-typedef herr_t (*h5trav_obj_func_t)(const char *path_name, const H5O_info_t *oinfo,
+typedef herr_t (*h5trav_obj_func_t)(const char *path_name, const H5O_info1_t *oinfo,
         const char *first_seen, void *udata);
 typedef herr_t (*h5trav_lnk_func_t)(const char *path_name, const H5L_info2_t *linfo,
         void *udata);
@@ -144,8 +144,8 @@ H5TOOLS_DLL hbool_t symlink_is_visited(symlink_trav_t *visited, H5L_type_t type,
  */
 H5TOOLS_DLL int h5trav_getinfo(hid_t file_id, trav_info_t *info);
 H5TOOLS_DLL ssize_t h5trav_getindex(const trav_info_t *info, const char *obj);
-H5TOOLS_DLL int trav_info_visit_obj (const char *path, const H5O_info_t *oinfo, const char *already_visited, void *udata);
-H5TOOLS_DLL int trav_info_visit_lnk (const char *path, const H5L_info2_t *linfo, void *udata);
+H5TOOLS_DLL int trav_info_visit_obj(const char *path, const H5O_info1_t *oinfo, const char *already_visited, void *udata);
+H5TOOLS_DLL int trav_info_visit_lnk(const char *path, const H5L_info2_t *linfo, void *udata);
 
 /*-------------------------------------------------------------------------
  * "h5trav table" public functions

@@ -2441,7 +2441,7 @@ test_attr_dense_delete(hid_t fcpl, hid_t fapl)
     unsigned    u;              /* Local index variable */
     h5_stat_size_t empty_filesize;       /* Size of empty file */
     h5_stat_size_t filesize;             /* Size of file after modifications */
-    H5O_info2_t  oinfo;         /* Object info                  */
+    H5O_info2_t oinfo;          /* Object info                  */
     int         use_min_dset_oh = (dcpl_g != H5P_DEFAULT);
     herr_t      ret;            /* Generic return value        */
 
@@ -2635,7 +2635,7 @@ test_attr_dense_rename(hid_t fcpl, hid_t fapl)
     htri_t    is_dense;         /* Are attributes stored densely? */
     h5_stat_size_t empty_filesize;       /* Size of empty file */
     h5_stat_size_t filesize;             /* Size of file after modifications */
-    H5O_info2_t  oinfo;         /* Object info */
+    H5O_info2_t oinfo;          /* Object info */
     unsigned    u;              /* Local index variable */
     int         use_min_dset_oh = (dcpl_g != H5P_DEFAULT);
     unsigned    use_corder;     /* Track creation order or not */
@@ -2827,7 +2827,7 @@ test_attr_dense_unlink(hid_t fcpl, hid_t fapl)
     size_t      mesg_count;     /* # of shared messages */
     h5_stat_size_t empty_filesize;       /* Size of empty file */
     h5_stat_size_t filesize;             /* Size of file after modifications */
-    H5O_info2_t  oinfo;         /* Object info */
+    H5O_info2_t oinfo;          /* Object info */
     unsigned    u;              /* Local index variable */
     int         use_min_dset_oh = (dcpl_g != H5P_DEFAULT);
     herr_t      ret;            /* Generic return value        */

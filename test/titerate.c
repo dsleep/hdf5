@@ -252,7 +252,7 @@ test_iter_group(hid_t fapl, hbool_t new_format)
         CHECK(ret, FAIL, "H5Lget_name_by_idx");
 
         ret = H5Oget_info_by_idx3(file, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-        CHECK(ret, FAIL, "H5Oget_info_by_idx");
+        CHECK(ret, FAIL, "H5Oget_info_by_idx3");
     } /* end for */
 
     H5E_BEGIN_TRY {
@@ -566,7 +566,7 @@ liter_cb2(hid_t loc_id, const char *name, const H5L_info_t H5_ATTR_UNUSED *link_
      * Get type of the object and check it.
      */
     ret = H5Oget_info_by_name3(loc_id, name, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-    CHECK(ret, FAIL, "H5Oget_info_by_name");
+    CHECK(ret, FAIL, "H5Oget_info_by_name3");
 
     if(test_info->type != oinfo.type) {
         TestErrPrintf("test_info->type = %d, oinfo.type = %d\n", test_info->type, (int)oinfo.type);
@@ -810,7 +810,7 @@ static void test_grp_memb_funcs(hid_t fapl)
         CHECK_PTR(obj_names[i], "strdup");
 
         ret = H5Oget_info_by_idx3(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-        CHECK(ret, FAIL, "H5Oget_info_by_idx");
+        CHECK(ret, FAIL, "H5Oget_info_by_idx3");
 
         if(!HDstrcmp(dataset_name, "grp"))
             VERIFY(oinfo.type, H5O_TYPE_GROUP, "H5Lget_name_by_idx");
@@ -904,7 +904,7 @@ static void test_links(hid_t fapl)
         /* Get object type */
         if(linfo.type == H5L_TYPE_HARD) {
             ret = H5Oget_info_by_idx3(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
-            CHECK(ret, FAIL, "H5Oget_info_by_idx");
+            CHECK(ret, FAIL, "H5Oget_info_by_idx3");
         } /* end if */
 
         if(!HDstrcmp(obj_name, "g1.1"))

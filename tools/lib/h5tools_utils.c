@@ -708,7 +708,7 @@ search_obj(table_t *table, haddr_t objno)
  *-------------------------------------------------------------------------
  */
 static herr_t
-find_objs_cb(const char *name, const H5O_info_t *oinfo, const char *already_seen, void *op_data)
+find_objs_cb(const char *name, const H5O_info1_t *oinfo, const char *already_seen, void *op_data)
 {
     find_objs_t *info = (find_objs_t*)op_data;
     herr_t ret_value = 0;
@@ -731,7 +731,7 @@ find_objs_cb(const char *name, const H5O_info_t *oinfo, const char *already_seen
                     hid_t type = H5Dget_type(dset);
 
                     if(H5Tcommitted(type) > 0) {
-                        H5O_info_t type_oinfo;
+                        H5O_info1_t type_oinfo;
 
                         H5Oget_info2(type, &type_oinfo, H5O_INFO_BASIC);
                         if(search_obj(info->type_table, type_oinfo.addr) == NULL)
@@ -893,7 +893,7 @@ int
 H5tools_get_symlink_info(hid_t file_id, const char * linkpath, h5tool_link_info_t *link_info, hbool_t get_obj_type)
 {
     htri_t l_ret;
-    H5O_info_t trg_oinfo;
+    H5O_info1_t trg_oinfo;
     hid_t fapl = H5P_DEFAULT;
     hid_t lapl = H5P_DEFAULT;
     int   ret_value = -1; /* init to fail */

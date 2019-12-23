@@ -1104,7 +1104,7 @@ h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t contai
                             case H5R_OBJECT1:
                                 {
                                 /* Object references -- show the type and OID of the referenced object. */
-                                H5O_info_t  oi;
+                                H5O_info1_t  oi;
 
                                 H5TOOLS_DEBUG(H5E_tools_min_dbg_id_g, "ref_type is H5R_OBJECT1");
                                 if((obj = H5Ropen_object(ref_vp, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {

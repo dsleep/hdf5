@@ -379,7 +379,7 @@ ceil_log10(unsigned long x)
  *-------------------------------------------------------------------------
  */
 static herr_t
-attribute_stats(iter_t *iter, const H5O_info_t *oi)
+attribute_stats(iter_t *iter, const H5O_info1_t *oi)
 {
     unsigned     bin;               /* "bin" the number of objects falls in */
 
@@ -440,7 +440,7 @@ attribute_stats(iter_t *iter, const H5O_info_t *oi)
  *-------------------------------------------------------------------------
  */
 static herr_t
-group_stats(iter_t *iter, const char *name, const H5O_info_t *oi)
+group_stats(iter_t *iter, const char *name, const H5O_info1_t *oi)
 {
     H5TOOLS_ERR_INIT(herr_t, SUCCEED)
     H5G_info_t ginfo;           /* Group information */
@@ -510,7 +510,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-dataset_stats(iter_t *iter, const char *name, const H5O_info_t *oi)
+dataset_stats(iter_t *iter, const char *name, const H5O_info1_t *oi)
 {
     H5TOOLS_ERR_INIT(herr_t, SUCCEED)
     unsigned bin;               /* "bin" the number of objects falls in */
@@ -702,7 +702,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-datatype_stats(iter_t *iter, const H5O_info_t *oi)
+datatype_stats(iter_t *iter, const H5O_info1_t *oi)
 {
     H5TOOLS_ERR_INIT(herr_t, SUCCEED)
 
@@ -735,7 +735,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-obj_stats(const char *path, const H5O_info_t *oi, const char *already_visited,
+obj_stats(const char *path, const H5O_info1_t *oi, const char *already_visited,
     void *_iter)
 {
     H5TOOLS_ERR_INIT(herr_t, SUCCEED)

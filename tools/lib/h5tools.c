@@ -1830,21 +1830,21 @@ hbool_t
 h5tools_is_obj_same(hid_t loc_id1, const char *name1,
                         hid_t loc_id2, const char *name2)
 {
-    H5O_info_t oinfo1,  oinfo2;
-    hbool_t ret_val = 0;
+    H5O_info2_t oinfo1,  oinfo2;
+    hbool_t ret_val = FALSE;
 
     if ( name1 && HDstrcmp(name1, "."))
-      H5Oget_info_by_name2(loc_id1, name1, &oinfo1, H5O_INFO_BASIC, H5P_DEFAULT);
+      H5Oget_info_by_name3(loc_id1, name1, &oinfo1, H5O_INFO_BASIC, H5P_DEFAULT);
     else
-      H5Oget_info2(loc_id1, &oinfo1, H5O_INFO_BASIC);
+      H5Oget_info3(loc_id1, &oinfo1, H5O_INFO_BASIC);
 
     if ( name2 && HDstrcmp(name2, "."))
-      H5Oget_info_by_name2(loc_id2, name2, &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
+      H5Oget_info_by_name3(loc_id2, name2, &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
     else
-      H5Oget_info2(loc_id2, &oinfo2, H5O_INFO_BASIC);
+      H5Oget_info3(loc_id2, &oinfo2, H5O_INFO_BASIC);
 
-    if (oinfo1.fileno == oinfo2.fileno && oinfo1.addr==oinfo2.addr)
-      ret_val = 1;
+    if (oinfo1.fileno == oinfo2.fileno && !HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(H5VL_token_t)))
+      ret_val = TRUE;
 
     return ret_val;
 }
