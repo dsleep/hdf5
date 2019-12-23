@@ -604,7 +604,7 @@ const int RANK = 2;
 const int DIM1 = 2;
 
 // Operator function
-static int visit_obj_cb(H5Object& obj, const H5std_string name, const H5O_info_t *oinfo, void *_op_data)
+static int visit_obj_cb(H5Object& obj, const H5std_string name, const H5O_info2_t *oinfo, void *_op_data)
 {
     ovisit_ud_t *op_data = static_cast <ovisit_ud_t *>(_op_data);
 
