@@ -3002,7 +3002,6 @@ check_object_info_tags(void)
     hid_t fapl = -1;         /* File access prop list */
     haddr_t root_tag = HADDR_UNDEF;
     haddr_t g_tag;
-    H5O_info2_t oinfo;                      /* Object info struct */
     H5O_native_info_t ninfo;                /* Native object info struct */
 
     /* Testing Macro */
@@ -3043,7 +3042,9 @@ check_object_info_tags(void)
     /* Get information on an object by name  */
     /* ===================================== */
 
-    if ( H5Oget_info_by_name3(fid, GROUPNAME, &oinfo, H5O_INFO_ALL, H5P_DEFAULT) < 0 ) TEST_ERROR;
+    /* Even though we do nothing with this, touching the internal
+     * data structures is needed for the test to pass.
+     */
     if ( H5Oget_native_info_by_name(fid, GROUPNAME, &ninfo, H5O_INFO_ALL, H5P_DEFAULT) < 0 ) TEST_ERROR;
 
     /* =================================== */
@@ -3698,6 +3699,10 @@ check_external_link_open_tags(void)
     if ( (xid = H5Gopen2(fid, LINKNAME, H5P_DEFAULT)) < 0 ) TEST_ERROR;
     if ( (fid2 = H5Iget_file_id(xid)) < 0) TEST_ERROR;
     if ( get_object_header_tag(xid, &link_tag) < 0 ) TEST_ERROR;
+
+    /* Even though we do nothing with this, touching the internal
+     * data structures is needed for the test to pass.
+     */
     if ( H5Oget_native_info(xid, &ninfo, H5O_INFO_ALL) < 0 ) TEST_ERROR;
 
     /* =================================== */
