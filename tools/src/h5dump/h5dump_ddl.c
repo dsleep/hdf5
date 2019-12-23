@@ -1962,7 +1962,7 @@ static int
 dump_extlink(hid_t group, const char *linkname, const char *objname)
 {
     hid_t       oid;
-    H5O_info2_t  oi;
+    H5O_info2_t oi;
     table_t     *old_group_table = group_table;
     table_t     *old_dset_table = dset_table;
     table_t     *old_type_table = type_table;
