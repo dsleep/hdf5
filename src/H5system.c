@@ -88,6 +88,10 @@ static hbool_t H5_ntzset = FALSE;
  *
  *    The conversion `a' refers to an `haddr_t' type.
  *
+ *    The conversion 't' refers to an htri_t type.
+ *
+ *    The conversion 'T' refers to an H5VL_token_t type.
+ *
  * Return:  Success:  Number of characters printed
  *
  *    Failure:  -1
@@ -411,6 +415,35 @@ HDfprintf(FILE *stream, const char *fmt, ...)
                             fprintf(stream, "FALSE");
                         else
                             fprintf(stream, "FAIL(%d)", (int)tri_var);
+                    }
+                    break;
+
+                case 'T':
+                    {
+                        H5VL_token_t token = HDva_arg(ap, H5VL_token_t);
+
+                        /* Print the raw token.
+                         * May want to update this if we add a "token to string"
+                         * callback in the VOL.
+                         */
+                        n = fprintf(stream, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X", 
+                                (unsigned char)token.__data[15],
+                                (unsigned char)token.__data[14],
+                                (unsigned char)token.__data[13],
+                                (unsigned char)token.__data[12],
+                                (unsigned char)token.__data[11],
+                                (unsigned char)token.__data[10],
+                                (unsigned char)token.__data[9],
+                                (unsigned char)token.__data[8],
+                                (unsigned char)token.__data[7],
+                                (unsigned char)token.__data[6],
+                                (unsigned char)token.__data[5],
+                                (unsigned char)token.__data[4],
+                                (unsigned char)token.__data[3],
+                                (unsigned char)token.__data[2],
+                                (unsigned char)token.__data[1],
+                                (unsigned char)token.__data[0]
+                                );
                     }
                     break;
 
