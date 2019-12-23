@@ -17,7 +17,7 @@
 
 #include "H5private.h"          /* Generic Functions                        */
 #include "H5Eprivate.h"         /* Error handling                           */
-#include "H5Fprivate.h"         /* File access                              */
+#include "H5Fprivate.h"         /* Files                                    */
 #include "H5Iprivate.h"         /* IDs                                      */
 #include "H5Pprivate.h"         /* Property lists                           */
 #include "H5VLprivate.h"        /* Virtual Object Layer                     */
@@ -186,6 +186,34 @@ H5VL__native_term(void)
 } /* end H5VL__native_term() */
 
 
+/*---------------------------------------------------------------------------
+ * Function:    H5VL__native_introspect_get_conn_cls
+ *
+ * Purpose:     Query the connector class.
+ *
+ * Note:        This routine is in this file so that it can return the address
+ *              of the staticly declared class struct.
+ *
+ * Returns:     SUCCEED (Can't fail)
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VL__native_introspect_get_conn_cls(void H5_ATTR_UNUSED *obj,
+    H5VL_get_conn_lvl_t H5_ATTR_UNUSED lvl, const H5VL_class_t **conn_cls)
+{
+    FUNC_ENTER_PACKAGE_NOERR
+
+    /* Sanity check */
+    HDassert(conn_cls);
+
+    /* Retrieve the native VOL connector class */
+    *conn_cls = &H5VL_native_cls_g;
+
+    FUNC_LEAVE_NOAPI(SUCCEED)
+} /* end H5VL__native_introspect_get_conn_cls() */
+
+
 /*-------------------------------------------------------------------------
  * Function:    H5VL_native_get_file_addr_len
  *
@@ -249,30 +277,70 @@ done:
 } /* end H5VL_native_get_file_addr_len() */
 
 
-/*---------------------------------------------------------------------------
- * Function:    H5VL__native_introspect_get_conn_cls
+/*-------------------------------------------------------------------------
+ * Function:    H5VL_addr_to_token
  *
- * Purpose:     Query the connector class.
+ * Purpose:     Converts a native VOL haddr_t address to an abstract VOL token.
  *
- * Note:        This routine is in this file so that it can return the address
- *              of the staticly declared class struct.
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
  *
- * Returns:     SUCCEED (Can't fail)
- *
- *---------------------------------------------------------------------------
+ *-------------------------------------------------------------------------
  */
 herr_t
-H5VL__native_introspect_get_conn_cls(void H5_ATTR_UNUSED *obj,
-    H5VL_get_conn_lvl_t H5_ATTR_UNUSED lvl, const H5VL_class_t **conn_cls)
+H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token)
 {
-    FUNC_ENTER_PACKAGE_NOERR
+    size_t          addr_len = 0;                   /* Size of haddr_t      */
+    uint8_t         *p = (uint8_t *)token;          /* Pointer into token   */
+    herr_t          ret_value = SUCCEED;            /* Return value         */
 
-    /* Sanity check */
-    HDassert(conn_cls);
+    FUNC_ENTER_NOAPI(FAIL)
 
-    /* Retrieve the native VOL connector class */
-    *conn_cls = &H5VL_native_cls_g;
+    /* Check args */
+    HDassert(token);
 
-    FUNC_LEAVE_NOAPI(SUCCEED)
-} /* end H5VL__native_introspect_get_conn_cls() */
+    /* Get the length of an haddr_t in the file */
+    if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from loc_id")
+
+    /* Encode token */
+    H5F_addr_encode_len(addr_len, &p, addr);
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_addr_to_token() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL_token_to_addr
+ *
+ * Purpose:     Converts an abstract VOL token to a native VOL haddr_t address.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr)
+{
+    size_t          addr_len = 0;                   /* Size of haddr_t      */
+    const uint8_t   *p = (const uint8_t *)(&token); /* Pointer into token   */
+    herr_t          ret_value = SUCCEED;            /* Return value         */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Check args */
+    HDassert(addr);
+
+    /* Get the length of an haddr_t in the file */
+    if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from loc_id")
+
+    /* Decode token */
+    H5F_addr_decode_len(addr_len, &p, addr);
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_token_to_addr() */
 

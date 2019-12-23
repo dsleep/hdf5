@@ -396,9 +396,9 @@ test_h5o_open_by_token(void)
     hid_t       fid;                        /* HDF5 File ID      */
     hid_t       grp, dset, dtype, dspace;   /* Object identifiers */
     H5L_info2_t li;                         /* Buffer for H5Lget_info */
-    size_t      addr_len;
     haddr_t     grp_addr;                   /* Addresses for objects */
     haddr_t     dtype_addr;
+    size_t      addr_len;
     hsize_t     dims[RANK];
     H5I_type_t  id_type;                    /* Type of IDs returned from H5Oopen */
     H5G_info_t  ginfo;                      /* Group info struct */
