@@ -439,7 +439,7 @@ static int copy_refs_attr(hid_t loc_in,
     hsize_t     nelmts;            /* number of elements in dataset */
     hsize_t     dims[H5S_MAX_RANK];/* dimensions of dataset */
     char        name[255];
-    H5O_info_t  oinfo;             /* Object info */
+    H5O_info2_t oinfo;             /* Object info */
     unsigned    u, i, j;
     int         rank;
     H5T_class_t type_class = -1;
@@ -454,7 +454,7 @@ static int copy_refs_attr(hid_t loc_in,
     int         ref_comp_field_n = 0;
 
 
-    if(H5Oget_info2(loc_in, &oinfo, H5O_INFO_NUM_ATTRS) < 0)
+    if(H5Oget_info3(loc_in, &oinfo, H5O_INFO_NUM_ATTRS) < 0)
         H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Oget_info failed");
 
     for(u = 0; u < (unsigned)oinfo.num_attrs; u++) {

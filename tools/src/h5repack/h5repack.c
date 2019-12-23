@@ -356,13 +356,13 @@ copy_attr(hid_t loc_in, hid_t loc_out, named_dt_t **named_dt_head_p, trav_table_
     htri_t      is_named;      /* Whether the datatype is named */
     hsize_t     dims[H5S_MAX_RANK];/* dimensions of dataset */
     char        name[255];
-    H5O_info_t  oinfo;         /* object info */
+    H5O_info2_t oinfo;         /* object info */
     int         j;
     unsigned    u;
     hbool_t     is_ref = 0;
     H5T_class_t type_class = -1;
 
-    if (H5Oget_info2(loc_in, &oinfo, H5O_INFO_NUM_ATTRS) < 0)
+    if (H5Oget_info3(loc_in, &oinfo, H5O_INFO_NUM_ATTRS) < 0)
         H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Oget_info failed");
 
     /*-------------------------------------------------------------------------
