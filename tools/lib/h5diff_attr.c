@@ -140,7 +140,7 @@ static void table_attr_mark_exist(unsigned *exist, char *name, table_attrs_t *ta
 static herr_t build_match_list_attrs(hid_t loc1_id, hid_t loc2_id, table_attrs_t ** table_out,  diff_opt_t *opts)
 {
     H5TOOLS_ERR_INIT(herr_t, 0)
-    H5O_info_t oinfo1, oinfo2;    /* Object info */
+    H5O_info2_t oinfo1, oinfo2;    /* Object info */
     hid_t      attr1_id = H5I_INVALID_HID;     /* attr ID */
     hid_t      attr2_id = H5I_INVALID_HID;     /* attr ID */
     size_t     curr1 = 0;
@@ -155,11 +155,11 @@ static herr_t build_match_list_attrs(hid_t loc1_id, hid_t loc2_id, table_attrs_t
     H5TOOLS_PUSH_STACK();
     H5TOOLS_DEBUG(H5E_tools_min_dbg_id_g, "build_match_list_attrs start - errstat:%d", opts->err_stat);
 
-    if(H5Oget_info2(loc1_id, &oinfo1, H5O_INFO_NUM_ATTRS) < 0) {
+    if(H5Oget_info3(loc1_id, &oinfo1, H5O_INFO_NUM_ATTRS) < 0) {
         H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Oget_info first object failed");
     }
     H5TOOLS_DEBUG(H5E_tools_min_dbg_id_g, "H5Oget_info2 loc1id=%d", oinfo1.num_attrs);
-    if(H5Oget_info2(loc2_id, &oinfo2, H5O_INFO_NUM_ATTRS) < 0) {
+    if(H5Oget_info3(loc2_id, &oinfo2, H5O_INFO_NUM_ATTRS) < 0) {
         H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Oget_info second object failed");
     }
     H5TOOLS_DEBUG(H5E_tools_min_dbg_id_g, "H5Oget_info2 loc2id=%d", oinfo2.num_attrs);
