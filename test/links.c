@@ -613,7 +613,7 @@ static int
 cklinks(hid_t fapl, hbool_t new_format)
 {
     hid_t        file;
-    H5O_info1_t  oinfo1, oinfo2;
+    H5O_info2_t  oinfo1, oinfo2;
     H5L_info2_t  linfo;
     char         linkval[LINK_BUF_SIZE];
     char         filename[NAME_BUF_SIZE];
@@ -629,14 +629,14 @@ cklinks(hid_t fapl, hbool_t new_format)
     if((file = H5Fopen(filename, H5F_ACC_RDONLY, fapl)) < 0) FAIL_STACK_ERROR
 
     /* Hard link */
-    if(H5Oget_info_by_name2(file, "d1", &oinfo1, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
-    if(H5Oget_info_by_name2(file, "grp1/hard", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Oget_info_by_name3(file, "d1", &oinfo1, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Oget_info_by_name3(file, "grp1/hard", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5O_TYPE_DATASET != oinfo2.type) {
         H5_FAILED();
         HDprintf("    %d: Unexpected object type should have been a dataset\n", __LINE__);
         TEST_ERROR
     } /* end if */
-    if(H5F_addr_ne(oinfo1.addr, oinfo2.addr)) {
+    if(HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(H5VL_token_t))) {
         H5_FAILED();
         HDputs("    Hard link test failed. Link seems not to point to the ");
         HDputs("    expected file location.");
@@ -651,9 +651,9 @@ cklinks(hid_t fapl, hbool_t new_format)
         status = H5Lexists(file, "no_grp1/hard", H5P_DEFAULT);
     } H5E_END_TRY;
     if(status >= 0) {
-    H5_FAILED();
-    HDputs("    H5Lexists() should have failed for a path with missing components.");
-    TEST_ERROR
+        H5_FAILED();
+        HDputs("    H5Lexists() should have failed for a path with missing components.");
+        TEST_ERROR
     } /* end if */
     H5E_BEGIN_TRY {
         status = H5Lexists(file, "/no_grp1/hard", H5P_DEFAULT);
@@ -665,13 +665,13 @@ cklinks(hid_t fapl, hbool_t new_format)
     } /* end if */
 
     /* Symbolic link */
-    if(H5Oget_info_by_name2(file, "grp1/soft", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Oget_info_by_name3(file, "grp1/soft", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5O_TYPE_DATASET != oinfo2.type) {
         H5_FAILED();
         HDprintf("    %d: Unexpected object type should have been a dataset\n", __LINE__);
         TEST_ERROR
     } /* end if */
-    if(H5F_addr_ne(oinfo1.addr, oinfo2.addr)) {
+    if(HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(H5VL_token_t))) {
         H5_FAILED();
         HDputs("    Soft link test failed. Link seems not to point to the ");
         HDputs("    expected file location.");
@@ -687,7 +687,7 @@ cklinks(hid_t fapl, hbool_t new_format)
 
     /* Dangling link */
     H5E_BEGIN_TRY {
-        status = H5Oget_info_by_name2(file, "grp1/dangle", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
+        status = H5Oget_info_by_name3(file, "grp1/dangle", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
     } H5E_END_TRY;
     if(status >= 0) {
         H5_FAILED();
@@ -714,7 +714,7 @@ cklinks(hid_t fapl, hbool_t new_format)
 
     /* Recursive link */
     H5E_BEGIN_TRY {
-        status = H5Oget_info_by_name2(file, "grp1/recursive", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
+        status = H5Oget_info_by_name3(file, "grp1/recursive", &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT);
     } H5E_END_TRY;
     if(status >= 0) {
         H5_FAILED();
@@ -749,7 +749,7 @@ cklinks(hid_t fapl, hbool_t new_format)
 
 error:
     return FAIL;
-}
+} /* end cklinks() */
 
 
 /*-------------------------------------------------------------------------

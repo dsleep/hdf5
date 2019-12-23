@@ -57,6 +57,7 @@
 typedef struct {
     hid_t       obj_id;         /* The ID for the starting group */
     H5G_loc_t    *start_loc;    /* Location of starting group */
+    H5SL_t     *visited;        /* Skip list for tracking visited nodes */
     H5O_iterate2_t op;          /* Application callback */
     void       *op_data;        /* Application's op data */
     unsigned    fields;         /* Selection of object info */
@@ -75,6 +76,8 @@ typedef struct {
 static herr_t H5O__delete_oh(H5F_t *f, H5O_t *oh);
 static herr_t H5O__obj_type_real(const H5O_t *oh, H5O_type_t *obj_type);
 static herr_t H5O__get_hdr_info_real(const H5O_t *oh, H5O_hdr_info_t *hdr);
+static herr_t H5O__free_visit_visited(void *item, void *key,
+    void *operator_data/*in,out*/);
 static herr_t H5O__visit_cb(hid_t group, const char *name, const H5L_info2_t *linfo,
     void *_udata);
 static const H5O_obj_class_t *H5O__obj_class_real(const H5O_t *oh);
@@ -155,6 +158,9 @@ H5FL_SEQ_EXTERN(H5O_cont_t);
 
 /* Declare external the free list for time_t's */
 H5FL_EXTERN(time_t);
+
+/* Declare external the free list for H5_obj_t's */
+H5FL_EXTERN(H5_obj_t);
 
 
 /*******************/
@@ -2593,6 +2599,29 @@ done:
 
 
 /*-------------------------------------------------------------------------
+ * Function:    H5O__free_visit_visited
+ *
+ * Purpose:     Free the key for an object visited during a group traversal
+ *
+ * Return:      Non-negative on success, negative on failure
+ *
+ * Programmer:  Quincey Koziol
+ *            Nov 25, 2007
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5O__free_visit_visited(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED *operator_data/*in,out*/)
+{
+    FUNC_ENTER_STATIC_NOERR
+
+    item = H5FL_FREE(H5_obj_t, item);
+
+    FUNC_LEAVE_NOAPI(SUCCEED)
+} /* end H5O__free_visit_visited() */
+
+
+/*-------------------------------------------------------------------------
  * Function:    H5O__visit_cb
  *
  * Purpose:     Callback function for recursively visiting objects from a group
@@ -2625,7 +2654,7 @@ H5O__visit_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info2_t *l
 
     /* Check if this is a hard link */
     if(linfo->type == H5L_TYPE_HARD) {
-        H5O_info2_t oinfo;          /* Object info */
+        H5_obj_t obj_pos;       /* Object "position" for this object */
 
         /* Set up opened group location to fill in */
         obj_loc.oloc = &obj_oloc;
@@ -2638,12 +2667,41 @@ H5O__visit_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info2_t *l
             HGOTO_ERROR(H5E_OHDR, H5E_NOTFOUND, H5_ITER_ERROR, "object not found")
         obj_found = TRUE;
 
-        /* Get the object's info */
-        if(H5O_get_info(&obj_oloc, &oinfo, udata->fields) < 0)
-            HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "unable to get object info")
+        /* Construct unique "position" for this object */
+        H5F_GET_FILENO(obj_oloc.file, obj_pos.fileno);
+        obj_pos.addr = obj_oloc.addr;
 
-        /* Make the application callback */
-        ret_value = (udata->op)(udata->obj_id, name, &oinfo, udata->op_data);
+        /* Check if we've seen the object the link references before */
+        if(NULL == H5SL_search(udata->visited, &obj_pos)) {
+            H5O_info2_t oinfo;           /* Object info */
+
+            /* Get the object's info */
+            if(H5O_get_info(&obj_oloc, &oinfo, udata->fields) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "unable to get object info")
+
+            /* Make the application callback */
+            ret_value = (udata->op)(udata->obj_id, name, &oinfo, udata->op_data);
+
+            /* Check for continuing to visit objects */
+            if(ret_value == H5_ITER_CONT) {
+                /* If its ref count is > 1, we add it to the list of visited objects */
+                /* (because it could come up again during traversal) */
+                if(oinfo.rc > 1) {
+                    H5_obj_t *new_node;                  /* New object node for visited list */
+
+                    /* Allocate new object "position" node */
+                    if((new_node = H5FL_MALLOC(H5_obj_t)) == NULL)
+                        HGOTO_ERROR(H5E_OHDR, H5E_NOSPACE, H5_ITER_ERROR, "can't allocate object node")
+
+                    /* Set node information */
+                    *new_node = obj_pos;
+
+                    /* Add to list of visited objects */
+                    if(H5SL_insert(udata->visited, new_node, new_node) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_CANTINSERT, H5_ITER_ERROR, "can't insert object node into visited list")
+                } /* end if */
+            } /* end if */
+        } /* end if */
     } /* end if */
 
 done:
@@ -2759,6 +2817,28 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
         udata.op_data = op_data;
         udata.fields = fields;
 
+        /* Create skip list to store visited object information */
+        if((udata.visited = H5SL_create(H5SL_TYPE_OBJ, NULL)) == NULL)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTCREATE, FAIL, "can't create skip list for visited objects")
+
+        /* If its ref count is > 1, we add it to the list of visited objects */
+        /* (because it could come up again during traversal) */
+        if(oinfo.rc > 1) {
+            H5_obj_t *obj_pos;                  /* New object node for visited list */
+
+            /* Allocate new object "position" node */
+            if((obj_pos = H5FL_MALLOC(H5_obj_t)) == NULL)
+                HGOTO_ERROR(H5E_OHDR, H5E_NOSPACE, FAIL, "can't allocate object node")
+
+            /* Construct unique "position" for this object */
+            obj_pos->fileno = oinfo.fileno;
+            HDmemcpy(&(obj_pos->addr), &oinfo.token, H5F_SIZEOF_ADDR(loc->oloc->file));
+
+            /* Add to list of visited objects */
+            if(H5SL_insert(udata.visited, obj_pos, obj_pos) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTINSERT, FAIL, "can't insert object node into visited list")
+        }
+
         /* Get the location of the visited group */
         if(H5G_loc(obj_id, &vis_loc) < 0)
             HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "not a location")
@@ -2776,6 +2856,9 @@ done:
     }
     else if(loc_found && H5G_loc_free(&obj_loc) < 0)
         HDONE_ERROR(H5E_OHDR, H5E_CANTRELEASE, FAIL, "can't free location")
+
+    if(udata.visited)
+        H5SL_destroy(udata.visited, H5O__free_visit_visited, NULL);
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5O__visit() */
