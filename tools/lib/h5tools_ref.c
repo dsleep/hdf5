@@ -80,7 +80,7 @@ free_ref_path_info(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSED *op
  *-------------------------------------------------------------------------
  */
 static herr_t
-init_ref_path_cb(const char *obj_name, const H5O_info_t *oinfo,
+init_ref_path_cb(const char *obj_name, const H5O_info1_t *oinfo,
     const char *already_seen, void H5_ATTR_UNUSED *_udata)
 {
     /* Check if the object is already in the path table */
@@ -165,7 +165,7 @@ term_ref_path_table(void)
 haddr_t
 ref_path_table_lookup(const char *thepath)
 {
-    H5O_info_t  oi;
+    H5O_info1_t  oi;
 
     if((thepath == NULL) || (HDstrlen(thepath) == 0))
         return HADDR_UNDEF;

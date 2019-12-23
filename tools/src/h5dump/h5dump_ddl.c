@@ -200,7 +200,7 @@ dump_all_cb(hid_t group, const char *name, const H5L_info_t *linfo, void H5_ATTR
     HDstrcat(obj_path, name);
 
     if(linfo->type == H5L_TYPE_HARD) {
-        H5O_info_t  oinfo;
+        H5O_info1_t  oinfo;
 
         /* Stat the object */
         if(H5Oget_info_by_name2(group, name, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT) < 0) {
@@ -612,7 +612,7 @@ link_iteration(hid_t gid, unsigned crt_order_flags)
 void
 dump_named_datatype(hid_t tid, const char *name)
 {
-    H5O_info_t        oinfo;
+    H5O_info1_t        oinfo;
     unsigned          attr_crt_order_flags;
     hid_t             tcpl_id = -1;    /* datatype creation property list ID */
     hsize_t           curr_pos = 0;    /* total data element position   */
@@ -739,7 +739,7 @@ done:
 void
 dump_group(hid_t gid, const char *name)
 {
-    H5O_info_t  oinfo;
+    H5O_info1_t  oinfo;
     hid_t       dset;
     hid_t       type;
     hid_t       gcpl_id;
@@ -1319,7 +1319,7 @@ attr_search(hid_t oid, const char *attr_name, const H5A_info_t H5_ATTR_UNUSED *a
 } /* end attr_search() */
 
 static herr_t
-obj_search(const char *path, const H5O_info_t *oi, const char H5_ATTR_UNUSED *already_visited, void *_op_data)
+obj_search(const char *path, const H5O_info1_t *oi, const char H5_ATTR_UNUSED *already_visited, void *_op_data)
 {
     trav_handle_udata_t  *handle_data = (trav_handle_udata_t*)_op_data;
     const char *op_name = handle_data->op_name;
@@ -1608,7 +1608,7 @@ error:
 void
 handle_datasets(hid_t fid, const char *dset, void *data, int pe, const char *display_name)
 {
-    H5O_info_t       oinfo;
+    H5O_info1_t       oinfo;
     hid_t            dsetid;
     hid_t            dapl_id = H5P_DEFAULT;  /* dataset access property list ID */
     struct subset_t *sset = (struct subset_t *)data;
@@ -1962,7 +1962,7 @@ static int
 dump_extlink(hid_t group, const char *linkname, const char *objname)
 {
     hid_t       oid;
-    H5O_info_t  oi;
+    H5O_info2_t  oi;
     table_t     *old_group_table = group_table;
     table_t     *old_dset_table = dset_table;
     table_t     *old_type_table = type_table;
@@ -1974,7 +1974,7 @@ dump_extlink(hid_t group, const char *linkname, const char *objname)
         goto fail;
 
     /* Get object info */
-    if (H5Oget_info2(oid, &oi, H5O_INFO_BASIC) < 0) {
+    if (H5Oget_info3(oid, &oi, H5O_INFO_BASIC) < 0) {
         H5Oclose(oid);
         goto fail;
     }

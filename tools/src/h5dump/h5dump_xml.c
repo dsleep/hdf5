@@ -177,7 +177,7 @@ xml_dump_all_cb(hid_t group, const char *name, const H5L_info_t *linfo, void H5_
     HDstrcat(obj_path, name);
 
     if(linfo->type == H5L_TYPE_HARD) {
-        H5O_info_t  oinfo;
+        H5O_info1_t  oinfo;
 
         /* Stat the object */
         if(H5Oget_info_by_name2(group, name, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT) < 0) {
@@ -878,7 +878,7 @@ xml_print_datatype(hid_t type, unsigned in_group)
     outputformat = &string_dataformat;
 
     if(!in_group && H5Tcommitted(type) > 0) {
-        H5O_info_t oinfo;
+        H5O_info1_t oinfo;
         obj_t  *found_obj;    /* Found object */
 
         /* detect a shared datatype, output only once */
@@ -1531,7 +1531,7 @@ xml_dump_datatype(hid_t type)
     dump_indent += COL;
 
     if(H5Tcommitted(type) > 0) {
-        H5O_info_t oinfo;
+        H5O_info1_t oinfo;
         obj_t  *found_obj;    /* Found object */
 
         /* Datatype is a shared or named datatype */
@@ -2317,7 +2317,7 @@ xml_dump_named_datatype(hid_t type, const char *name)
         h5tools_render_element(rawoutstream, outputformat, &ctx, &buffer, &curr_pos, (size_t)outputformat->line_ncols, (hsize_t)0, (hsize_t)0);
     }
     else {
-        H5O_info_t  oinfo;          /* Object info */
+        H5O_info1_t  oinfo;          /* Object info */
 
         ctx.need_prefix = TRUE;
 
@@ -2436,7 +2436,7 @@ done:
 void
 xml_dump_group(hid_t gid, const char *name)
 {
-    H5O_info_t              oinfo;
+    H5O_info1_t              oinfo;
     hid_t                   gcpl_id;
     hid_t                   dset, type;
     unsigned                crt_order_flags;

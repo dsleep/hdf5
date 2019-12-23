@@ -65,7 +65,7 @@ typedef struct trav_path_op_data_t {
  */
 static void trav_table_add(trav_table_t *table,
                         const char *objname,
-                        const H5O_info_t *oinfo);
+                        const H5O_info1_t *oinfo);
 
 static void trav_table_addlink(trav_table_t *table,
                         haddr_t objno,
@@ -199,7 +199,7 @@ traverse_cb(hid_t loc_id, const char *path, const H5L_info_t *linfo,
 
     /* Perform the correct action for different types of links */
     if(linfo->type == H5L_TYPE_HARD) {
-        H5O_info_t oinfo;
+        H5O_info1_t oinfo;
 
         /* Get information about the object */
         if(H5Oget_info_by_name2(loc_id, path, &oinfo, udata->fields, H5P_DEFAULT) < 0) {
@@ -255,7 +255,7 @@ traverse(hid_t file_id, const char *grp_name, hbool_t visit_start,
         hbool_t recurse, const trav_visitor_t *visitor, unsigned fields)
 {
     H5TOOLS_ERR_INIT(int, SUCCEED)
-    H5O_info_t  oinfo;          /* Object info for starting group */
+    H5O_info1_t  oinfo;          /* Object info for starting group */
 
     /* Get info for starting object */
     if(H5Oget_info_by_name2(file_id, grp_name, &oinfo, fields, H5P_DEFAULT) < 0)
@@ -354,13 +354,13 @@ trav_info_add(trav_info_t *info, const char *path, h5trav_type_t obj_type)
 void
 trav_fileinfo_add(trav_info_t *info, hid_t loc_id)
 {
-    H5O_info_t oinfo;
+    H5O_info1_t oinfo;
     size_t idx = info->nused - 1;
 
-    if ( info->paths[idx].path && HDstrcmp(info->paths[idx].path, "."))
-      H5Oget_info_by_name2(loc_id, info->paths[idx].path, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+    if(info->paths[idx].path && HDstrcmp(info->paths[idx].path, "."))
+        H5Oget_info_by_name2(loc_id, info->paths[idx].path, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
     else
-      H5Oget_info2(loc_id, &oinfo, H5O_INFO_BASIC);
+        H5Oget_info2(loc_id, &oinfo, H5O_INFO_BASIC);
 
     info->paths[idx].objno = oinfo.addr;
     info->paths[idx].fileno = oinfo.fileno;
@@ -377,7 +377,7 @@ trav_fileinfo_add(trav_info_t *info, hid_t loc_id)
  *-------------------------------------------------------------------------
  */
 int
-trav_info_visit_obj(const char *path, const H5O_info_t *oinfo,
+trav_info_visit_obj(const char *path, const H5O_info1_t *oinfo,
         const char H5_ATTR_UNUSED *already_visited, void *udata)
 {
     size_t idx;
@@ -547,7 +547,7 @@ trav_info_free(trav_info_t *info)
  *-------------------------------------------------------------------------
  */
 static int
-trav_table_visit_obj(const char *path, const H5O_info_t *oinfo,
+trav_table_visit_obj(const char *path, const H5O_info1_t *oinfo,
     const char *already_visited, void *udata)
 {
     trav_table_t *table = (trav_table_t *)udata;
@@ -663,9 +663,7 @@ h5trav_getindext(const char *name, const trav_table_t *table)
  *-------------------------------------------------------------------------
  */
 static void
-trav_table_add(trav_table_t *table,
-                    const char *path,
-                    const H5O_info_t *oinfo)
+trav_table_add(trav_table_t *table, const char *path, const H5O_info1_t *oinfo)
 {
     size_t new_obj;
 
@@ -893,8 +891,8 @@ trav_attr(hid_t
  *-------------------------------------------------------------------------
  */
 static int
-trav_print_visit_obj(const char *path, const H5O_info_t *oinfo,
-        const char *already_visited, void *udata)
+trav_print_visit_obj(const char *path, const H5O_info1_t *oinfo,
+    const char *already_visited, void *udata)
 {
     trav_print_udata_t *print_udata = (trav_print_udata_t *)udata;
     /* Print the name of the object */

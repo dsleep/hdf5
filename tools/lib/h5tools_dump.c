@@ -2103,7 +2103,7 @@ h5tools_print_datatype(FILE *stream, h5tools_str_t *buffer, const h5tool_format_
     if((type_class = H5Tget_class(type)) < 0)
         H5TOOLS_THROW(FAIL, H5E_tools_min_id_g, "H5Tget_class failed");
     if (object_search && H5Tcommitted(type) > 0) {
-        H5O_info_t  oinfo;
+        H5O_info1_t  oinfo;
         obj_t      *obj = NULL;    /* Found object */
 
         H5Oget_info2(type, &oinfo, H5O_INFO_BASIC);

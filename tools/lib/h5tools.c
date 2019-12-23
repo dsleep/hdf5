@@ -1830,7 +1830,7 @@ hbool_t
 h5tools_is_obj_same(hid_t loc_id1, const char *name1,
                         hid_t loc_id2, const char *name2)
 {
-    H5O_info_t oinfo1,  oinfo2;
+    H5O_info1_t oinfo1,  oinfo2;
     hbool_t ret_val = 0;
 
     if ( name1 && HDstrcmp(name1, "."))

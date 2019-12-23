@@ -387,7 +387,7 @@ done:
  * Purpose:  Call back function from h5trav_visit().
  *------------------------------------------------------------------------*/
 static herr_t
-trav_grp_objs(const char *path, const H5O_info_t *oinfo,
+trav_grp_objs(const char *path, const H5O_info1_t *oinfo,
         const char *already_visited, void *udata)
 {
     trav_info_visit_obj(path, oinfo, already_visited, udata);
@@ -531,7 +531,7 @@ h5diff(const char *fname1,
     h5trav_type_t obj1type = H5TRAV_TYPE_GROUP;
     h5trav_type_t obj2type = H5TRAV_TYPE_GROUP;
     /* for single object */
-    H5O_info_t    oinfo1, oinfo2; /* object info */
+    H5O_info1_t    oinfo1, oinfo2; /* object info */
     trav_info_t  *info1_obj = NULL;
     trav_info_t  *info2_obj = NULL;
     /* for group object */

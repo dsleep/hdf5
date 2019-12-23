@@ -1260,7 +1260,7 @@ print_type(h5tools_str_t *buffer, hid_t type, int ind)
 
     /* Shared? If so then print the type's OID */
     if (H5Tcommitted(type)) {
-        H5O_info_t  oi;
+        H5O_info1_t  oi;
 
         if (H5Oget_info2(type, &oi, H5O_INFO_BASIC) >= 0)
             h5tools_str_append(buffer,"shared-%lu:"H5_PRINTF_HADDR_FMT" ", oi.fileno, oi.addr);
@@ -2295,7 +2295,7 @@ datatype_list2(hid_t type, const char H5_ATTR_UNUSED *name)
  *-------------------------------------------------------------------------
  */
 static herr_t
-list_obj(const char *name, const H5O_info_t *oinfo, const char *first_seen, void *_iter)
+list_obj(const char *name, const H5O_info1_t *oinfo, const char *first_seen, void *_iter)
 {
     H5TOOLS_ERR_INIT(herr_t, SUCCEED)
     H5O_type_t          obj_type = oinfo->type;          /* Type of the object */
@@ -2642,7 +2642,7 @@ static herr_t
 visit_obj(hid_t file, const char *oname, iter_t *iter)
 {
     int                 retval = 0;
-    H5O_info_t          oi;              /* Information for object */
+    H5O_info1_t         oi;              /* Information for object */
     hsize_t             curr_pos = 0;    /* total data element position   */
     h5tools_str_t       buffer;          /* string into which to render   */
     h5tools_context_t   ctx;             /* print context  */
