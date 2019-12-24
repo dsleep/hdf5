@@ -1371,7 +1371,7 @@ done:
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5Ovisit2
+ * Function:    H5Ovisit3
  *
  * Purpose:     Recursively visit an object and all the objects reachable
  *              from it.  If the starting object is a group, all the objects
@@ -1406,7 +1406,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
+H5Ovisit3(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     H5O_iterate2_t op, void *op_data, unsigned fields)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
@@ -1414,7 +1414,6 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE6("e", "iIiIox*xIu", obj_id, idx_type, order, op, op_data, fields);
 
     /* Check args */
     if(idx_type <= H5_INDEX_UNKNOWN || idx_type >= H5_INDEX_N)
@@ -1440,11 +1439,11 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
 
 done:
     FUNC_LEAVE_API(ret_value)
-} /* end H5Ovisit2() */
+} /* end H5Ovisit3() */
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5Ovisit_by_name2
+ * Function:    H5Ovisit_by_name3
  *
  * Purpose:     Recursively visit an object and all the objects reachable
  *              from it.  If the starting object is a group, all the objects
@@ -1479,7 +1478,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
+H5Ovisit_by_name3(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     H5_iter_order_t order, H5O_iterate2_t op, void *op_data, unsigned fields, hid_t lapl_id)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
@@ -1487,8 +1486,6 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
-    H5TRACE8("e", "i*sIiIox*xIui", loc_id, obj_name, idx_type, order, op, op_data,
-             fields, lapl_id);
 
     /* Check args */
     if(!obj_name)
@@ -1524,7 +1521,7 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
 
 done:
     FUNC_LEAVE_API(ret_value)
-} /* end H5Ovisit_by_name2() */
+} /* end H5Ovisit_by_name3() */
 
 
 /*-------------------------------------------------------------------------
