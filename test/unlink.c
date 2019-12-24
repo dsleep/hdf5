@@ -454,7 +454,7 @@ check_new_move(hid_t fapl)
     /* Check hard links */
     if(H5O_TYPE_GROUP != oi_hard1.type || H5O_TYPE_GROUP != oi_hard2.type)
         FAIL_PUTS_ERROR("    Unexpected object type, should have been a group")
-    if(HDmemcmp(&oi_hard1.token, &oi_hard2.token, sizeof(H5VL_token_t)))
+    if(HDmemcmp(&oi_hard1.token, &oi_hard2.token, sizeof(h5token_t)))
         FAIL_PUTS_ERROR("    Hard link test failed.  Link seems not to point to the expected file location.")
 
     /* Check soft links */

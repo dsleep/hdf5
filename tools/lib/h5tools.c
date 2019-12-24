@@ -1843,7 +1843,7 @@ h5tools_is_obj_same(hid_t loc_id1, const char *name1,
     else
       H5Oget_info3(loc_id2, &oinfo2, H5O_INFO_BASIC);
 
-    if (oinfo1.fileno == oinfo2.fileno && !HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(H5VL_token_t)))
+    if (oinfo1.fileno == oinfo2.fileno && !HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(h5token_t)))
       ret_val = TRUE;
 
     return ret_val;

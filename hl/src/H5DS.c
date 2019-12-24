@@ -168,7 +168,7 @@ herr_t H5DSattach_scale(hid_t did,
         return FAIL;
 
     /* same object, not valid */
-    if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(H5VL_token_t)))
+    if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(h5token_t)))
         return FAIL;
 
     /* get ID type */
@@ -332,7 +332,7 @@ herr_t H5DSattach_scale(hid_t did,
                 goto out;
 
             /* same object, so this DS scale is already in this DIM IDX */
-            if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(H5VL_token_t)))
+            if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(h5token_t)))
                 found_ds = 1;
 
             /* close the dereferenced dataset */
@@ -617,7 +617,7 @@ herr_t H5DSdetach_scale(hid_t did,
         return FAIL;
 
     /* same object, not valid */
-    if(did_oi.fileno == dsid_oi.fileno && !HDmemcmp(&did_oi.token, &dsid_oi.token, sizeof(H5VL_token_t)))
+    if(did_oi.fileno == dsid_oi.fileno && !HDmemcmp(&did_oi.token, &dsid_oi.token, sizeof(h5token_t)))
         return FAIL;
 
 
@@ -704,7 +704,7 @@ herr_t H5DSdetach_scale(hid_t did,
                 goto out;
 
             /* same object, reset */
-            if(dsid_oi.fileno == tmp_oi.fileno && !HDmemcmp(&dsid_oi.token, &tmp_oi.token, sizeof(H5VL_token_t)))
+            if(dsid_oi.fileno == tmp_oi.fileno && !HDmemcmp(&dsid_oi.token, &tmp_oi.token, sizeof(h5token_t)))
             {
                 /* If there are more than one reference in the VL element
                    and the reference we found is not the last one,
@@ -814,7 +814,7 @@ herr_t H5DSdetach_scale(hid_t did,
                 goto out;
 
             /* same object, reset. we want to detach only for this DIM */
-            if(did_oi.fileno == tmp_oi.fileno && !HDmemcmp(&did_oi.token, &tmp_oi.token, sizeof(H5VL_token_t))) {
+            if(did_oi.fileno == tmp_oi.fileno && !HDmemcmp(&did_oi.token, &tmp_oi.token, sizeof(h5token_t))) {
                 /* copy the last one to replace the one which is found */
                 dsbuf[ii] = dsbuf[nelmts-1];
                 nelmts--;
@@ -981,7 +981,7 @@ htri_t H5DSis_attached(hid_t did,
         return FAIL;
 
     /* same object, not valid */
-    if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(H5VL_token_t)))
+    if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(h5token_t)))
         return FAIL;
 
     /* get ID type */
@@ -1062,7 +1062,7 @@ htri_t H5DSis_attached(hid_t did,
                 goto out;
 
             /* same object */
-            if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(H5VL_token_t)))
+            if(oi1.fileno == oi2.fileno && !HDmemcmp(&oi1.token, &oi2.token, sizeof(h5token_t)))
                 found_ds = 1;
 
             /* close the dereferenced dataset */
@@ -1152,7 +1152,7 @@ htri_t H5DSis_attached(hid_t did,
                     goto out;
 
                 /* same object */
-                if(oi3.fileno == oi4.fileno && !HDmemcmp(&oi3.token, &oi4.token, sizeof(H5VL_token_t)) && idx == dsbuf[i].dim_idx)
+                if(oi3.fileno == oi4.fileno && !HDmemcmp(&oi3.token, &oi4.token, sizeof(h5token_t)) && idx == dsbuf[i].dim_idx)
                     found_dset=1;
 
                 /* close the dereferenced dataset */

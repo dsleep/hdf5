@@ -81,7 +81,7 @@ H5Rcreate_object(hid_t loc_id, const char *name, hid_t oapl_id, H5R_ref_t *ref_p
     hid_t file_id = H5I_INVALID_HID;/* File ID */
     H5VL_object_t *vol_obj_file = NULL; /* Object token of file_id */
     H5VL_loc_params_t loc_params;   /* Location parameters */
-    H5VL_token_t obj_token = {0};   /* Object token */
+    h5token_t obj_token = {0};   /* Object token */
     H5VL_file_cont_info_t cont_info = {H5VL_CONTAINER_INFO_VERSION, 0, 0, 0};
     herr_t ret_value = SUCCEED;     /* Return value */
 
@@ -135,7 +135,7 @@ H5Rcreate_object(hid_t loc_id, const char *name, hid_t oapl_id, H5R_ref_t *ref_p
 
     /* Create the reference (do not pass filename, since file_id is attached) */
     HDmemset(ref_ptr, 0, H5R_REF_BUF_SIZE);
-    if(H5R__create_object((const H5VL_token_t *)&obj_token, cont_info.token_size, (H5R_ref_priv_t *)ref_ptr) < 0)
+    if(H5R__create_object((const h5token_t *)&obj_token, cont_info.token_size, (H5R_ref_priv_t *)ref_ptr) < 0)
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTCREATE, FAIL, "unable to create object reference")
 
     /* Attach loc_id to reference and hold reference to it */
@@ -169,7 +169,7 @@ H5Rcreate_region(hid_t loc_id, const char *name, hid_t space_id,
     hid_t file_id = H5I_INVALID_HID;/* File ID */
     H5VL_object_t *vol_obj_file = NULL; /* Object token of file_id */
     H5VL_loc_params_t loc_params;   /* Location parameters */
-    H5VL_token_t obj_token = {0};   /* Object token */
+    h5token_t obj_token = {0};   /* Object token */
     H5VL_file_cont_info_t cont_info = {H5VL_CONTAINER_INFO_VERSION, 0, 0, 0};
     struct H5S_t *space = NULL;     /* Pointer to dataspace containing region */
     herr_t ret_value = SUCCEED;     /* Return value */
@@ -228,7 +228,7 @@ H5Rcreate_region(hid_t loc_id, const char *name, hid_t space_id,
 
     /* Create the reference (do not pass filename, since file_id is attached) */
     HDmemset(ref_ptr, 0, H5R_REF_BUF_SIZE);
-    if(H5R__create_region((const H5VL_token_t *)&obj_token, cont_info.token_size, space, (H5R_ref_priv_t *)ref_ptr) < 0)
+    if(H5R__create_region((const h5token_t *)&obj_token, cont_info.token_size, space, (H5R_ref_priv_t *)ref_ptr) < 0)
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTCREATE, FAIL, "unable to create region reference")
 
     /* Attach loc_id to reference and hold reference to it */
@@ -261,7 +261,7 @@ H5Rcreate_attr(hid_t loc_id, const char *name, const char *attr_name,
     hid_t file_id = H5I_INVALID_HID;/* File ID */
     H5VL_object_t *vol_obj_file = NULL; /* Object token of file_id */
     H5VL_loc_params_t loc_params;   /* Location parameters */
-    H5VL_token_t obj_token = {0};   /* Object token */
+    h5token_t obj_token = {0};   /* Object token */
     H5VL_file_cont_info_t cont_info = {H5VL_CONTAINER_INFO_VERSION, 0, 0, 0};
     herr_t ret_value = SUCCEED;     /* Return value */
 
@@ -317,7 +317,7 @@ H5Rcreate_attr(hid_t loc_id, const char *name, const char *attr_name,
 
     /* Create the reference (do not pass filename, since file_id is attached) */
     HDmemset(ref_ptr, 0, H5R_REF_BUF_SIZE);
-    if(H5R__create_attr((const H5VL_token_t *)&obj_token, cont_info.token_size, attr_name, (H5R_ref_priv_t *)ref_ptr) < 0)
+    if(H5R__create_attr((const h5token_t *)&obj_token, cont_info.token_size, attr_name, (H5R_ref_priv_t *)ref_ptr) < 0)
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTCREATE, FAIL, "unable to create attribute reference")
 
     /* Attach loc_id to reference and hold reference to it */
@@ -471,7 +471,7 @@ H5Ropen_object(const H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id)
     hid_t loc_id;                       /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
-    H5VL_token_t obj_token = {0};       /* Object token */
+    h5token_t obj_token = {0};       /* Object token */
     H5I_type_t opened_type;             /* Opened object type */
     void *opened_obj = NULL;            /* Opened object */
     hid_t ret_value = H5I_INVALID_HID;  /* Return value */
@@ -544,7 +544,7 @@ H5Ropen_region(const H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id)
     hid_t loc_id;                           /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;          /* Object token of loc_id */
     H5VL_loc_params_t loc_params;           /* Location parameters */
-    H5VL_token_t obj_token = {0};           /* Object token */
+    h5token_t obj_token = {0};           /* Object token */
     H5I_type_t opened_type;                 /* Opened object type */
     void *opened_obj = NULL;                /* Opened object */
     hid_t opened_obj_id = H5I_INVALID_HID;  /* Opened object ID */
@@ -638,7 +638,7 @@ H5Ropen_attr(const H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t aapl_id)
     hid_t loc_id;                           /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;          /* Object token of loc_id */
     H5VL_loc_params_t loc_params;           /* Location parameters */
-    H5VL_token_t obj_token = {0};           /* Object token */
+    h5token_t obj_token = {0};           /* Object token */
     H5I_type_t opened_type;                 /* Opened object type */
     void *opened_obj = NULL;                /* Opened object */
     hid_t opened_obj_id = H5I_INVALID_HID;  /* Opened object ID */
@@ -733,7 +733,7 @@ H5Rget_obj_type3(const H5R_ref_t *ref_ptr, hid_t rapl_id, H5O_type_t *obj_type)
     hid_t loc_id;                       /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
-    H5VL_token_t obj_token = {0};       /* Object token */
+    h5token_t obj_token = {0};       /* Object token */
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -841,7 +841,7 @@ H5Rget_obj_name(const H5R_ref_t *ref_ptr, hid_t rapl_id, char *buf, size_t size)
     hid_t loc_id;                       /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
-    H5VL_token_t obj_token = {0};       /* Object token */
+    h5token_t obj_token = {0};       /* Object token */
     ssize_t ret_value;                  /* Return value */
 
     FUNC_ENTER_API((-1))

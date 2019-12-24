@@ -86,11 +86,11 @@ static hbool_t H5_ntzset = FALSE;
  *    prints an `hsize_t' value as a hex number right justified and
  *    zero filled in an 18-character field.
  *
- *    The conversion `a' refers to an `haddr_t' type.
+ *    The conversion 'a' refers to an haddr_t type.
  *
  *    The conversion 't' refers to an htri_t type.
  *
- *    The conversion 'T' refers to an H5VL_token_t type.
+ *    The conversion 'k' refers to an h5token_t type.
  *
  * Return:  Success:  Number of characters printed
  *
@@ -418,9 +418,9 @@ HDfprintf(FILE *stream, const char *fmt, ...)
                     }
                     break;
 
-                case 'T':
+                case 'k':
                     {
-                        H5VL_token_t token = HDva_arg(ap, H5VL_token_t);
+                        h5token_t token = HDva_arg(ap, h5token_t);
 
                         /* Print the raw token.
                          * May want to update this if we add a "token to string"

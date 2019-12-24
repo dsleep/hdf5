@@ -569,12 +569,12 @@ vrfy_ns_grp_c(hid_t fid, const char *group_name, unsigned nlinks) {
                 pass = FALSE;
                 failure_mssg = "vrfy_ns_grp_c: H5Oget_info() failed.";
             }
-            else if (HDmemcmp(&root_oinfo.token, &lnk_info.u.token, H5VL_MAX_TOKEN_SIZE)) {
+            else if (HDmemcmp(&root_oinfo.token, &lnk_info.u.token, sizeof(h5token_t))) {
                 pass = FALSE;
                 failure_mssg = "vrfy_ns_grp_c: root_oinfo.addr != lnk_info.u.address";
             }
             HDassert(ret >= 0);
-            HDassert(!HDmemcmp(&root_oinfo.token, &lnk_info.u.token, H5VL_MAX_TOKEN_SIZE));
+            HDassert(!HDmemcmp(&root_oinfo.token, &lnk_info.u.token, sizeof(h5token_t)));
         } /* end else-if */
         else {
             void *elinkval;
@@ -977,12 +977,12 @@ vrfy_ns_grp_d(hid_t fid, const char *group_name, unsigned nlinks) {
                 pass = FALSE;
                 failure_mssg = "vrfy_ns_grp_d: H5Oget_info() failed.";
             }
-            else if (HDmemcmp(&root_oinfo.token, &lnk_info.u.token, H5VL_MAX_TOKEN_SIZE)) {
+            else if (HDmemcmp(&root_oinfo.token, &lnk_info.u.token, sizeof(h5token_t))) {
                 pass = FALSE;
                 failure_mssg = "vrfy_ns_grp_d: root_oinfo.addr != lnk_info.u.address";
             }
             HDassert(ret >= 0);
-            HDassert(!HDmemcmp(&root_oinfo.token, &lnk_info.u.token, H5VL_MAX_TOKEN_SIZE));
+            HDassert(!HDmemcmp(&root_oinfo.token, &lnk_info.u.token, sizeof(h5token_t)));
         } /* end else-if */
         else {
             void *elinkval;
@@ -1574,12 +1574,12 @@ vrfy_os_grp_n(hid_t fid, const char *group_name, int proc_num,
                 pass = FALSE;
                 failure_mssg = "vrfy_os_grp_n: H5Oget_info() failed.";
             }
-            else if (HDmemcmp(&root_oinfo.token, &lnk_info.u.token, H5VL_MAX_TOKEN_SIZE)) {
+            else if (HDmemcmp(&root_oinfo.token, &lnk_info.u.token, sizeof(h5token_t))) {
                 pass = FALSE;
                 failure_mssg = "vrfy_os_grp_n: root_oinfo.addr != lnk_info.u.address";
             }
             HDassert(ret >= 0);
-            HDassert(!HDmemcmp(&root_oinfo.token, &lnk_info.u.token, H5VL_MAX_TOKEN_SIZE));
+            HDassert(!HDmemcmp(&root_oinfo.token, &lnk_info.u.token, sizeof(h5token_t)));
         } /* end else */
 
         u++;

@@ -113,8 +113,8 @@ H5_DLL herr_t H5VL__native_blob_specific(void *obj, void *blob_id, H5VL_blob_spe
 
 /* Helper functions */
 H5_DLL herr_t H5VL_native_get_file_addr_len(hid_t loc_id, size_t *addr_len);
-H5_DLL herr_t H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token);
-H5_DLL herr_t H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr);
+H5_DLL herr_t H5VL_native_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token);
+H5_DLL herr_t H5VL_native_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr);
 H5_DLL herr_t H5VL_native_get_file_struct(void *obj, H5I_type_t type, H5F_t **file);
 
 #ifdef __cplusplus

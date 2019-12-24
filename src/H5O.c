@@ -259,7 +259,7 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     H5I_type_t opened_type;             /* Opened object type */
     void *opened_obj = NULL;            /* Opened object */
     H5VL_loc_params_t loc_params;       /* Location parameters */
-    H5VL_token_t obj_token = {0};       /* Object token */
+    h5token_t obj_token = {0};          /* Object token */
     size_t addr_len = 0;                /* Size of haddr_t in this file */
     uint8_t *p = NULL;
     hid_t ret_value = H5I_INVALID_HID;  /* Return value */
@@ -314,7 +314,7 @@ done:
  *-------------------------------------------------------------------------
  */
 hid_t
-H5Oopen_by_token(hid_t loc_id, H5VL_token_t token)
+H5Oopen_by_token(hid_t loc_id, h5token_t token)
 {
     H5VL_object_t *vol_obj;             /* Object token of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
@@ -324,7 +324,7 @@ H5Oopen_by_token(hid_t loc_id, H5VL_token_t token)
     hid_t ret_value = H5I_INVALID_HID;  /* Return value */
 
     FUNC_ENTER_API(H5I_INVALID_HID)
-    H5TRACE2("i", "iVT", loc_id, token);
+    H5TRACE2("i", "ik", loc_id, token);
 
     /* Get the location object */
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))

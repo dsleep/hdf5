@@ -337,7 +337,7 @@ H5VL__native_object_specific(void *obj, const H5VL_loc_params_t *loc_params, H5V
         /* Lookup object */
         case H5VL_OBJECT_LOOKUP:
             {
-                H5VL_token_t *token = va_arg(arguments, H5VL_token_t *);
+                h5token_t *token = va_arg(arguments, h5token_t *);
 
                 HDassert(token);
 

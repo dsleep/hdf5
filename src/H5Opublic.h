@@ -120,7 +120,7 @@ typedef struct H5O_hdr_info_t {
 /* (For H5Oget_info / H5Oget_info_by_name / H5Oget_info_by_idx) */
 typedef struct H5O_info2_t {
     unsigned long   fileno;     /* File number that object is located in */
-    H5VL_token_t    token;      /* Token representing the object        */
+    h5token_t       token;      /* Token representing the object        */
     H5O_type_t 	    type;       /* Basic object type (group, dataset, etc.) */
     unsigned 	    rc;         /* Reference count of object            */
     time_t	    atime;	/* Access time			        */
@@ -172,7 +172,7 @@ extern "C" {
 
 H5_DLL hid_t H5Oopen(hid_t loc_id, const char *name, hid_t lapl_id);
 H5_DLL hid_t H5Oopen_by_addr(hid_t loc_id, haddr_t addr);
-H5_DLL hid_t H5Oopen_by_token(hid_t loc_id, H5VL_token_t token);
+H5_DLL hid_t H5Oopen_by_token(hid_t loc_id, h5token_t token);
 H5_DLL hid_t H5Oopen_by_idx(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id);
 H5_DLL htri_t H5Oexists_by_name(hid_t loc_id, const char *name, hid_t lapl_id);

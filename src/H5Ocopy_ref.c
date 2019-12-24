@@ -173,7 +173,7 @@ H5O__copy_expand_ref_object1(H5O_loc_t *src_oloc, const void *buf_src,
     for(i = 0; i < ref_count; i++) {
         const unsigned char *src_buf = (const unsigned char *)&src_ref[i];
         unsigned char *dst_buf = (unsigned char *)&dst_ref[i];
-        H5VL_token_t tmp_token = { 0 };
+        h5token_t tmp_token = { 0 };
         uint8_t *p;
 
         /* If data is not initialized, copy zeros and skip */
@@ -198,7 +198,7 @@ H5O__copy_expand_ref_object1(H5O_loc_t *src_oloc, const void *buf_src,
         /* Set the object reference info for the destination file */
         p = (uint8_t *)&tmp_token;
         H5F_addr_encode(dst_oloc->file, &p, dst_oloc->addr);
-        if(H5R__encode_token_obj_compat((const H5VL_token_t *)&tmp_token, token_size, dst_buf, &buf_size) < 0)
+        if(H5R__encode_token_obj_compat((const h5token_t *)&tmp_token, token_size, dst_buf, &buf_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTDECODE, FAIL, "unable to encode dst object address")
     } /* end for */
 
@@ -365,7 +365,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, H5T_t *dt_src,
     for(i = 0; i < ref_count; i++) {
         H5R_ref_t *ref_ptr  = (H5R_ref_t *)conv_buf;
         H5R_ref_priv_t *ref = (H5R_ref_priv_t *)&ref_ptr[i];
-        H5VL_token_t tmp_token = { 0 };
+        h5token_t tmp_token = { 0 };
         uint8_t *p;
 
         /* Get src object address */
@@ -381,7 +381,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, H5T_t *dt_src,
         /* Set dst object address */
         p = (uint8_t *)&tmp_token;
         H5F_addr_encode(dst_oloc->file, &p, dst_oloc->addr);
-        if(H5R__set_obj_token(ref, (const H5VL_token_t *)&tmp_token, token_size) < 0)
+        if(H5R__set_obj_token(ref, (const h5token_t *)&tmp_token, token_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "unable to set object token")
         if(H5R__set_loc_id(ref, dst_loc_id, TRUE) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "unable to set destination loc id")

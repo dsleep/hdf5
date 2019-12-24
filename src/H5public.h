@@ -235,12 +235,12 @@ H5_GCC_DIAG_ON(long-long)
  * used to reference HDF5 objects in a container. */
 
 /* The maximum size allowed for tokens */
-#define H5VL_MAX_TOKEN_SIZE       (16)    /* Allow for 128-bit tokens */
+#define H5_MAX_TOKEN_SIZE       (16)    /* Allows for 128-bit tokens */
 
 /* Type for tokens */
-typedef struct H5VL_token_t {
-    char __data[H5VL_MAX_TOKEN_SIZE];
-} H5VL_token_t;
+typedef struct h5token_t {
+    char __data[H5_MAX_TOKEN_SIZE];
+} h5token_t;
 
 /* uint32_t type is used for creation order field for messages.  It may be
  * defined in Posix.1g, otherwise it is defined here.

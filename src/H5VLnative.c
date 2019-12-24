@@ -262,7 +262,7 @@ done:
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5VL_addr_to_token
+ * Function:    H5VL_native_addr_to_token
  *
  * Purpose:     Converts a native VOL haddr_t address to an abstract VOL token.
  *
@@ -271,7 +271,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token)
+H5VL_native_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token)
 {
     size_t          addr_len = 0;                   /* Size of haddr_t      */
     herr_t          ret_value = SUCCEED;            /* Return value         */
@@ -290,11 +290,11 @@ H5VL_addr_to_token(hid_t loc_id, haddr_t addr, H5VL_token_t *token)
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_addr_to_token() */
+} /* end H5VL_native_addr_to_token() */
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5VL_token_to_addr
+ * Function:    H5VL_native_token_to_addr
  *
  * Purpose:     Converts an abstract VOL token to a native VOL haddr_t address.
  *
@@ -303,7 +303,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr)
+H5VL_native_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr)
 {
     size_t          addr_len = 0;                   /* Size of haddr_t      */
     herr_t          ret_value = SUCCEED;            /* Return value         */
@@ -322,7 +322,7 @@ H5VL_token_to_addr(hid_t loc_id, H5VL_token_t token, haddr_t *addr)
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_token_to_addr() */
+} /* end H5VL_native_token_to_addr() */
 
 
 /*---------------------------------------------------------------------------
