@@ -1069,7 +1069,7 @@ h5str_sprintf
                     case H5R_OBJECT1:
                         {
                         /* Object references -- show the type and OID of the referenced object. */
-                        H5O_info_t  oi;
+                        H5O_info1_t  oi;
 
                         if((obj = H5Ropen_object(ref_vp, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
                             H5Oget_info2(obj, &oi, H5O_INFO_BASIC);
@@ -3466,7 +3466,7 @@ obj_info_all
     (hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data)
 {
     info_all_t *datainfo = (info_all_t *)op_data;
-    H5O_info_t  object_info;
+    H5O_info1_t  object_info;
     htri_t      object_exists;
     size_t      str_len;
 
@@ -3512,7 +3512,7 @@ obj_info_max
     (hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data)
 {
     info_all_t *datainfo = (info_all_t *)op_data;
-    H5O_info_t  object_info;
+    H5O_info1_t  object_info;
     size_t      str_len;
 
     datainfo->otype[datainfo->count] = -1;

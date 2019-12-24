@@ -40,7 +40,7 @@ typedef struct _cb_wrapper {
 /* Local Prototypes */
 /********************/
 
-static herr_t H5O_iterate_cb(hid_t g_id, const char *name, const H5O_info_t *info, void *cb_data);
+static herr_t H5O_iterate_cb(hid_t g_id, const char *name, const H5O_info1_t *info, void *cb_data);
 
 /*
  * Class:     hdf_hdf5lib_H5
@@ -134,7 +134,7 @@ JNIEXPORT jobject JNICALL
 Java_hdf_hdf5lib_H5_H5Oget_1info
     (JNIEnv *env, jclass clss, jlong loc_id, jint fields)
 {
-    H5O_info_t infobuf;
+    H5O_info1_t infobuf;
     jobject    hdrinfobuf;
     jobject    ihinfobuf1;
     jobject    ihinfobuf2;
@@ -201,7 +201,7 @@ JNIEXPORT jobject JNICALL
 Java_hdf_hdf5lib_H5_H5Oget_1info_1by_1name
     (JNIEnv *env, jclass clss, jlong loc_id, jstring name, jint fields, jlong access_id)
 {
-    H5O_info_t  infobuf;
+    H5O_info1_t  infobuf;
     const char *objName = NULL;
     jobject     hdrinfobuf;
     jobject     ihinfobuf1;
@@ -278,7 +278,7 @@ Java_hdf_hdf5lib_H5_H5Oget_1info_1by_1idx
     (JNIEnv *env, jclass clss, jlong loc_id,
         jstring name, jint index_field, jint order, jlong link_n, jint fields, jlong access_id)
 {
-    H5O_info_t  infobuf;
+    H5O_info1_t  infobuf;
     const char *grpName = NULL;
     jobject     hdrinfobuf;
     jobject     ihinfobuf1;
@@ -375,7 +375,7 @@ done:
 
 static herr_t
 H5O_iterate_cb
-    (hid_t g_id, const char *name, const H5O_info_t *info, void *cb_data)
+    (hid_t g_id, const char *name, const H5O_info1_t *info, void *cb_data)
 {
     cb_wrapper *wrapper = (cb_wrapper *)cb_data;
     jmethodID   constructor, mid;
@@ -512,7 +512,7 @@ Java_hdf_hdf5lib_H5_H5Ovisit
     if (NULL == callback_op)
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Ovisit: callback_op is NULL");
 
-    if ((status = H5Ovisit2((hid_t)grp_id, (H5_index_t)idx_type, (H5_iter_order_t)order, (H5O_iterate_t)H5O_iterate_cb, (void *)&wrapper, (unsigned)fields)) < 0)
+    if ((status = H5Ovisit2((hid_t)grp_id, (H5_index_t)idx_type, (H5_iter_order_t)order, (H5O_iterate1_t)H5O_iterate_cb, (void *)&wrapper, (unsigned)fields)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:
@@ -547,7 +547,7 @@ Java_hdf_hdf5lib_H5_H5Ovisit_1by_1name
 
     PIN_JAVA_STRING(ENVONLY, name, objName, NULL, "H5Ovisit_by_name: object name not pinned");
 
-    if ((status = H5Ovisit_by_name2((hid_t)grp_id, objName, (H5_index_t)idx_type, (H5_iter_order_t)order, (H5O_iterate_t)H5O_iterate_cb, (void *)&wrapper, (unsigned)fields, (hid_t)access_id)) < 0)
+    if ((status = H5Ovisit_by_name2((hid_t)grp_id, objName, (H5_index_t)idx_type, (H5_iter_order_t)order, (H5O_iterate1_t)H5O_iterate_cb, (void *)&wrapper, (unsigned)fields, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:
