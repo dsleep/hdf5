@@ -587,6 +587,8 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
+    H5TRACE8("e", "i*sIiIox*xIui", loc_id, obj_name, idx_type, order, op, op_data,
+             fields, lapl_id);
 
     /* Check args */
     if(!obj_name)
