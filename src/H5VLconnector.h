@@ -255,7 +255,7 @@ typedef struct H5VL_loc_by_idx {
 } H5VL_loc_by_idx_t;
 
 typedef struct H5VL_loc_by_token {
-    H5VL_token_t *token;
+    h5token_t *token;
 } H5VL_loc_by_token_t;
 
 /* Structure to hold parameters for object locations.

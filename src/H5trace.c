@@ -1630,6 +1630,22 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                 } /* end switch */
                 break;
 
+            case 'k':
+                if(ptr) {
+                    if(vp)
+                        HDfprintf(out, "0x%lx", (unsigned long)vp);
+                    else
+                        HDfprintf(out, "NULL");
+                } /* end if */
+                else {
+                    h5token_t token = HDva_arg(ap, h5token_t);
+                    int j;
+
+                    for (j = 0; j < H5_MAX_TOKEN_SIZE; j++)
+                        HDfprintf(out, "%02x", token.__data[j]);
+                } /* end else */
+                break;
+
             case 'L':
                 switch(type[1]) {
                     case 'l':
@@ -3261,22 +3277,6 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                                     HDfprintf(out, "%ld", (long)optional);
                                     break;
                             } /* end switch */
-                        } /* end else */
-                        break;
-
-                    case 'T':
-                        if(ptr) {
-                            if(vp)
-                                HDfprintf(out, "0x%lx", (unsigned long)vp);
-                            else
-                                HDfprintf(out, "NULL");
-                        } /* end if */
-                        else {
-                            H5VL_token_t token = HDva_arg(ap, H5VL_token_t);
-                            int j;
-
-                            for (j = 0; j < H5VL_MAX_TOKEN_SIZE; j++)
-                                HDfprintf(out, "%02x", token.__data[j]);
                         } /* end else */
                         break;
 

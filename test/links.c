@@ -636,7 +636,7 @@ cklinks(hid_t fapl, hbool_t new_format)
         HDprintf("    %d: Unexpected object type should have been a dataset\n", __LINE__);
         TEST_ERROR
     } /* end if */
-    if(HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(H5VL_token_t))) {
+    if(HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(h5token_t))) {
         H5_FAILED();
         HDputs("    Hard link test failed. Link seems not to point to the ");
         HDputs("    expected file location.");
@@ -671,7 +671,7 @@ cklinks(hid_t fapl, hbool_t new_format)
         HDprintf("    %d: Unexpected object type should have been a dataset\n", __LINE__);
         TEST_ERROR
     } /* end if */
-    if(HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(H5VL_token_t))) {
+    if(HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(h5token_t))) {
         H5_FAILED();
         HDputs("    Soft link test failed. Link seems not to point to the ");
         HDputs("    expected file location.");
@@ -11092,7 +11092,7 @@ UD_hard_create(const char H5_ATTR_UNUSED * link_name, hid_t loc_group, const voi
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
-    if(udata_size != H5VL_MAX_TOKEN_SIZE) {
+    if(udata_size != sizeof(h5token_t)) {
         ret_value = -1;
         goto done;
     } /* end if */
@@ -11172,7 +11172,7 @@ UD_hard_traverse(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
     size_t addr_len;
     hid_t ret_value = -1;
 
-    if(udata_size != H5VL_MAX_TOKEN_SIZE)
+    if(udata_size != sizeof(h5token_t))
         return FAIL;
 
     if(H5VL_native_get_file_addr_len(cur_group, &addr_len) < 0)
@@ -11196,7 +11196,7 @@ UD_hard_delete(const char H5_ATTR_UNUSED * link_name, hid_t file, const void *ud
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
-    if(udata_size != H5VL_MAX_TOKEN_SIZE) {
+    if(udata_size != sizeof(h5token_t)) {
         ret_value = -1;
         goto done;
     } /* end if */
@@ -11310,7 +11310,7 @@ ud_hard_links(hid_t fapl)
 
     /* Create a user-defined "hard link" to the group using the address we got
      * from H5Lget_info2 */
-    if(H5Lcreate_ud(fid, "ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token), H5VL_MAX_TOKEN_SIZE, H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Lcreate_ud(fid, "ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token), sizeof(h5token_t), H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
 
     /* Close and re-open file to ensure that data is written to disk */
     if(H5Fclose(fid) < 0) TEST_ERROR
@@ -11452,7 +11452,7 @@ ud_link_reregister(hid_t fapl)
     if(H5Gclose(gid) < 0) TEST_ERROR
 
     if(H5Lcreate_ud(fid, "ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token),
-            H5VL_MAX_TOKEN_SIZE, H5P_DEFAULT, H5P_DEFAULT) < 0)
+            sizeof(h5token_t), H5P_DEFAULT, H5P_DEFAULT) < 0)
         TEST_ERROR
 
     /* Create a group named REREG_TARGET_NAME in the same group as the ud link */
@@ -11473,7 +11473,7 @@ ud_link_reregister(hid_t fapl)
     /* Verify that we can't create any new links of this type */
     H5E_BEGIN_TRY {
         if(H5Lcreate_ud(fid, "ud_link2", (H5L_type_t)UD_HARD_TYPE, &(li.u.token),
-                H5VL_MAX_TOKEN_SIZE, H5P_DEFAULT, H5P_DEFAULT) >= 0)
+                sizeof(h5token_t), H5P_DEFAULT, H5P_DEFAULT) >= 0)
             TEST_ERROR
     } H5E_END_TRY
 
@@ -15468,7 +15468,7 @@ link_iterate_cb(hid_t group_id, const char *link_name, const H5L_info2_t *info,
             return H5_ITER_ERROR;
         if(info->cset != my_info.cset)
             return H5_ITER_ERROR;
-        if(HDmemcmp(&info->u.token, &my_info.u.token, H5VL_MAX_TOKEN_SIZE))
+        if(HDmemcmp(&info->u.token, &my_info.u.token, sizeof(h5token_t)))
             return H5_ITER_ERROR;
     } /* end if */
 
@@ -15915,7 +15915,7 @@ link_iterate_old_cb(hid_t group_id, const char *link_name, const H5L_info2_t *in
             return H5_ITER_ERROR;
         if(info->cset != my_info.cset)
             return H5_ITER_ERROR;
-        if(HDmemcmp(&info->u.token, &my_info.u.token, H5VL_MAX_TOKEN_SIZE))
+        if(HDmemcmp(&info->u.token, &my_info.u.token, sizeof(h5token_t)))
             return H5_ITER_ERROR;
     } /* end if */
 

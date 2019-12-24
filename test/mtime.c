@@ -95,7 +95,7 @@ main(void)
     if(H5Fclose(file) < 0) TEST_ERROR;
 
     /* Compare addresses & times from the two ways of calling H5Oget_info() */
-    if(HDmemcmp(&oi1.token, &oi2.token, sizeof(H5VL_token_t)) || oi1.ctime != oi2.ctime) {
+    if(HDmemcmp(&oi1.token, &oi2.token, sizeof(h5token_t)) || oi1.ctime != oi2.ctime) {
         H5_FAILED();
         HDputs("    Calling H5Oget_info() with the dataset ID returned");
         HDputs("    different values than calling it with a file and dataset");

@@ -382,7 +382,7 @@ get_object_header_tag(hid_t loc_id, haddr_t *tag)
         TEST_ERROR;
 
     /* Set the tag to return */
-    if(H5VL_token_to_addr(loc_id, oinfo.token, tag) < 0)
+    if(H5VL_native_token_to_addr(loc_id, oinfo.token, tag) < 0)
         TEST_ERROR;
 
     return 0;
