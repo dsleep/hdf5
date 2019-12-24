@@ -130,7 +130,7 @@ static char            *xml_escape_the_name(const char *);
  *-------------------------------------------------------------------------
  */
 static herr_t
-xml_dump_all_cb(hid_t group, const char *name, const H5L_info_t *linfo, void H5_ATTR_UNUSED *op_data)
+xml_dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATTR_UNUSED *op_data)
 {
     hid_t             obj;
     herr_t            ret = SUCCEED;
@@ -2665,9 +2665,9 @@ xml_dump_group(hid_t gid, const char *name)
                 /* iterate through all the links */
 
                 if((sort_by == H5_INDEX_CRT_ORDER) && (crt_order_flags & H5P_CRT_ORDER_TRACKED))
-                    H5Literate(gid, sort_by, sort_order, NULL, xml_dump_all_cb, NULL);
+                    H5Literate2(gid, sort_by, sort_order, NULL, xml_dump_all_cb, NULL);
                 else
-                    H5Literate(gid, H5_INDEX_NAME, sort_order, NULL, xml_dump_all_cb, NULL);
+                    H5Literate2(gid, H5_INDEX_NAME, sort_order, NULL, xml_dump_all_cb, NULL);
 
                 dump_indent -= COL;
                 ctx.indent_level--;
@@ -2747,9 +2747,9 @@ xml_dump_group(hid_t gid, const char *name)
         /* iterate through all the links */
 
         if((sort_by == H5_INDEX_CRT_ORDER) && (crt_order_flags & H5P_CRT_ORDER_TRACKED))
-            H5Literate(gid, sort_by, sort_order, NULL, xml_dump_all_cb, NULL);
+            H5Literate2(gid, sort_by, sort_order, NULL, xml_dump_all_cb, NULL);
         else
-            H5Literate(gid, H5_INDEX_NAME, sort_order, NULL, xml_dump_all_cb, NULL);
+            H5Literate2(gid, H5_INDEX_NAME, sort_order, NULL, xml_dump_all_cb, NULL);
 
         dump_indent -= COL;
         ctx.indent_level--;

@@ -171,10 +171,10 @@ ref_path_table_lookup(const char *thepath)
         return HADDR_UNDEF;
     /* Allow lookups on the root group, even though it doesn't have any link info */
     if(HDstrcmp(thepath, "/")) {
-        H5L_info_t  li;
+        H5L_info2_t  li;
 
         /* Check for external link first, so we don't return the OID of an object in another file */
-        if(H5Lget_info(thefile, thepath, &li, H5P_DEFAULT) < 0)
+        if(H5Lget_info2(thefile, thepath, &li, H5P_DEFAULT) < 0)
             return HADDR_UNDEF;
 
         /* UD links can't be followed, so they always "dangle" like soft links.  */

@@ -78,7 +78,7 @@ static herr_t H5O__obj_type_real(const H5O_t *oh, H5O_type_t *obj_type);
 static herr_t H5O__get_hdr_info_real(const H5O_t *oh, H5O_hdr_info_t *hdr);
 static herr_t H5O__free_visit_visited(void *item, void *key,
     void *operator_data/*in,out*/);
-static herr_t H5O__visit_cb(hid_t group, const char *name, const H5L_info_t *linfo,
+static herr_t H5O__visit_cb(hid_t group, const char *name, const H5L_info2_t *linfo,
     void *_udata);
 static const H5O_obj_class_t *H5O__obj_class_real(const H5O_t *oh);
 
@@ -2635,7 +2635,7 @@ H5O__free_visit_visited(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSE
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5O__visit_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info_t *linfo,
+H5O__visit_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info2_t *linfo,
     void *_udata)
 {
     H5O_iter_visit_ud_t *udata = (H5O_iter_visit_ud_t *)_udata;     /* User data for callback */

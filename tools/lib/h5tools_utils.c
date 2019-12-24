@@ -915,7 +915,7 @@ H5tools_get_symlink_info(hid_t file_id, const char * linkpath, h5tool_link_info_
     } /* end if */
 
     /* get info from link */
-    if(H5Lget_info(file_id, linkpath, &(link_info->linfo), H5P_DEFAULT) < 0) {
+    if(H5Lget_info2(file_id, linkpath, &(link_info->linfo), H5P_DEFAULT) < 0) {
         if(link_info->opt.msg_mode == 1)
             parallel_print("Warning: unable to get link info from <%s>\n",linkpath);
         HGOTO_DONE(FAIL);

@@ -41,7 +41,7 @@ typedef struct _cb_wrapper {
 /* Local Prototypes */
 /********************/
 
-static herr_t H5L_iterate_cb(hid_t g_id, const char *name, const H5L_info_t *info, void *cb_data);
+static herr_t H5L_iterate_cb(hid_t g_id, const char *name, const H5L_info1_t *info, void *cb_data);
 
 /*
  * Class:     hdf_hdf5lib_H5
@@ -281,11 +281,11 @@ JNIEXPORT jobject JNICALL
 Java_hdf_hdf5lib_H5_H5Lget_1info
     (JNIEnv *env, jclass clss, jlong loc_id, jstring name, jlong access_id)
 {
-    H5L_info_t  infobuf;
-    const char *linkName = NULL;
-    jvalue      args[5];
-    herr_t      status = FAIL;
-    jobject     ret_obj = NULL;
+    H5L_info1_t  infobuf;
+    const char  *linkName = NULL;
+    jvalue       args[5];
+    herr_t       status = FAIL;
+    jobject      ret_obj = NULL;
 
     UNUSED(clss);
 
@@ -322,11 +322,11 @@ Java_hdf_hdf5lib_H5_H5Lget_1info_1by_1idx
     (JNIEnv *env, jclass clss, jlong loc_id, jstring name,
         jint index_field, jint order, jlong link_n, jlong access_id)
 {
-    H5L_info_t  infobuf;
-    const char *groupName = NULL;
-    jvalue      args[5];
-    herr_t      status = FAIL;
-    jobject     ret_obj = NULL;
+    H5L_info1_t  infobuf;
+    const char  *groupName = NULL;
+    jvalue       args[5];
+    herr_t       status = FAIL;
+    jobject      ret_obj = NULL;
 
     UNUSED(clss);
 
@@ -408,13 +408,13 @@ JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_H5_H5Lget_1value
     (JNIEnv *env, jclass clss, jlong loc_id, jstring name, jobjectArray link_value, jlong access_id)
 {
-    H5L_info_t  infobuf;
-    const char *file_name = NULL;
-    const char *obj_name = NULL;
-    const char *linkName = NULL;
-    jstring     str;
-    herr_t      status;
-    char       *linkValue = NULL;
+    H5L_info1_t  infobuf;
+    const char  *file_name = NULL;
+    const char  *obj_name = NULL;
+    const char  *linkName = NULL;
+    jstring      str;
+    herr_t       status;
+    char        *linkValue = NULL;
 
     UNUSED(clss);
 
@@ -498,13 +498,13 @@ Java_hdf_hdf5lib_H5_H5Lget_1value_1by_1idx
     (JNIEnv *env, jclass clss, jlong loc_id, jstring name, jint index_field, jint order,
         jlong link_n, jobjectArray link_value, jlong access_id)
 {
-    H5L_info_t  infobuf;
-    const char *file_name = NULL;
-    const char *obj_name = NULL;
-    const char *grpName = NULL;
-    jstring     str;
-    herr_t      status;
-    void       *linkValue = NULL;
+    H5L_info1_t  infobuf;
+    const char  *file_name = NULL;
+    const char  *obj_name = NULL;
+    const char  *grpName = NULL;
+    jstring      str;
+    herr_t       status;
+    void        *linkValue = NULL;
 
     UNUSED(clss);
 
@@ -617,7 +617,7 @@ done:
 
 static herr_t
 H5L_iterate_cb
-    (hid_t g_id, const char *name, const H5L_info_t *info, void *cb_data)
+    (hid_t g_id, const char *name, const H5L_info1_t *info, void *cb_data)
 {
     cb_wrapper *wrapper = (cb_wrapper *)cb_data;
     jmethodID   constructor, mid;

@@ -31,7 +31,7 @@ typedef struct {
 } trav_attr_udata_t;
 
 /* callback function used by H5Literate() */
-static herr_t   dump_all_cb(hid_t group, const char *name, const H5L_info_t *linfo, void *op_data);
+static herr_t   dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void *op_data);
 static int      dump_extlink(hid_t group, const char *linkname, const char *objname);
 
 /*-------------------------------------------------------------------------
@@ -152,7 +152,7 @@ dump_attr_cb(hid_t oid, const char *attr_name, const H5A_info_t H5_ATTR_UNUSED *
  *-------------------------------------------------------------------------
  */
 static herr_t
-dump_all_cb(hid_t group, const char *name, const H5L_info_t *linfo, void H5_ATTR_UNUSED *op_data)
+dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATTR_UNUSED *op_data)
 {
     hid_t       obj;
     hid_t       dapl_id = H5P_DEFAULT;  /* dataset access property list ID */
@@ -596,9 +596,9 @@ link_iteration(hid_t gid, unsigned crt_order_flags)
     /* if there is a request to do H5_INDEX_CRT_ORDER and tracking order is set
        in the group, then, sort by creation order, otherwise by name */
     if((sort_by == H5_INDEX_CRT_ORDER) && (crt_order_flags & H5P_CRT_ORDER_TRACKED))
-        H5Literate(gid, sort_by, sort_order, NULL, dump_all_cb, NULL);
+        H5Literate2(gid, sort_by, sort_order, NULL, dump_all_cb, NULL);
     else
-        H5Literate(gid, H5_INDEX_NAME, sort_order, NULL, dump_all_cb, NULL);
+        H5Literate2(gid, H5_INDEX_NAME, sort_order, NULL, dump_all_cb, NULL);
 }
 
 /*-------------------------------------------------------------------------
@@ -1356,7 +1356,7 @@ obj_search(const char *path, const H5O_info1_t *oi, const char H5_ATTR_UNUSED *a
 } /* end obj_search() */
 
 static herr_t
-lnk_search(const char *path, const H5L_info_t *li, void *_op_data)
+lnk_search(const char *path, const H5L_info2_t *li, void *_op_data)
 {
     size_t      search_len;
     size_t      k;
@@ -1812,9 +1812,9 @@ handle_groups(hid_t fid, const char *group, void H5_ATTR_UNUSED *data, int pe, c
 void
 handle_links(hid_t fid, const char *links, void H5_ATTR_UNUSED * data, int H5_ATTR_UNUSED pe, const char H5_ATTR_UNUSED *display_name)
 {
-    H5L_info_t linfo;
+    H5L_info2_t linfo;
 
-    if(H5Lget_info(fid, links, &linfo, H5P_DEFAULT) < 0) {
+    if(H5Lget_info2(fid, links, &linfo, H5P_DEFAULT) < 0) {
         error_msg("unable to get link info from \"%s\"\n", links);
         h5tools_setstatus(EXIT_FAILURE);
     }

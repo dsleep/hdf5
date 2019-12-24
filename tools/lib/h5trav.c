@@ -172,7 +172,7 @@ trav_addr_visited(trav_addr_t *visited, haddr_t addr)
  *-------------------------------------------------------------------------
  */
 static herr_t
-traverse_cb(hid_t loc_id, const char *path, const H5L_info_t *linfo,
+traverse_cb(hid_t loc_id, const char *path, const H5L_info2_t *linfo,
     void *_udata)
 {
     trav_ud_traverse_t *udata = (trav_ud_traverse_t *)_udata;     /* User data */
@@ -288,12 +288,12 @@ traverse(hid_t file_id, const char *grp_name, hbool_t visit_start,
         /* Check for iteration of links vs. visiting all links recursively */
         if(recurse) {
             /* Visit all links in group, recursively */
-            if(H5Lvisit_by_name(file_id, grp_name, trav_index_by, trav_index_order, traverse_cb, &udata, H5P_DEFAULT) < 0)
+            if(H5Lvisit_by_name2(file_id, grp_name, trav_index_by, trav_index_order, traverse_cb, &udata, H5P_DEFAULT) < 0)
                 H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Lvisit_by_name failed");
         } /* end if */
         else {
             /* Iterate over links in group */
-            if(H5Literate_by_name(file_id, grp_name, trav_index_by, trav_index_order, NULL, traverse_cb, &udata, H5P_DEFAULT) < 0)
+            if(H5Literate_by_name2(file_id, grp_name, trav_index_by, trav_index_order, NULL, traverse_cb, &udata, H5P_DEFAULT) < 0)
                 H5TOOLS_GOTO_ERROR(FAIL, H5E_tools_min_id_g, "H5Literate_by_name failed");
         } /* end else */
 
@@ -407,7 +407,7 @@ trav_info_visit_obj(const char *path, const H5O_info1_t *oinfo,
  *-------------------------------------------------------------------------
  */
 int
-trav_info_visit_lnk(const char *path, const H5L_info_t *linfo, void *udata)
+trav_info_visit_lnk(const char *path, const H5L_info2_t *linfo, void *udata)
 {
     /* Add the link to the 'info' struct */
     trav_info_add((trav_info_t *)udata, path, ((linfo->type == H5L_TYPE_SOFT) ? H5TRAV_TYPE_LINK : H5TRAV_TYPE_UDLINK));
@@ -574,7 +574,7 @@ trav_table_visit_obj(const char *path, const H5O_info1_t *oinfo,
  *-------------------------------------------------------------------------
  */
 static int
-trav_table_visit_lnk(const char *path, const H5L_info_t H5_ATTR_UNUSED *linfo, void *udata)
+trav_table_visit_lnk(const char *path, const H5L_info2_t H5_ATTR_UNUSED *linfo, void *udata)
 {
     /* Add the link to the 'table' struct */
     trav_table_add((trav_table_t *)udata, path, NULL);
@@ -949,7 +949,7 @@ trav_print_visit_obj(const char *path, const H5O_info1_t *oinfo,
  *-------------------------------------------------------------------------
  */
 static int
-trav_print_visit_lnk(const char *path, const H5L_info_t *linfo, void *udata)
+trav_print_visit_lnk(const char *path, const H5L_info2_t *linfo, void *udata)
 {
     trav_print_udata_t *print_udata = (trav_print_udata_t *)udata;
 

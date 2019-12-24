@@ -3204,13 +3204,13 @@ done:
  */
 
 #ifdef __cplusplus
-    herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
-    herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
+    herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
+    herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
     int H5Gget_obj_info_max(hid_t, char **, int *, int *, unsigned long *, long);
     int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, unsigned long *objno, int indexType, int indexOrder);
 #else
-    static herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
-    static herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
+    static herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
+    static herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
     static int H5Gget_obj_info_max(hid_t, char **, int *, int *, unsigned long *, long);
     static int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, unsigned long *objno, int indexType, int indexOrder);
 #endif
@@ -3463,7 +3463,7 @@ H5Gget_obj_info_max
 
 herr_t
 obj_info_all
-    (hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data)
+    (hid_t loc_id, const char *name, const H5L_info1_t *info, void *op_data)
 {
     info_all_t *datainfo = (info_all_t *)op_data;
     H5O_info1_t  object_info;
@@ -3509,7 +3509,7 @@ done:
 
 herr_t
 obj_info_max
-    (hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data)
+    (hid_t loc_id, const char *name, const H5L_info1_t *info, void *op_data)
 {
     info_all_t *datainfo = (info_all_t *)op_data;
     H5O_info1_t  object_info;

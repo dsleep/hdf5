@@ -316,7 +316,7 @@ static void hard_link_example(void)
 {
     hid_t file_id;
     hid_t group_id;
-    H5L_info_t li;
+    H5L_info2_t li;
     /* Define the link class that we'll use to register "user-defined hard
      * links" using the callbacks we defined above.
      * A link class can have NULL for any callback except its traverse
@@ -361,13 +361,13 @@ static void hard_link_example(void)
      * the target group's address. We do this by calling H5Lget_info
      * on a hard link to the object.
      */
-    H5Lget_info(file_id, TARGET_GROUP, &li, H5P_DEFAULT);
+    H5Lget_info2(file_id, TARGET_GROUP, &li, H5P_DEFAULT);
 
     /* Now create a user-defined link.  We give it the group's address
      * as its udata.
      */
-    H5Lcreate_ud(file_id, UD_HARD_LINK_NAME, (H5L_type_t)UD_HARD_CLASS, &(li.u.address),
-                 sizeof(li.u.address), H5P_DEFAULT, H5P_DEFAULT);
+    H5Lcreate_ud(file_id, UD_HARD_LINK_NAME, (H5L_type_t)UD_HARD_CLASS, &(li.u.token),
+                 H5VL_MAX_TOKEN_SIZE, H5P_DEFAULT, H5P_DEFAULT);
 
     /* The UD hard link has now incremented the group's reference count
      * like a normal hard link would.  This means that we can unlink the
@@ -404,23 +404,23 @@ static void hard_link_example(void)
 static herr_t UD_hard_create(const char *link_name, hid_t loc_group,
     const void *udata, size_t udata_size, hid_t lcpl_id)
 {
-    haddr_t addr;
+    H5VL_token_t token;
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
     /* Make sure that the address passed in looks valid */
-    if(udata_size != sizeof(haddr_t))
+    if(udata_size != H5VL_MAX_TOKEN_SIZE)
     {
       ret_value = -1;
       goto done;
     }
 
-    addr = *((const haddr_t *) udata);
+    token = *((H5VL_token_t *) udata);
 
     /* Open the object this link points to so that we can increment
-     * its reference count. This also ensures that the address passed
+     * its reference count. This also ensures that the token passed
      * in points to a real object (although this check is not perfect!) */
-    target_obj= H5Oopen_by_addr(loc_group, addr);
+    target_obj = H5Oopen_by_token(loc_group, token);
     if(target_obj < 0)
     {
       ret_value = -1;
@@ -448,23 +448,23 @@ done:
 static herr_t UD_hard_delete(const char *link_name, hid_t loc_group,
     const void *udata, size_t udata_size)
 {
-    haddr_t addr;
+    H5VL_token_t token;
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
     /* Sanity check; we have already verified the udata's size in the creation
      * callback.
      */
-    if(udata_size != sizeof(haddr_t))
+    if(udata_size != H5VL_MAX_TOKEN_SIZE)
     {
       ret_value = -1;
       goto done;
     }
 
-    addr = *((const haddr_t *) udata);
+    token = *((H5VL_token_t *) udata);
 
     /* Open the object this link points to */
-    target_obj= H5Oopen_by_addr(loc_group, addr);
+    target_obj = H5Oopen_by_token(loc_group, token);
     if(target_obj < 0)
     {
       ret_value = -1;
@@ -492,21 +492,21 @@ done:
 static hid_t UD_hard_traverse(const char *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t lapl_id, hid_t dxpl_id)
 {
-    haddr_t       addr;
-    hid_t         ret_value = -1;
+    H5VL_token_t token;
+    hid_t        ret_value = -1;
 
     /* Sanity check; we have already verified the udata's size in the creation
      * callback.
      */
-    if(udata_size != sizeof(haddr_t))
+    if(udata_size != H5VL_MAX_TOKEN_SIZE)
       return -1;
 
-    addr = *((const haddr_t *) udata);
+    token = *((H5VL_token_t *) udata);
 
-    /* Open the object by address. If H5Oopen_by_addr fails, ret_value will
+    /* Open the object by token. If H5Oopen_by_token fails, ret_value will
      * be negative to indicate that the traversal function failed.
      */
-    ret_value = H5Oopen_by_addr(cur_group, addr);
+    ret_value = H5Oopen_by_token(cur_group, token);
 
     return ret_value;
 }
