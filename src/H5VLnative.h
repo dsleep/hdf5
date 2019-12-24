@@ -20,6 +20,11 @@
 /* Public headers needed by this file */
 #include "H5VLpublic.h"        /* Virtual Object Layer                 */
 
+
+/*****************/
+/* Public Macros */
+/*****************/
+
 /* Identifier for the native VOL connector */
 #define H5VL_NATIVE     (H5VL_native_register())
 
@@ -89,11 +94,23 @@
 #define H5VL_NATIVE_OBJECT_ARE_MDC_FLUSHES_DISABLED    4   /* H5Oare_mdc_flushes_disabled                  */
 #define H5VL_NATIVE_OBJECT_GET_NATIVE_INFO             5   /* H5Oget_native_info(_by_idx, _by_name)        */
 
+/*******************/
+/* Public Typedefs */
+/*******************/
+
+/********************/
+/* Public Variables */
+/********************/
+
+/*********************/
+/* Public Prototypes */
+/*********************/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Private functions */
+/* Not really public but must be included here */
 H5_DLL hid_t H5VL_native_register(void);
 
 #ifdef __cplusplus
