@@ -22,10 +22,10 @@
 #include "H5f90.h"
 #include "H5Eprivate.h"
 int_f
-fill_h5o_info_t_f(H5O_info_t Oinfo, H5O_info_t_f *object_info);
+fill_h5o_info_t_f(H5O_info1_t Oinfo, H5O_info_t_f *object_info);
 
 int_f
-fill_h5o_info_t_f(H5O_info_t Oinfo, H5O_info_t_f *object_info) {
+fill_h5o_info_t_f(H5O_info1_t Oinfo, H5O_info_t_f *object_info) {
 
   /* This function does not used the field parameter because we want 
    * this function to fill the unfilled fields with C's default values.
@@ -248,7 +248,7 @@ h5oclose_c ( hid_t_f *object_id )
  * SOURCE
 */
 int_f
-h5ovisit_c(hid_t_f *group_id, int_f *index_type, int_f *order, H5O_iterate_t op, void *op_data, int_f *fields )
+h5ovisit_c(hid_t_f *group_id, int_f *index_type, int_f *order, H5O_iterate1_t op, void *op_data, int_f *fields )
 /******/
 {
   int_f ret_value = -1;       /* Return value */
@@ -328,7 +328,7 @@ h5oget_info_by_name_c (hid_t_f *loc_id, _fcd name, size_t_f *namelen, hid_t_f *l
 {
   char *c_name = NULL;          /* Buffer to hold C string */
   int_f ret_value = 0;          /* Return value */
-  H5O_info_t Oinfo;
+  H5O_info1_t Oinfo;
   
   /*
    * Convert FORTRAN name to C name
@@ -379,7 +379,7 @@ h5oget_info_by_idx_c (hid_t_f *loc_id, _fcd  group_name, size_t_f *namelen,
 {
   char *c_group_name = NULL;     /* Buffer to hold C string */
   int_f ret_value = 0;          /* Return value */
-  H5O_info_t Oinfo;
+  H5O_info1_t Oinfo;
   H5_index_t c_index_field;
   H5_iter_order_t c_order;
   
@@ -430,7 +430,7 @@ h5oget_info_c (hid_t_f *object_id, H5O_info_t_f *object_info, int_f *fields)
 /******/
 {
   int_f ret_value = 0;          /* Return value */
-  H5O_info_t Oinfo;
+  H5O_info1_t Oinfo;
   
   /*
    * Call H5Oinfo_by_name function.
@@ -528,7 +528,7 @@ h5ocopy_c (hid_t_f *src_loc_id, _fcd src_name, size_t_f *src_name_len,
 */
 int_f
 h5ovisit_by_name_c(hid_t_f *loc_id,  _fcd object_name, size_t_f *namelen, int_f *index_type, int_f *order,
-                   H5O_iterate_t op, void *op_data, hid_t_f *lapl_id, int_f *fields )
+                   H5O_iterate1_t op, void *op_data, hid_t_f *lapl_id, int_f *fields )
 /******/
 {
   int_f ret_value = -1;       /* Return value */

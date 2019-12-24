@@ -231,8 +231,13 @@ H5_DLL ssize_t H5Oget_comment(hid_t obj_id, char *comment, size_t bufsize);
 H5_DLL ssize_t H5Oget_comment_by_name(hid_t loc_id, const char *name,
     char *comment, size_t bufsize, hid_t lapl_id);
 H5_DLL herr_t H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
-    H5O_iterate2_t op, void *op_data, unsigned fields);
+    H5O_iterate1_t op, void *op_data, unsigned fields);
 H5_DLL herr_t H5Ovisit_by_name2(hid_t loc_id, const char *obj_name,
+    H5_index_t idx_type, H5_iter_order_t order, H5O_iterate1_t op,
+    void *op_data, unsigned fields, hid_t lapl_id);
+H5_DLL herr_t H5Ovisit3(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
+    H5O_iterate2_t op, void *op_data, unsigned fields);
+H5_DLL herr_t H5Ovisit_by_name3(hid_t loc_id, const char *obj_name,
     H5_index_t idx_type, H5_iter_order_t order, H5O_iterate2_t op,
     void *op_data, unsigned fields, hid_t lapl_id);
 H5_DLL herr_t H5Oclose(hid_t object_id);

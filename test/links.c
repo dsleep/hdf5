@@ -12906,26 +12906,26 @@ obj_visit(hid_t fapl, hbool_t new_format)
     /* Visit all the objects reachable from the root group (with file ID) */
     udata.idx = 0;
     udata.info = new_format ? ovisit0_new : ovisit0_old;
-    if(H5Ovisit2(fid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit3(fid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
 
     /* Visit all the objects reachable from the root group (with group ID) */
     if((gid = H5Gopen2(fid, "/", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = new_format ? ovisit0_new : ovisit0_old;
-    if(H5Ovisit2(gid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit3(gid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Visit all the objects reachable from each internal group */
     if((gid = H5Gopen2(fid, "/Group1", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = new_format ? ovisit1_new : ovisit1_old;
-    if(H5Ovisit2(gid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit3(gid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     if((gid = H5Gopen2(fid, "/Group1/Group2", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = new_format ? ovisit2_new : ovisit2_old;
-    if(H5Ovisit2(gid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit3(gid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Close file created */
@@ -12970,34 +12970,34 @@ obj_visit_by_name(hid_t fapl, hbool_t new_format)
     /* Visit all the objects reachable from the root group (with file ID) */
     udata.idx = 0;
     udata.info = new_format ? ovisit0_new : ovisit0_old;
-    if(H5Ovisit_by_name2(fid, "/", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit_by_name3(fid, "/", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
 
     /* Visit all the objects reachable from the root group (with group ID) */
     if((gid = H5Gopen2(fid, "/", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = new_format ? ovisit0_new : ovisit0_old;
-    if(H5Ovisit_by_name2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit_by_name3(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Visit all the objects reachable from each internal group */
     udata.idx = 0;
     udata.info = new_format ? ovisit1_new : ovisit1_old;
-    if(H5Ovisit_by_name2(fid, "/Group1", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit_by_name3(fid, "/Group1", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
 
     if((gid = H5Gopen2(fid, "/Group1", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = new_format ? ovisit1_new : ovisit1_old;
-    if(H5Ovisit_by_name2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit_by_name3(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     udata.idx = 0;
     udata.info = new_format ? ovisit2_new : ovisit2_old;
-    if(H5Ovisit_by_name2(fid, "/Group1/Group2", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit_by_name3(fid, "/Group1/Group2", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
 
     if((gid = H5Gopen2(fid, "/Group1/Group2", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = new_format ? ovisit2_new : ovisit2_old;
-    if(H5Ovisit_by_name2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Ovisit_by_name3(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_obj_cb, &udata, H5O_INFO_BASIC, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Close file created */
@@ -13064,14 +13064,14 @@ obj_visit_stop(hid_t fapl, hbool_t new_format)
      * returns H5_ITER_STOP
      */
     nvisited = 0;
-    if((ret = H5Ovisit2(fid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_stop_cb, &nvisited, H5O_INFO_BASIC)) < 0)
+    if((ret = H5Ovisit3(fid, H5_INDEX_NAME, H5_ITER_INC, visit_obj_stop_cb, &nvisited, H5O_INFO_BASIC)) < 0)
         FAIL_STACK_ERROR
     if(ret != H5_ITER_STOP) TEST_ERROR
     if(nvisited != 1) TEST_ERROR
 
     /* Same test with H5Ovisit_by_name */
     nvisited = 0;
-    if((ret = H5Ovisit_by_name2(fid, "/", H5_INDEX_NAME, H5_ITER_INC, visit_obj_stop_cb,
+    if((ret = H5Ovisit_by_name3(fid, "/", H5_INDEX_NAME, H5_ITER_INC, visit_obj_stop_cb,
             &nvisited, H5O_INFO_BASIC, H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     if(ret != H5_ITER_STOP) TEST_ERROR
     if(nvisited != 1) TEST_ERROR

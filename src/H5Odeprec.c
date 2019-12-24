@@ -39,6 +39,7 @@
 
 #include "H5VLnative_private.h" /* Native VOL connector                     */
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 
 /****************/
 /* Local Macros */
@@ -81,7 +82,6 @@ typedef struct H5O_visit1_adapter_t {
 /*******************/
 
 
-#ifndef H5_NO_DEPRECATED_SYMBOLS
 
 
 /*-------------------------------------------------------------------------
@@ -462,6 +462,171 @@ H5Ovisit_by_name1(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
 done:
     FUNC_LEAVE_API(ret_value)
 } /* end H5Ovisit_by_name1() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Ovisit2
+ *
+ * Purpose:     Recursively visit an object and all the objects reachable
+ *              from it.  If the starting object is a group, all the objects
+ *              linked to from that group will be visited.  Links within
+ *              each group are visited according to the order within the
+ *              specified index (unless the specified index does not exist for
+ *              a particular group, then the "name" index is used).
+ *
+ *              NOTE: Soft links and user-defined links are ignored during
+ *              this operation.
+ *
+ *              NOTE: Each _object_ reachable from the initial group will only
+ *              be visited once.  If multiple hard links point to the same
+ *              object, the first link to the object's path (according to the
+ *              iteration index and iteration order given) will be used to in
+ *              the callback about the object.
+ *
+ *              NOTE: Add a a parameter "fields" to indicate selection of
+ *              object info to be retrieved to the callback "op".
+ *
+ * Return:      Success:    The return value of the first operator that
+ *                          returns non-zero, or zero if all members were
+ *                          processed with no operator returning non-zero.
+ *
+ *              Failure:    Negative if something goes wrong within the
+ *                          library, or the negative value returned by one
+ *                          of the operators.
+ *
+ * Programmer:	Quincey Koziol
+ *              November 25 2007
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
+    H5O_iterate1_t op, void *op_data, unsigned fields)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t   loc_params;
+    H5O_visit1_adapter_t shim_data;             /* Adapter for passing app callback & user data */
+    herr_t              ret_value;              /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE6("e", "iIiIox*xIu", obj_id, idx_type, order, op, op_data, fields);
+
+    /* Check args */
+    if(idx_type <= H5_INDEX_UNKNOWN || idx_type >= H5_INDEX_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid index type specified")
+    if(order <= H5_ITER_UNKNOWN || order >= H5_ITER_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified")
+    if(!op)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no callback operator specified")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(obj_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Set location parameters */
+    loc_params.type         = H5VL_OBJECT_BY_SELF;
+    loc_params.obj_type     = H5I_get_type(obj_id);
+
+    /* Set up adapter */
+    shim_data.real_op = op;
+    shim_data.real_op_data = op_data;
+
+    /* Visit the objects */
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, H5O__iterate1_adapter, (void *)&shim_data, fields)) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Ovisit2() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Ovisit_by_name2
+ *
+ * Purpose:     Recursively visit an object and all the objects reachable
+ *              from it.  If the starting object is a group, all the objects
+ *              linked to from that group will be visited.  Links within
+ *              each group are visited according to the order within the
+ *              specified index (unless the specified index does not exist for
+ *              a particular group, then the "name" index is used).
+ *
+ *              NOTE: Soft links and user-defined links are ignored during
+ *              this operation.
+ *
+ *              NOTE: Each _object_ reachable from the initial group will only
+ *              be visited once.  If multiple hard links point to the same
+ *              object, the first link to the object's path (according to the
+ *              iteration index and iteration order given) will be used to in
+ *              the callback about the object.
+ *
+ *              NOTE: Add a a parameter "fields" to indicate selection of
+ *              object info to be retrieved to the callback "op".
+ *
+ * Return:      Success:    The return value of the first operator that
+ *                          returns non-zero, or zero if all members were
+ *                          processed with no operator returning non-zero.
+ *
+ *              Failure:    Negative if something goes wrong within the
+ *                          library, or the negative value returned by one
+ *                          of the operators.
+ *
+ * Programmer:	Quincey Koziol
+ *              November 24 2007
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
+    H5_iter_order_t order, H5O_iterate1_t op, void *op_data, unsigned fields, hid_t lapl_id)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t   loc_params;
+    H5O_visit1_adapter_t shim_data;             /* Adapter for passing app callback & user data */
+    herr_t              ret_value;              /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+
+    /* Check args */
+    if(!obj_name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "obj_name parameter cannot be NULL")
+    if(!*obj_name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "obj_name parameter cannot be an empty string")
+    if(idx_type <= H5_INDEX_UNKNOWN || idx_type >= H5_INDEX_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid index type specified")
+    if(order <= H5_ITER_UNKNOWN || order >= H5_ITER_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified")
+    if(!op)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no callback operator specified")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Verify access property list and set up collective metadata if appropriate */
+    if(H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info")
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Set location parameters */
+    loc_params.type                         = H5VL_OBJECT_BY_NAME;
+    loc_params.loc_data.loc_by_name.name    = obj_name;
+    loc_params.loc_data.loc_by_name.lapl_id = lapl_id;
+    loc_params.obj_type                     = H5I_get_type(loc_id);
+
+    /* Set up adapter */
+    shim_data.real_op = op;
+    shim_data.real_op_data = op_data;
+
+    /* Visit the objects */
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, H5O__iterate1_adapter, (void *)&shim_data, fields)) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Ovisit_by_name2() */
 
 #endif /* H5_NO_DEPRECATED_SYMBOLS */
 
