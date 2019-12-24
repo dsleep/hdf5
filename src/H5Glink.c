@@ -309,16 +309,10 @@ H5G_link_to_info(const H5O_loc_t *link_loc, const H5O_link_t *lnk, H5L_info2_t *
 
         switch(lnk->type) {
             case H5L_TYPE_HARD:
-            {
-                uint8_t *p = NULL;
-
                 /* Serialize the address into a VOL token */
                 HDmemset(&info->u.token, 0, sizeof(H5VL_token_t));
-                p = (uint8_t *)&info->u.token;
-                H5F_addr_encode_len(H5F_SIZEOF_ADDR(link_loc->file), &p, lnk->u.hard.addr);
-
+                HDmemcpy(&info->u.token, lnk->u.hard.addr, H5F_SIZEOF_ADDR(link_loc->file));
                 break;
-            } /* end case */
 
             case H5L_TYPE_SOFT:
                 info->u.val_size = HDstrlen(lnk->u.soft.name) + 1; /*count the null terminator*/

@@ -250,7 +250,6 @@ test_h5o_open_by_addr(void)
     haddr_t      dset_addr;
     haddr_t      dtype_addr;
     void        *vol_obj_file = NULL;        /* Object token of file_id */
-    uint8_t     *p = NULL;                   /* Pointer for de-serialization */
     hsize_t      dims[RANK];
     H5I_type_t   id_type;                    /* Type of IDs returned from H5Oopen */
     H5G_info_t   ginfo;                      /* Group info struct */
@@ -301,16 +300,13 @@ test_h5o_open_by_addr(void)
     /* Get address for each object */
     ret = H5Lget_info2(fid, "group", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info2");
-    p = (uint8_t *)&li.u.token;
-    H5F_addr_decode(f, &p, &grp_addr);
+    HDmemcpy(&grp_addr, &li.u.token, H5F_SIZEOF_ADDR(f));
     ret = H5Lget_info2(fid, "group/datatype", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info2");
-    p = (uint8_t *)&li.u.token;
-    H5F_addr_decode(f, &p, &dtype_addr);
+    HDmemcpy(&dtype_addr, &li.u.token, H5F_SIZEOF_ADDR(f));
     ret = H5Lget_info2(fid, "dataset", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info2");
-    p = (uint8_t *)&li.u.token;
-    H5F_addr_decode(f, &p, &dset_addr);
+    HDmemcpy(&dset_addr, &li.u.token, H5F_SIZEOF_ADDR(f));
 
     /* Now make sure that H5Oopen_by_addr can open all three types of objects */
     grp = H5Oopen_by_addr(fid, grp_addr);
@@ -448,19 +444,13 @@ test_h5o_open_by_token(void)
     CHECK(ret, FAIL, "H5Lget_info");
     grp = H5Oopen_by_token(fid, li.u.token);
     CHECK(grp, FAIL, "H5Oopen_by_token");
-    {
-        const uint8_t *p = (const uint8_t *)&li.u.token;
-        H5F_addr_decode_len(addr_len, &p, &grp_addr);
-    }
+    HDmemcpy(&grp_addr, &li.u.token, addr_len);
 
     ret = H5Lget_info2(fid, "group/datatype", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");
     dtype = H5Oopen_by_token(fid, li.u.token);
     CHECK(dtype, FAIL, "H5Oopen_by_token");
-    {
-        const uint8_t *p = (const uint8_t *)&li.u.token;
-        H5F_addr_decode_len(addr_len, &p, &dtype_addr);
-    }
+    HDmemcpy(&dtype_addr, &li.u.token, addr_len);
 
     ret = H5Lget_info2(fid, "dataset", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");

@@ -111,7 +111,6 @@ H5L__iterate2_shim(hid_t group_id, const char *name, const H5L_info2_t *linfo2, 
         linfo.cset         = linfo2->cset;
         if (H5L_TYPE_HARD == linfo2->type) {
             size_t addr_len = 0;
-            const uint8_t *p = (const uint8_t *)(&(linfo2->u.token)); /* Pointer into token   */
 
             /* IF NATIVE */
             /* Get the size of an haddr_t in this file */
@@ -119,7 +118,7 @@ H5L__iterate2_shim(hid_t group_id, const char *name, const H5L_info2_t *linfo2, 
                 HGOTO_ERROR(H5E_FILE, H5E_CANTGET, H5_ITER_ERROR, "can't get address size from file")
 
             /* Convert from VOL token to address */
-            H5F_addr_decode_len(addr_len, &p, &(linfo.u.address));
+            HDmemcpy(&linfo.u.address, &linfo2->u.token, addr_len);
 
             /* IF NOT NATIVE, COPY LOW-ORDER BYTES */
         }
@@ -191,7 +190,6 @@ H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
         linfo->cset         = linfo2.cset;
         if (H5L_TYPE_HARD == linfo2.type) {
             size_t addr_len = 0;
-            const uint8_t *p = (const uint8_t *)(&(linfo2.u.token)); /* Pointer into token   */
 
             /* IF NATIVE */
             /* Get the size of an haddr_t in this file */
@@ -199,7 +197,7 @@ H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
                 HGOTO_ERROR(H5E_ARGS, H5E_CANTGET, FAIL, "unable to get the file's address size")
 
             /* Convert from VOL token to address */
-            H5F_addr_decode_len(addr_len, &p, &(linfo->u.address));
+            HDmemcpy(&linfo->u.address, &linfo2.u.token, addr_len);
 
             /* IF NOT NATIVE, COPY LOW-ORDER BYTES */
         }
@@ -278,7 +276,6 @@ H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
         linfo->cset         = linfo2.cset;
         if (H5L_TYPE_HARD == linfo2.type) {
             size_t addr_len = 0;
-            const uint8_t *p = (const uint8_t *)(&(linfo2.u.token)); /* Pointer into token   */
 
             /* IF NATIVE */
             /* Get the size of an haddr_t in this file */
@@ -286,7 +283,7 @@ H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
                 HGOTO_ERROR(H5E_ARGS, H5E_CANTGET, FAIL, "unable to get the file's address size")
 
             /* Convert from VOL token to address */
-            H5F_addr_decode_len(addr_len, &p, &(linfo->u.address));
+            HDmemcpy(&linfo->u.address, &linfo2.u.token, addr_len);
 
             /* IF NOT NATIVE, COPY LOW-ORDER BYTES */
         }

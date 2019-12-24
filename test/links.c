@@ -11087,7 +11087,6 @@ static herr_t
 UD_hard_create(const char H5_ATTR_UNUSED * link_name, hid_t loc_group, const void *udata,
     size_t udata_size, hid_t H5_ATTR_UNUSED lcpl_id)
 {
-    const uint8_t *p = (const uint8_t *)udata; /* Pointer into token   */
     haddr_t addr;
     size_t addr_len;
     hid_t target_obj = -1;
@@ -11104,7 +11103,7 @@ UD_hard_create(const char H5_ATTR_UNUSED * link_name, hid_t loc_group, const voi
     } /* end if */
 
     /* Convert from VOL token to address */
-    H5F_addr_decode_len(addr_len, &p, &addr);
+    HDmemcpy(&addr, udata, addr_len);
 
     /* Open the object this link points to */
     target_obj = H5Oopen_by_addr(loc_group, addr);
@@ -11169,7 +11168,6 @@ UD_hard_traverse(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t H5_ATTR_UNUSED lapl_id,
     hid_t H5_ATTR_UNUSED dxpl_id)
 {
-    const uint8_t *p = (const uint8_t *)udata; /* Pointer into token   */
     haddr_t addr;
     size_t addr_len;
     hid_t ret_value = -1;
@@ -11181,7 +11179,7 @@ UD_hard_traverse(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
         return FAIL;
 
     /* Convert from VOL token to address */
-    H5F_addr_decode_len(addr_len, &p, &addr);
+    HDmemcpy(&addr, udata, addr_len);
 
     ret_value = H5Oopen_by_addr(cur_group, addr); /* If this fails, our return value will be negative. */
 
@@ -11193,7 +11191,6 @@ static herr_t
 UD_hard_delete(const char H5_ATTR_UNUSED * link_name, hid_t file, const void *udata,
     size_t udata_size)
 {
-    const uint8_t *p = (const uint8_t *)udata; /* Pointer into token   */
     haddr_t addr;
     size_t addr_len;
     hid_t target_obj = -1;
@@ -11210,7 +11207,7 @@ UD_hard_delete(const char H5_ATTR_UNUSED * link_name, hid_t file, const void *ud
     } /* end if */
 
     /* Convert from VOL token to address */
-    H5F_addr_decode_len(addr_len, &p, &addr);
+    HDmemcpy(&addr, udata, addr_len);
 
     /* Open the object this link points to */
     target_obj = H5Oopen_by_addr(file, addr);
@@ -14734,7 +14731,6 @@ link_info_by_idx_old(hid_t fapl)
     haddr_t      curr_addr;              /* Address for current object */
     haddr_t      objno[CORDER_NLINKS];   /* Addresses of the objects created */
     void        *vol_obj_file = NULL;    /* Object token of file_id */
-    uint8_t     *p = NULL;
     char         tmpname[NAME_BUF_SIZE]; /* Temporary link name */
     char         tmpval[NAME_BUF_SIZE];  /* Temporary link value */
     unsigned     u;                      /* Local index variable */
@@ -14802,8 +14798,7 @@ link_info_by_idx_old(hid_t fapl)
             /* Verify link information (in increasing order) */
             if(hard_link) {
                 if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-                p = (uint8_t *)&linfo.u.token;
-                H5F_addr_decode(f, &p, &curr_addr);
+                HDmemcpy(&curr_addr, &linfo.u.token, H5F_SIZEOF_ADDR(f));
                 if(H5F_addr_ne(curr_addr, objno[u])) TEST_ERROR
             } /* end if */
             else {
@@ -14819,8 +14814,7 @@ link_info_by_idx_old(hid_t fapl)
             /* Verify link information (in native order - native is increasing) */
             if(hard_link) {
                 if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, H5_ITER_NATIVE, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-                p = (uint8_t *)&linfo.u.token;
-                H5F_addr_decode(f, &p, &curr_addr);
+                HDmemcpy(&curr_addr, &linfo.u.token, H5F_SIZEOF_ADDR(f));
                 if(H5F_addr_ne(curr_addr, objno[u])) TEST_ERROR
             } /* end if */
             else {
@@ -14842,8 +14836,7 @@ link_info_by_idx_old(hid_t fapl)
             /* Verify link information (in decreasing order) */
             if(hard_link) {
                 if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-                p = (uint8_t *)&linfo.u.token;
-                H5F_addr_decode(f, &p, &curr_addr);
+                HDmemcpy(&curr_addr, &linfo.u.token, H5F_SIZEOF_ADDR(f));
                 if(H5F_addr_ne(curr_addr, objno[dec_u])) TEST_ERROR
             } /* end if */
             else {
@@ -15224,7 +15217,6 @@ delete_by_idx_old(hid_t fapl)
     H5L_info2_t  linfo;                  /* Link info struct */
     H5_iter_order_t order;               /* Order within in the index */
     void        *vol_obj_file = NULL;        /* Object token of file_id */
-    uint8_t     *p = NULL;                   /* Pointer for de-serialization */
     char         objname[NAME_BUF_SIZE]; /* Object name */
     char         filename[NAME_BUF_SIZE];/* File name */
     haddr_t      curr_addr;              /* Address of the current object */
@@ -15302,8 +15294,7 @@ delete_by_idx_old(hid_t fapl)
             /* Verify the link information for first link in appropriate order */
             HDmemset(&linfo, 0, sizeof(linfo));
             if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)0, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-            p = (uint8_t *)&linfo.u.token;
-            H5F_addr_decode(f, &p, &curr_addr);
+            HDmemcpy(&curr_addr, &linfo.u.token, H5F_SIZEOF_ADDR(f));
             if(order == H5_ITER_INC) {
                 if(H5F_addr_ne(curr_addr, objno[u + 1])) TEST_ERROR
             } /* end if */
@@ -15363,8 +15354,7 @@ delete_by_idx_old(hid_t fapl)
             /* Verify the link information for current link in appropriate order */
             HDmemset(&linfo, 0, sizeof(linfo));
             if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-            p = (uint8_t *)&linfo.u.token;
-            H5F_addr_decode(f, &p, &curr_addr);
+            HDmemcpy(&curr_addr, &linfo.u.token, H5F_SIZEOF_ADDR(f));
             if(order == H5_ITER_INC) {
                 if(H5F_addr_ne(curr_addr, objno[(u * 2) + 1])) TEST_ERROR
             } /* end if */
@@ -15392,8 +15382,7 @@ delete_by_idx_old(hid_t fapl)
             /* Verify the link information for first link in appropriate order */
             HDmemset(&linfo, 0, sizeof(linfo));
             if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)0, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-            p = (uint8_t *)&linfo.u.token;
-            H5F_addr_decode(f, &p, &curr_addr);
+            HDmemcpy(&curr_addr, &linfo.u.token, H5F_SIZEOF_ADDR(f));
             if(order == H5_ITER_INC) {
                 if(H5F_addr_ne(curr_addr, objno[(u * 2) + 3])) TEST_ERROR
             } /* end if */

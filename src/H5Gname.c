@@ -1224,11 +1224,10 @@ H5G_get_name_by_addr_cb(hid_t gid, const char *path, const H5L_info2_t *linfo,
 
     /* Check for hard link with correct address */
     if(linfo->type == H5L_TYPE_HARD) {
-        const uint8_t *p = (const uint8_t *)&linfo->u.token;
-        haddr_t        link_addr;
+        haddr_t link_addr;
 
         /* Retrieve hard link address from VOL token */
-        H5F_addr_decode_len(H5F_SIZEOF_ADDR(udata->loc->file), &p, &link_addr);
+        HDmemcpy(&link_addr, &linfo->u.token, H5F_SIZEOF_ADDR(udata->loc->file));
 
         if(udata->loc->addr == link_addr) {
             H5G_loc_t   grp_loc;                /* Location of group */
