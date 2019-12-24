@@ -311,7 +311,7 @@ H5G_link_to_info(const H5O_loc_t *link_loc, const H5O_link_t *lnk, H5L_info2_t *
             case H5L_TYPE_HARD:
                 /* Serialize the address into a VOL token */
                 HDmemset(&info->u.token, 0, sizeof(H5VL_token_t));
-                HDmemcpy(&info->u.token, lnk->u.hard.addr, H5F_SIZEOF_ADDR(link_loc->file));
+                HDmemcpy(&info->u.token, &lnk->u.hard.addr, H5F_SIZEOF_ADDR(link_loc->file));
                 break;
 
             case H5L_TYPE_SOFT:

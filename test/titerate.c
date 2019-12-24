@@ -1058,7 +1058,7 @@ static void test_links_deprec(hid_t fapl)
 
     /* Test these two functions, H5Oget_info_by_idx and H5Lget_name_by_idx */
     for(i = 0; i < ginfo.nlinks; i++) {
-        H5O_info_t oinfo;               /* Object info */
+        H5O_info1_t oinfo;              /* Object info */
         H5L_info1_t linfo;              /* Link info */
 
         /* Get link name */
