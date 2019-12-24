@@ -65,6 +65,10 @@ typedef struct H5O_visit1_adapter_t {
 /********************/
 /* Local Prototypes */
 /********************/
+static herr_t H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
+    void *op_data);
+static herr_t H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
+    H5O_info1_t *oinfo, unsigned fields);
 
 
 /*********************/
@@ -82,6 +86,150 @@ typedef struct H5O_visit1_adapter_t {
 /*******************/
 
 
+
+/*-------------------------------------------------------------------------
+ * Function:    H5O__iterate1_adapter
+ *
+ * Purpose:     Retrieve information about an object, according to the order
+ *              of an index.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ * Programmer:  Quincey Koziol
+ *              November 26 2006
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
+    void *op_data)
+{
+    H5O_visit1_adapter_t *shim_data = (H5O_visit1_adapter_t *)op_data;
+    H5O_info1_t oinfo;                  /* Deprecated object info struct */
+    H5VL_object_t *vol_obj;             /* Object token of obj_id */
+    H5VL_loc_params_t loc_params;       /* Location parameters for VOL callback */
+    H5O_native_info_t nat_info;         /* Native object info */
+    herr_t ret_value = H5_ITER_CONT;    /* Return value */
+
+    FUNC_ENTER_STATIC
+
+    /* Sanity check */
+    HDassert(oinfo2);
+    HDassert(op_data);
+
+    /* Reset the deprecated object info struct */
+    HDmemset(&oinfo, 0, sizeof(H5O_info1_t));
+
+    /* Copy the data model info into the deprecated struct */
+    oinfo.fileno    = oinfo2->fileno;
+    HDmemcpy(&oinfo.addr, &oinfo2->token, sizeof(oinfo.addr));
+    oinfo.type      = oinfo2->type;
+    oinfo.rc        = oinfo2->rc;
+    oinfo.atime     = oinfo2->atime;
+    oinfo.mtime     = oinfo2->mtime;
+    oinfo.ctime     = oinfo2->ctime;
+    oinfo.btime     = oinfo2->btime;
+    oinfo.num_attrs = oinfo2->num_attrs;
+
+    /* Retrieve the 'native' object info fields for this object */
+    loc_params.type         = H5VL_OBJECT_BY_SELF;
+    loc_params.obj_type     = H5I_get_type(obj_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(obj_id)))
+        HGOTO_ERROR(H5E_OHDR, H5E_BADTYPE, H5_ITER_ERROR, "invalid location identifier")
+
+    /* Retrieve the object's native information */
+    if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, &nat_info, H5O_INFO_ALL) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "can't get native info for object")
+
+    /* Set the native fields */
+    HDmemcpy(&(oinfo.hdr), &(nat_info.hdr), sizeof(H5O_hdr_info_t));
+    HDmemcpy(&(oinfo.meta_size.obj),  &(nat_info.meta_size.obj),  sizeof(H5_ih_info_t));
+    HDmemcpy(&(oinfo.meta_size.attr), &(nat_info.meta_size.attr), sizeof(H5_ih_info_t));
+
+    /* Invoke the application callback */
+    ret_value = (shim_data->real_op)(obj_id, name, &oinfo, shim_data->real_op_data);
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value);
+} /* end H5O__iterate1_adapter() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5O__get_info_old
+ *
+ * Purpose:     Retrieve deprecated info about an object.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Quincey Koziol
+ *              December 21 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
+    H5O_info1_t *oinfo, unsigned fields)
+{
+    unsigned dm_fields;                 /* Fields for data model query */
+    unsigned nat_fields;                /* Fields for native query */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_STATIC
+
+    /* Sanity check */
+    HDassert(vol_obj);
+    HDassert(loc_params);
+
+    /* Check for retrieving data model information */
+    dm_fields = fields & (H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS);
+    if(dm_fields) {
+        H5O_info2_t dm_info;                /* Data model object info */
+
+        /* Retrieve the object's data model information */
+        if(H5VL_object_get(vol_obj, loc_params, H5VL_OBJECT_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &dm_info, dm_fields) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get data model info for object")
+
+        /* Set the data model fields */
+        if(fields & H5O_INFO_BASIC) {
+            oinfo->fileno = dm_info.fileno;
+            oinfo->type = dm_info.type;
+            oinfo->rc = dm_info.rc;
+            HDmemcpy(&oinfo->addr, &dm_info.token, sizeof(oinfo->addr));
+        } /* end if */
+        if(fields & H5O_INFO_TIME) {
+            oinfo->atime = dm_info.atime;
+            oinfo->mtime = dm_info.mtime;
+            oinfo->ctime = dm_info.ctime;
+            oinfo->btime = dm_info.btime;
+        } /* end if */
+        if(fields & H5O_INFO_NUM_ATTRS)
+            oinfo->num_attrs = dm_info.num_attrs;
+    } /* end if */
+
+    /* Check for retrieving native information */
+    nat_fields = fields & (H5O_INFO_HDR | H5O_INFO_META_SIZE);
+    if(nat_fields) {
+        H5O_native_info_t nat_info;         /* Native object info */
+
+        /* Retrieve the object's native information */
+        if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, loc_params, &nat_info, nat_fields) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get native info for object")
+
+        /* Set the native fields */
+        if(fields & H5O_INFO_HDR)
+            HDmemcpy(&(oinfo->hdr), &(nat_info.hdr), sizeof(H5O_hdr_info_t));
+        if(fields & H5O_INFO_META_SIZE) {
+            HDmemcpy(&(oinfo->meta_size.obj),  &(nat_info.meta_size.obj),  sizeof(H5_ih_info_t));
+            HDmemcpy(&(oinfo->meta_size.attr), &(nat_info.meta_size.attr), sizeof(H5_ih_info_t));
+        } /* end if */
+    } /* end if */
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5O__get_info_old() */
 
 
 /*-------------------------------------------------------------------------
@@ -238,73 +386,173 @@ done:
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5O__iterate1_adapter
+ * Function:    H5Oget_info2
+ *
+ * Purpose:     Retrieve information about an object.
+ *
+ *              NOTE: Add a parameter "fields" to indicate selection of object info.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Neil Fortner
+ *              July 7 2010
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_info2(hid_t loc_id, H5O_info1_t *oinfo, unsigned fields)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t   loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE3("e", "i*xIu", loc_id, oinfo, fields);
+
+    /* Check args */
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "oinfo parameter cannot be NULL")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Set location struct fields */
+    loc_params.type         = H5VL_OBJECT_BY_SELF;
+    loc_params.obj_type     = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve deprecated info struct */
+    if(H5O__get_info_old(vol_obj, &loc_params, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get deprecated info for object")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_info2() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oget_info_by_name2
+ *
+ * Purpose:     Retrieve information about an object
+ *
+ *              NOTE: Add a parameter "fields" to indicate selection of object info.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Neil Fortner
+ *              July 7 2010
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info1_t *oinfo,
+    unsigned fields, hid_t lapl_id)
+{
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE5("e", "i*s*xIui", loc_id, name, oinfo, fields, lapl_id);
+
+    /* Check args */
+    if(!name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be NULL")
+    if(!*name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "name parameter cannot be an empty string")
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "oinfo parameter cannot be NULL")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
+
+    /* Verify access property list and set up collective metadata if appropriate */
+    if(H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info")
+
+    /* Fill out location struct */
+    loc_params.type                         = H5VL_OBJECT_BY_NAME;
+    loc_params.loc_data.loc_by_name.name    = name;
+    loc_params.loc_data.loc_by_name.lapl_id = lapl_id;
+    loc_params.obj_type                     = H5I_get_type(loc_id);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve deprecated info struct */
+    if(H5O__get_info_old(vol_obj, &loc_params, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get deprecated info for object")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_info_by_name2() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5Oget_info_by_idx2
  *
  * Purpose:     Retrieve information about an object, according to the order
  *              of an index.
  *
- * Return:      Success:    Non-negative
- *              Failure:    Negative
+ *              NOTE: Add a parameter "fields" to indicate selection of object info.
  *
- * Programmer:  Quincey Koziol
+ * Return:      Success:	Non-negative
+ *              Failure:	Negative
+ *
+ * Programmer:	Quincey Koziol
  *              November 26 2006
  *
  *-------------------------------------------------------------------------
  */
-static herr_t
-H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
-    void *op_data)
+herr_t
+H5Oget_info_by_idx2(hid_t loc_id, const char *group_name, H5_index_t idx_type,
+    H5_iter_order_t order, hsize_t n, H5O_info1_t *oinfo, unsigned fields, hid_t lapl_id)
 {
-    H5O_visit1_adapter_t *shim_data = (H5O_visit1_adapter_t *)op_data;
-    H5O_info1_t oinfo;          /* Deprecated object info struct */
-    H5VL_object_t *vol_obj;     /* Object token of obj_id */
-    H5VL_loc_params_t loc_params; /* Location parameters for VOL callback */
-    H5O_native_info_t nat_info; /* Native object info */
-    herr_t ret_value = H5_ITER_CONT; /* Return value */
+    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_loc_params_t loc_params;
+    herr_t      ret_value = SUCCEED;    /* Return value */
 
-    FUNC_ENTER_STATIC
+    FUNC_ENTER_API(FAIL)
+    H5TRACE8("e", "i*sIiIoh*xIui", loc_id, group_name, idx_type, order, n, oinfo,
+             fields, lapl_id);
 
-    /* Sanity check */
-    HDassert(oinfo2);
-    HDassert(op_data);
+    /* Check args */
+    if(!group_name || !*group_name)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no name specified")
+    if(idx_type <= H5_INDEX_UNKNOWN || idx_type >= H5_INDEX_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid index type specified")
+    if(order <= H5_ITER_UNKNOWN || order >= H5_ITER_N)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid iteration order specified")
+    if(!oinfo)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "no info struct")
+    if(fields & ~H5O_INFO_ALL)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid fields")
 
-    /* Reset the deprecated object info struct */
-    HDmemset(&oinfo, 0, sizeof(H5O_info1_t));
+    /* Verify access property list and set up collective metadata if appropriate */
+    if(H5CX_set_apl(&lapl_id, H5P_CLS_LACC, loc_id, FALSE) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't set access property list info")
 
-    /* Copy the data model info into the deprecated struct */
-    oinfo.fileno    = oinfo2->fileno;
-    HDmemcpy(&oinfo.addr, &oinfo2->token, sizeof(oinfo.addr));
-    oinfo.type      = oinfo2->type;
-    oinfo.rc        = oinfo2->rc;
-    oinfo.atime     = oinfo2->atime;
-    oinfo.mtime     = oinfo2->mtime;
-    oinfo.ctime     = oinfo2->ctime;
-    oinfo.btime     = oinfo2->btime;
-    oinfo.num_attrs = oinfo2->num_attrs;
-
-    /* Retrieve the 'native' object info fields for this object */
-    loc_params.type         = H5VL_OBJECT_BY_SELF;
-    loc_params.obj_type     = H5I_get_type(obj_id);
+    loc_params.type = H5VL_OBJECT_BY_IDX;
+    loc_params.loc_data.loc_by_idx.name = group_name;
+    loc_params.loc_data.loc_by_idx.idx_type = idx_type;
+    loc_params.loc_data.loc_by_idx.order = order;
+    loc_params.loc_data.loc_by_idx.n = n;
+    loc_params.loc_data.loc_by_idx.lapl_id = lapl_id;
+    loc_params.obj_type = H5I_get_type(loc_id);
 
     /* Get the location object */
-    if(NULL == (vol_obj = H5VL_vol_object(obj_id)))
-        HGOTO_ERROR(H5E_OHDR, H5E_BADTYPE, H5_ITER_ERROR, "invalid location identifier")
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
 
-    /* Retrieve the object's native information */
-    if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, &nat_info, H5O_INFO_ALL) < 0)
-        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "can't get native info for object")
-
-    /* Set the native fields */
-    HDmemcpy(&(oinfo.hdr), &(nat_info.hdr), sizeof(H5O_hdr_info_t));
-    HDmemcpy(&(oinfo.meta_size.obj),  &(nat_info.meta_size.obj),  sizeof(H5_ih_info_t));
-    HDmemcpy(&(oinfo.meta_size.attr), &(nat_info.meta_size.attr), sizeof(H5_ih_info_t));
-
-    /* Invoke the application callback */
-    ret_value = (shim_data->real_op)(obj_id, name, &oinfo, shim_data->real_op_data);
+    /* Retrieve deprecated info struct */
+    if(H5O__get_info_old(vol_obj, &loc_params, oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get deprecated info for object")
 
 done:
-    FUNC_LEAVE_NOAPI(ret_value);
-} /* end H5O__iterate1_adapter() */
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oget_info_by_idx2() */
 
 
 /*-------------------------------------------------------------------------
@@ -587,6 +835,8 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
+    H5TRACE8("e", "i*sIiIox*xIui", loc_id, obj_name, idx_type, order, op, op_data,
+             fields, lapl_id);
 
     /* Check args */
     if(!obj_name)

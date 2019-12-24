@@ -1069,7 +1069,7 @@ h5str_sprintf
                     case H5R_OBJECT1:
                         {
                         /* Object references -- show the type and OID of the referenced object. */
-                        H5O_info_t  oi;
+                        H5O_info1_t  oi;
 
                         if((obj = H5Ropen_object(ref_vp, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
                             H5Oget_info2(obj, &oi, H5O_INFO_BASIC);
@@ -3204,13 +3204,13 @@ done:
  */
 
 #ifdef __cplusplus
-    herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
-    herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
+    herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
+    herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
     int H5Gget_obj_info_max(hid_t, char **, int *, int *, unsigned long *, long);
     int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, unsigned long *objno, int indexType, int indexOrder);
 #else
-    static herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
-    static herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info_t *linfo, void *op_data);
+    static herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
+    static herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info1_t *linfo, void *op_data);
     static int H5Gget_obj_info_max(hid_t, char **, int *, int *, unsigned long *, long);
     static int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, unsigned long *objno, int indexType, int indexOrder);
 #endif
@@ -3463,10 +3463,10 @@ H5Gget_obj_info_max
 
 herr_t
 obj_info_all
-    (hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data)
+    (hid_t loc_id, const char *name, const H5L_info1_t *info, void *op_data)
 {
     info_all_t *datainfo = (info_all_t *)op_data;
-    H5O_info_t  object_info;
+    H5O_info1_t  object_info;
     htri_t      object_exists;
     size_t      str_len;
 
@@ -3509,10 +3509,10 @@ done:
 
 herr_t
 obj_info_max
-    (hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data)
+    (hid_t loc_id, const char *name, const H5L_info1_t *info, void *op_data)
 {
     info_all_t *datainfo = (info_all_t *)op_data;
-    H5O_info_t  object_info;
+    H5O_info1_t  object_info;
     size_t      str_len;
 
     datainfo->otype[datainfo->count] = -1;
