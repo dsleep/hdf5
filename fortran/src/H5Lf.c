@@ -462,7 +462,7 @@ h5lget_info_c(hid_t_f *link_loc_id, _fcd link_name, size_t_f *link_namelen,
 {
     char *c_link_name = NULL;          /* Buffer to hold C string */
     int_f ret_value = 0;          /* Return value */
-    H5L_info_t link_buff;
+    H5L_info1_t link_buff;
 
     /*
      * Convert FORTRAN name to C name
@@ -473,7 +473,7 @@ h5lget_info_c(hid_t_f *link_loc_id, _fcd link_name, size_t_f *link_namelen,
     /*
      * Call H5Linfo function.
      */
-    if(H5Lget_info((hid_t)*link_loc_id, c_link_name, &link_buff, (hid_t)*lapl_id) < 0)
+    if(H5Lget_info1((hid_t)*link_loc_id, c_link_name, &link_buff, (hid_t)*lapl_id) < 0)
         HGOTO_DONE(FAIL);
 
     /* Unpack the structure */
@@ -532,7 +532,7 @@ h5lget_info_by_idx_c(hid_t_f *loc_id, _fcd group_name, size_t_f *group_namelen,
     H5_index_t c_index_field;
     H5_iter_order_t c_order;
     int_f ret_value = 0;          /* Return value */
-    H5L_info_t link_buff;
+    H5L_info1_t link_buff;
 
     /*
      * Convert FORTRAN name to C name
@@ -545,7 +545,7 @@ h5lget_info_by_idx_c(hid_t_f *loc_id, _fcd group_name, size_t_f *group_namelen,
      /*
       * Call H5Linfo_by_idx function.
       */
-    if(H5Lget_info_by_idx((hid_t)*loc_id, c_group_name, c_index_field, c_order, (hsize_t)*n,
+    if(H5Lget_info_by_idx1((hid_t)*loc_id, c_group_name, c_index_field, c_order, (hsize_t)*n,
 			  &link_buff, (hid_t)*lapl_id) < 0)
       HGOTO_DONE(FAIL);
 
