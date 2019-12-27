@@ -920,6 +920,8 @@ H5_DLL time_t H5O_get_oh_mtime(const H5O_t *oh);
 H5_DLL uint8_t H5O_get_oh_version(const H5O_t *oh);
 H5_DLL herr_t H5O_get_rc_and_type(const H5O_loc_t *oloc, unsigned *rc, H5O_type_t *otype);
 H5_DLL H5AC_proxy_entry_t *H5O_get_proxy(const H5O_t *oh);
+H5_DLL herr_t H5O_reset_info1(H5O_info1_t *oinfo);
+H5_DLL herr_t H5O_reset_info2(H5O_info2_t *oinfo);
 
 /* Object header message routines */
 H5_DLL herr_t H5O_msg_create(const H5O_loc_t *loc, unsigned type_id, unsigned mesg_flags,
