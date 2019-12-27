@@ -414,6 +414,13 @@ typedef struct H5O_chk_cache_ud_t {
     H5O_common_cache_ud_t common;       /* Common object header cache callback info */
 } H5O_chk_cache_ud_t;
 
+/* Adapter for using deprecated H5Ovisit1 callbacks with the VOL */
+typedef struct H5O_visit1_adapter_t {
+    H5O_iterate1_t   real_op;           /* Application callback to invoke */
+    unsigned         fields;            /* Original fields passed to H5Ovisit */
+    void            *real_op_data;      /* Application op_data */
+} H5O_visit1_adapter_t;
+
 /* Header message ID to class mapping */
 H5_DLLVAR const H5O_msg_class_t *const H5O_msg_class_g[H5O_MSG_TYPES];
 
@@ -561,7 +568,9 @@ H5_DLL herr_t H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_ty
 H5_DLL herr_t H5O__inc_rc(H5O_t *oh);
 H5_DLL herr_t H5O__dec_rc(H5O_t *oh);
 H5_DLL herr_t H5O__free(H5O_t *oh);
-H5_DLL herr_t H5O__iterate2_shim(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2, void *op_data);
+H5_DLL herr_t H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2, void *op_data);
+H5_DLL herr_t H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
+    H5O_info1_t *oinfo, unsigned fields);
 
 /* Object header message routines */
 H5_DLL herr_t H5O__msg_alloc(H5F_t *f, H5O_t *oh, const H5O_msg_class_t *type,
