@@ -93,6 +93,7 @@
 #define H5VL_NATIVE_OBJECT_ENABLE_MDC_FLUSHES          3   /* H5Oenable_mdc_flushes                        */
 #define H5VL_NATIVE_OBJECT_ARE_MDC_FLUSHES_DISABLED    4   /* H5Oare_mdc_flushes_disabled                  */
 #define H5VL_NATIVE_OBJECT_GET_NATIVE_INFO             5   /* H5Oget_native_info(_by_idx, _by_name)        */
+#define H5VL_NATIVE_OBJECT_VISIT_OLD                   6   /* H5Ovisit(_by_name)2                          */
 
 /*******************/
 /* Public Typedefs */

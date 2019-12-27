@@ -58,7 +58,7 @@ typedef struct {
     hid_t       obj_id;         /* The ID for the starting group */
     H5G_loc_t    *start_loc;    /* Location of starting group */
     H5SL_t     *visited;        /* Skip list for tracking visited nodes */
-    H5O_iterate2_t op;          /* Application callback */
+    H5O_internal_iterate_t op;  /* Application callback */
     void       *op_data;        /* Application's op data */
     unsigned    fields;         /* Selection of object info */
 } H5O_iter_visit_ud_t;
@@ -2276,7 +2276,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5O_get_native_info(const H5O_loc_t *loc, H5O_native_info_t *oinfo, unsigned fields)
+H5O_get_native_info(const H5O_loc_t *loc, H5O_native_info_t *ninfo, unsigned fields)
 {
     const H5O_obj_class_t *obj_class;   /* Class of object for header */
     H5O_t *oh = NULL;                   /* Object header */
@@ -2286,7 +2286,7 @@ H5O_get_native_info(const H5O_loc_t *loc, H5O_native_info_t *oinfo, unsigned fie
 
     /* Check args */
     HDassert(loc);
-    HDassert(oinfo);
+    HDassert(ninfo);
 
     /* Get the object header */
     if(NULL == (oh = H5O_protect(loc, H5AC__READ_ONLY_FLAG, FALSE)))
@@ -2297,11 +2297,11 @@ H5O_get_native_info(const H5O_loc_t *loc, H5O_native_info_t *oinfo, unsigned fie
         HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to determine object class")
 
     /* Reset the object info structure */
-    HDmemset(oinfo, 0, sizeof(*oinfo));
+    HDmemset(ninfo, 0, sizeof(*ninfo));
 
     /* Get the information for the object header, if requested */
     if(fields & H5O_INFO_HDR)
-        if(H5O__get_hdr_info_real(oh, &oinfo->hdr) < 0)
+        if(H5O__get_hdr_info_real(oh, &ninfo->hdr) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object header info")
 
     /* Get B-tree & heap metadata storage size, if requested */
@@ -2309,11 +2309,11 @@ H5O_get_native_info(const H5O_loc_t *loc, H5O_native_info_t *oinfo, unsigned fie
         /* Check for 'bh_info' callback for this type of object */
         if(obj_class->bh_info)
             /* Call the object's class 'bh_info' routine */
-            if((obj_class->bh_info)(loc, oh, &oinfo->meta_size.obj) < 0)
+            if((obj_class->bh_info)(loc, oh, &ninfo->meta_size.obj) < 0)
                 HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object's btree & heap info")
 
         /* Get B-tree & heap info for any attributes */
-        if(H5O__attr_bh_info(loc->file, oh, &oinfo->meta_size.attr) < 0)
+        if(H5O__attr_bh_info(loc->file, oh, &ninfo->meta_size.attr) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve attribute btree & heap info")
     } /* end if */
 
@@ -2600,6 +2600,84 @@ done:
 
 
 /*-------------------------------------------------------------------------
+ * Function:    H5O_get_internal_info
+ *
+ * Purpose:     Fill an H5O_internal_info_t struct with data model
+ *              and native data.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ * Programmer:  Dana Robinson
+ *              Winter 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5O_get_internal_info(const H5O_loc_t *loc, H5O_internal_info_t *iinfo, unsigned fields)
+{
+    H5O_info2_t oinfo;                  /* Object info */
+    H5O_native_info_t ninfo;            /* Native info */
+    unsigned dm_fields;                 /* Data model fields */
+    unsigned nat_fields;                /* Native fields */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL);
+
+    /* Check args */
+    HDassert(loc);
+    HDassert(iinfo);
+
+    /* Reset the object info structure */
+    if (H5O_reset_internal_info(iinfo, sizeof(loc->addr)) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't reset object data struct");
+
+    /* Get the object's data model info */
+    if (H5O_get_info(loc, &oinfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to get object data model info");
+
+    /* Get the object's native info */
+    if (H5O_get_native_info(loc, &ninfo, fields) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to get object native info");
+
+    /* Copy data model information */
+    dm_fields = fields & (H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS);
+    if (dm_fields) {
+        /* Set the data model fields */
+        if(fields & H5O_INFO_BASIC) {
+            iinfo->fileno    = oinfo.fileno;
+            iinfo->type      = oinfo.type;
+            iinfo->rc        = oinfo.rc;
+            HDmemcpy(&iinfo->token, &oinfo.token, sizeof(h5token_t));
+        }
+        if(fields & H5O_INFO_TIME) {
+            iinfo->atime     = oinfo.atime;
+            iinfo->mtime     = oinfo.mtime;
+            iinfo->ctime     = oinfo.ctime;
+            iinfo->btime     = oinfo.btime;
+        }
+        if(fields & H5O_INFO_NUM_ATTRS)
+            iinfo->num_attrs = oinfo.num_attrs;
+    }
+
+    /* Copy native information */
+    nat_fields = fields & (H5O_INFO_HDR | H5O_INFO_META_SIZE);
+    if (nat_fields) {
+
+        /* Set the native fields */
+        if (fields & H5O_INFO_HDR)
+            HDmemcpy(&(iinfo->hdr), &(ninfo.hdr), sizeof(H5O_hdr_info_t));
+        if (fields & H5O_INFO_META_SIZE) {
+            HDmemcpy(&(iinfo->meta_size.obj),  &(ninfo.meta_size.obj),  sizeof(H5_ih_info_t));
+            HDmemcpy(&(iinfo->meta_size.attr), &(ninfo.meta_size.attr), sizeof(H5_ih_info_t));
+        }
+    }
+
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value);
+} /* end H5O_get_internal_info() */
+
+/*-------------------------------------------------------------------------
  * Function:    H5O__free_visit_visited
  *
  * Purpose:     Free the key for an object visited during a group traversal
@@ -2627,11 +2705,11 @@ H5O__free_visit_visited(void *item, void H5_ATTR_UNUSED *key, void H5_ATTR_UNUSE
  *
  * Purpose:     Callback function for recursively visiting objects from a group
  *
- * Return:    Success:        Non-negative
- *        Failure:    Negative
+ * Return:      Success:    H5_ITER_CONT or H5_ITER_STOP
+ *              Failure:    H5_ITER_ERROR
  *
- * Programmer:    Quincey Koziol
- *            Nov 25, 2007
+ * Programmer:  Quincey Koziol
+ *              Nov 25, 2007
  *
  *-------------------------------------------------------------------------
  */
@@ -2674,20 +2752,20 @@ H5O__visit_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info2_t *l
 
         /* Check if we've seen the object the link references before */
         if(NULL == H5SL_search(udata->visited, &obj_pos)) {
-            H5O_info2_t oinfo;           /* Object info */
+            H5O_internal_info_t iinfo;      /* Internal info */
 
             /* Get the object's info */
-            if(H5O_get_info(&obj_oloc, &oinfo, udata->fields) < 0)
+            if(H5O_get_internal_info(&obj_oloc, &iinfo, udata->fields) < 0)
                 HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "unable to get object info")
 
             /* Make the application callback */
-            ret_value = (udata->op)(udata->obj_id, name, &oinfo, udata->op_data);
+            ret_value = (udata->op)(udata->obj_id, name, &iinfo, udata->op_data);
 
             /* Check for continuing to visit objects */
             if(ret_value == H5_ITER_CONT) {
                 /* If its ref count is > 1, we add it to the list of visited objects */
                 /* (because it could come up again during traversal) */
-                if(oinfo.rc > 1) {
+                if(iinfo.rc > 1) {
                     H5_obj_t *new_node;                  /* New object node for visited list */
 
                     /* Allocate new object "position" node */
@@ -2750,14 +2828,14 @@ done:
  */
 herr_t
 H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
-    H5_iter_order_t order, H5O_iterate2_t op, void *op_data, unsigned fields)
+    H5_iter_order_t order, H5O_internal_iterate_t op, void *op_data, unsigned fields)
 {
     H5O_iter_visit_ud_t udata;  /* User data for callback */
     H5G_loc_t   obj_loc;        /* Location used to open object */
     H5G_name_t  obj_path;       /* Opened object group hier. path */
     H5O_loc_t   obj_oloc;       /* Opened object object location */
     hbool_t     loc_found = FALSE;      /* Entry at 'name' found */
-    H5O_info2_t oinfo;          /* Object info struct */
+    H5O_internal_info_t iinfo;  /* Internal info struct */
     void       *obj = NULL;     /* Object */
     H5I_type_t  opened_type;    /* ID type of object */
     hid_t       obj_id = H5I_INVALID_HID;  /* ID of object */
@@ -2782,7 +2860,7 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
     loc_found = TRUE;
 
     /* Get the object's info */
-    if(H5O_get_info(&obj_oloc, &oinfo, fields) < 0)
+    if(H5O_get_internal_info(&obj_oloc, &iinfo, fields) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to get object info")
 
     /* Open the object */
@@ -2795,7 +2873,7 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
         HGOTO_ERROR(H5E_ATOM, H5E_CANTREGISTER, FAIL, "unable to register visited object")
 
     /* Make callback for starting object */
-    if((ret_value = op(obj_id, ".", &oinfo, op_data)) < 0)
+    if((ret_value = op(obj_id, ".", &iinfo, op_data)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "can't visit objects")
 
     /* Check return value of first callback */
@@ -2803,7 +2881,7 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
         HGOTO_DONE(ret_value);
 
     /* Check for object being a group */
-    if(oinfo.type == H5O_TYPE_GROUP) {
+    if(iinfo.type == H5O_TYPE_GROUP) {
         H5G_loc_t    start_loc;          /* Location of starting group */
         H5G_loc_t    vis_loc;            /* Location of visited group */
 
@@ -2824,7 +2902,7 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
 
         /* If its ref count is > 1, we add it to the list of visited objects */
         /* (because it could come up again during traversal) */
-        if(oinfo.rc > 1) {
+        if(iinfo.rc > 1) {
             H5_obj_t *obj_pos;                  /* New object node for visited list */
 
             /* Allocate new object "position" node */
@@ -2832,8 +2910,8 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
                 HGOTO_ERROR(H5E_OHDR, H5E_NOSPACE, FAIL, "can't allocate object node")
 
             /* Construct unique "position" for this object */
-            obj_pos->fileno = oinfo.fileno;
-            HDmemcpy(&(obj_pos->addr), &oinfo.token, H5F_SIZEOF_ADDR(loc->oloc->file));
+            obj_pos->fileno = iinfo.fileno;
+            HDmemcpy(&(obj_pos->addr), &iinfo.token, H5F_SIZEOF_ADDR(loc->oloc->file));
 
             /* Add to list of visited objects */
             if(H5SL_insert(udata.visited, obj_pos, obj_pos) < 0)
@@ -2850,7 +2928,6 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
     } /* end if */
 
 done:
-/* XXX (VOL MERGE): Probably also want to consider closing obj here on failures */
     if(obj_id != H5I_INVALID_HID) {
         if(H5I_dec_app_ref(obj_id) < 0)
             HDONE_ERROR(H5E_OHDR, H5E_CANTRELEASE, FAIL, "unable to close object")
@@ -3084,6 +3161,8 @@ H5O_reset_info1(H5O_info1_t *oinfo)
 {
     FUNC_ENTER_NOAPI_NOINIT_NOERR;
 
+    HDassert(oinfo);
+
     /* Reset the passed-in info struct */
     HDmemset(oinfo, 0, sizeof(H5O_info1_t));
     oinfo->type = H5O_TYPE_UNKNOWN;
@@ -3106,10 +3185,38 @@ H5O_reset_info2(H5O_info2_t *oinfo)
 {
     FUNC_ENTER_NOAPI_NOINIT_NOERR;
 
+    HDassert(oinfo);
+
     /* Reset the passed-in info struct */
     HDmemset(oinfo, 0, sizeof(H5O_info2_t));
     oinfo->type = H5O_TYPE_UNKNOWN;
 
     FUNC_LEAVE_NOAPI(SUCCEED);
 } /* end H5O_reset_info2() */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5O_reset_internal_info
+ *
+ * Purpose:     Resets/initializes an H5O_info2_t struct.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5O_reset_internal_info(H5O_internal_info_t *iinfo, size_t addr_len)
+{
+    haddr_t addr_undef = HADDR_UNDEF;
+
+    FUNC_ENTER_NOAPI_NOINIT_NOERR;
+
+    HDassert(iinfo);
+
+    /* Reset the passed-in info struct */
+    HDmemset(iinfo, 0, sizeof(H5O_internal_info_t));
+    iinfo->type = H5O_TYPE_UNKNOWN;
+    HDmemcpy(&iinfo->token, &addr_undef, addr_len);
+
+    FUNC_LEAVE_NOAPI(SUCCEED);
+} /* end H5O_reset_internal_info() */
 

@@ -29,6 +29,161 @@
 
 #include "H5VLnative_private.h" /* Native VOL connector                     */
 
+
+/* Adapter for using deprecated H5Ovisit1/2 callbacks with the native VOL */
+typedef struct H5O_visit12_adapter_t {
+    H5O_iterate1_t   real_op;           /* Application callback to invoke */
+    unsigned         fields;            /* Original fields passed to H5Ovisit */
+    void            *real_op_data;      /* Application op_data */
+} H5O_visit12_adapter_t;
+
+/* Adapter for using H5Ovisit3 callbacks with the native VOL */
+typedef struct H5O_visit3_adapter_t {
+    H5O_iterate2_t   real_op;           /* Application callback to invoke */
+    unsigned         fields;            /* Original fields passed to H5Ovisit */
+    void            *real_op_data;      /* Application op_data */
+} H5O_visit3_adapter_t;
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__object_iterate1_adapter
+ *
+ * Purpose:     Adapter between H5O_iterate1_t and H5O_internal_iterate_t
+ *              callbacks.
+ *
+ * Return:      Success:    H5_ITER_CONT or H5_ITER_STOP
+ *              Failure:    H5_ITER_ERROR
+ *
+ * Programmer:  Dana Robinson
+ *              Winter 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__object_iterate1_adapter(hid_t obj_id, const char *name,
+        const H5O_internal_info_t *iinfo, void *op_data)
+{
+    H5O_visit12_adapter_t *shim_data = (H5O_visit12_adapter_t *)op_data;
+    H5O_info1_t oinfo;                  /* Deprecated object info struct */
+    unsigned dm_fields;                 /* Fields for data model query */
+    unsigned nat_fields;                /* Fields for native query */
+    H5VL_object_t *vol_obj;             /* Object token of obj_id */
+    H5VL_loc_params_t loc_params;       /* Location parameters for VOL callback */
+    herr_t ret_value = H5_ITER_CONT;    /* Return value */
+
+    FUNC_ENTER_STATIC
+
+    /* Sanity check */
+    HDassert(iinfo);
+    HDassert(op_data);
+
+    /* Reset the legacy info struct */
+    if (H5O_reset_info1(&oinfo) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, H5_ITER_ERROR, "can't reset object data struct")
+
+    /* Copy data model information */
+    dm_fields = shim_data->fields & (H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS);
+    if (dm_fields) {
+        /* Set the data model fields */
+        if(shim_data->fields & H5O_INFO_BASIC) {
+            oinfo.fileno    = iinfo->fileno;
+            oinfo.type      = iinfo->type;
+            oinfo.rc        = iinfo->rc;
+            HDmemcpy(&oinfo.addr, &iinfo->token, sizeof(oinfo.addr));
+        }
+        if(shim_data->fields & H5O_INFO_TIME) {
+            oinfo.atime     = iinfo->atime;
+            oinfo.mtime     = iinfo->mtime;
+            oinfo.ctime     = iinfo->ctime;
+            oinfo.btime     = iinfo->btime;
+        }
+        if(shim_data->fields & H5O_INFO_NUM_ATTRS)
+            oinfo.num_attrs = iinfo->num_attrs;
+    }
+
+    /* Copy native information */
+    nat_fields = shim_data->fields & (H5O_INFO_HDR | H5O_INFO_META_SIZE);
+    if (nat_fields) {
+
+        /* Set the native fields */
+        if (shim_data->fields & H5O_INFO_HDR)
+            HDmemcpy(&(oinfo.hdr), &(iinfo->hdr), sizeof(H5O_hdr_info_t));
+        if (shim_data->fields & H5O_INFO_META_SIZE) {
+            HDmemcpy(&(oinfo.meta_size.obj),  &(iinfo->meta_size.obj),  sizeof(H5_ih_info_t));
+            HDmemcpy(&(oinfo.meta_size.attr), &(iinfo->meta_size.attr), sizeof(H5_ih_info_t));
+        }
+    }
+
+    /* Invoke the application callback */
+    ret_value = (shim_data->real_op)(obj_id, name, &oinfo, shim_data->real_op_data);
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value);
+} /* end H5VL__object_iterate1_adapter() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__object_iterate2_adapter
+ *
+ * Purpose:     Adapter between H5O_iterate2_t and H5O_internal_iterate_t
+ *              callbacks.
+ *
+ * Return:      Success:    H5_ITER_CONT or H5_ITER_STOP
+ *              Failure:    H5_ITER_ERROR
+ *
+ * Programmer:  Dana Robinson
+ *              Winter 2019
+ *
+ *-------------------------------------------------------------------------
+ */
+static herr_t
+H5VL__object_iterate2_adapter(hid_t obj_id, const char *name,
+        const H5O_internal_info_t *iinfo, void *op_data)
+{
+    H5O_visit3_adapter_t *shim_data = (H5O_visit3_adapter_t *)op_data;
+    H5O_info2_t oinfo;                  /* Object info struct */
+    unsigned dm_fields;                 /* Fields for data model query */
+    H5VL_object_t *vol_obj;             /* Object token of obj_id */
+    H5VL_loc_params_t loc_params;       /* Location parameters for VOL callback */
+    herr_t ret_value = H5_ITER_CONT;    /* Return value */
+
+    FUNC_ENTER_STATIC
+
+    /* Sanity check */
+    HDassert(iinfo);
+    HDassert(op_data);
+
+    /* Reset the info struct */
+    if (H5O_reset_info2(&oinfo) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, H5_ITER_ERROR, "can't reset object data struct")
+
+    /* Copy data model information */
+    dm_fields = shim_data->fields & (H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS);
+    if (dm_fields) {
+        /* Set the data model fields */
+        if(shim_data->fields & H5O_INFO_BASIC) {
+            oinfo.fileno    = iinfo->fileno;
+            oinfo.type      = iinfo->type;
+            oinfo.rc        = iinfo->rc;
+            HDmemcpy(&oinfo.token, &iinfo->token, sizeof(oinfo.token));
+        }
+        if(shim_data->fields & H5O_INFO_TIME) {
+            oinfo.atime     = iinfo->atime;
+            oinfo.mtime     = iinfo->mtime;
+            oinfo.ctime     = iinfo->ctime;
+            oinfo.btime     = iinfo->btime;
+        }
+        if(shim_data->fields & H5O_INFO_NUM_ATTRS)
+            oinfo.num_attrs = iinfo->num_attrs;
+    }
+
+    /* Invoke the application callback */
+    ret_value = (shim_data->real_op)(obj_id, name, &oinfo, shim_data->real_op_data);
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value);
+} /* end H5VL__object_iterate2_adapter() */
+
 
 /*-------------------------------------------------------------------------
  * Function:    H5VL__native_object_open
@@ -375,16 +530,22 @@ H5VL__native_object_specific(void *obj, const H5VL_loc_params_t *loc_params, H5V
                 H5O_iterate2_t op       = HDva_arg(arguments, H5O_iterate2_t);
                 void *op_data           = HDva_arg(arguments, void *);
                 unsigned fields         = HDva_arg(arguments, unsigned);
+                H5O_visit3_adapter_t shim_data;             /* Adapter for passing app callback & user data */
+
+                /* Set up adapter */
+                shim_data.real_op = op;
+                shim_data.fields = fields;
+                shim_data.real_op_data = op_data;
 
                 /* Call internal object visitation routine */
                 if(loc_params->type == H5VL_OBJECT_BY_SELF) {
                     /* H5Ovisit */
-                    if((ret_value = H5O__visit(&loc, ".", idx_type, order, op, op_data, fields)) < 0)
+                    if((ret_value = H5O__visit(&loc, ".", idx_type, order, H5VL__object_iterate2_adapter, &shim_data, fields)) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
                 } /* end if */
                 else if(loc_params->type == H5VL_OBJECT_BY_NAME) {
                     /* H5Ovisit_by_name */
-                    if((ret_value = H5O__visit(&loc, loc_params->loc_data.loc_by_name.name, idx_type, order, op, op_data, fields)) < 0)
+                    if((ret_value = H5O__visit(&loc, loc_params->loc_data.loc_by_name.name, idx_type, order, H5VL__object_iterate2_adapter, &shim_data, fields)) < 0)
                         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
                 } /* end else-if */
                 else
@@ -570,6 +731,36 @@ H5VL__native_object_optional(void *obj, H5VL_object_optional_t optional_type,
                 else
                     HGOTO_ERROR(H5E_OHDR, H5E_UNSUPPORTED, FAIL, "unknown get info parameters")
 
+                break;
+            }
+
+        case H5VL_NATIVE_OBJECT_VISIT_OLD:
+            {
+                H5_index_t idx_type     = (H5_index_t)HDva_arg(arguments, int); /* enum work-around */
+                H5_iter_order_t order   = (H5_iter_order_t)HDva_arg(arguments, int); /* enum work-around */
+                H5O_iterate1_t op       = HDva_arg(arguments, H5O_iterate_t);
+                void *op_data           = HDva_arg(arguments, void *);
+                unsigned fields         = HDva_arg(arguments, unsigned);
+                H5O_visit12_adapter_t shim_data;             /* Adapter for passing app callback & user data */
+
+                /* Set up adapter */
+                shim_data.real_op = op;
+                shim_data.fields = fields;
+                shim_data.real_op_data = op_data;
+
+                /* Call internal object visitation routine */
+                if(loc_params->type == H5VL_OBJECT_BY_SELF) {
+                    /* H5Ovisit */
+                    if((ret_value = H5O__visit(&loc, ".", idx_type, order, H5VL__object_iterate1_adapter, &shim_data, fields)) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
+                } /* end if */
+                else if(loc_params->type == H5VL_OBJECT_BY_NAME) {
+                    /* H5Ovisit_by_name */
+                    if((ret_value = H5O__visit(&loc, loc_params->loc_data.loc_by_name.name, idx_type, order, H5VL__object_iterate1_adapter, &shim_data, fields)) < 0)
+                        HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object visitation failed")
+                } /* end else-if */
+                else
+                    HGOTO_ERROR(H5E_VOL, H5E_UNSUPPORTED, FAIL, "unknown object visit params");
                 break;
             }
 

@@ -877,6 +877,30 @@ typedef struct {
     void *new_obj;              /* Pointer to new object created */
 } H5O_obj_create_t;
 
+/* Data structure for H5Ovisit calls. Essentially a superset of both
+ * H5O_info1_t and H5O_info2_t.
+ */
+typedef struct H5O_internal_info_t {
+    unsigned long   fileno;     /* File number that object is located in */
+    h5token_t       token;      /* Object address in file */
+    H5O_type_t      type;       /* Basic object type (group, dataset, etc.) */
+    unsigned        rc;         /* Reference count of object */
+    time_t          atime;      /* Access time */
+    time_t          mtime;      /* Modification time */
+    time_t          ctime;      /* Change time */
+    time_t          btime;      /* Birth time */
+    hsize_t         num_attrs;  /* # of attributes attached to object */
+    H5O_hdr_info_t  hdr;        /* Object header information */
+    /* Extra metadata storage for obj & attributes */
+    struct {
+        H5_ih_info_t    obj;    /* v1/v2 B-tree & local/fractal heap for groups, B-tree for chunked datasets */
+        H5_ih_info_t    attr;   /* v2 B-tree & heap for attributes */
+    } meta_size;
+} H5O_internal_info_t;
+
+/* Prototype for internal H5Ovisit/H5Ovisit_by_name() operator */
+typedef herr_t (*H5O_internal_iterate_t)(hid_t obj, const char *name,
+        const H5O_internal_info_t *info, void *op_data);
 
 /* Forward declarations for prototype arguments */
 struct H5P_genplist_t;
@@ -909,6 +933,7 @@ H5_DLL herr_t H5O_delete(H5F_t *f, haddr_t addr);
 H5_DLL herr_t H5O_get_hdr_info(const H5O_loc_t *oloc, H5O_hdr_info_t *hdr);
 H5_DLL herr_t H5O_get_info(const H5O_loc_t *oloc, H5O_info2_t *oinfo, unsigned fields);
 H5_DLL herr_t H5O_get_native_info(const H5O_loc_t *oloc, H5O_native_info_t *oinfo, unsigned fields);
+H5_DLL herr_t H5O_get_internal_info(const H5O_loc_t *loc, H5O_internal_info_t *iinfo, unsigned fields);
 H5_DLL herr_t H5O_obj_type(const H5O_loc_t *loc, H5O_type_t *obj_type);
 H5_DLL herr_t H5O_get_create_plist(const H5O_loc_t *loc, struct H5P_genplist_t *oc_plist);
 H5_DLL void *H5O_open_name(const H5G_loc_t *loc, const char *name, H5I_type_t *opened_type/*out*/);
@@ -922,6 +947,7 @@ H5_DLL herr_t H5O_get_rc_and_type(const H5O_loc_t *oloc, unsigned *rc, H5O_type_
 H5_DLL H5AC_proxy_entry_t *H5O_get_proxy(const H5O_t *oh);
 H5_DLL herr_t H5O_reset_info1(H5O_info1_t *oinfo);
 H5_DLL herr_t H5O_reset_info2(H5O_info2_t *oinfo);
+H5_DLL herr_t H5O_reset_internal_info(H5O_internal_info_t *iinfo, size_t addr_len);
 
 /* Object header message routines */
 H5_DLL herr_t H5O_msg_create(const H5O_loc_t *loc, unsigned type_id, unsigned mesg_flags,
