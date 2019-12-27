@@ -144,9 +144,11 @@ H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
             oinfo.num_attrs = oinfo2->num_attrs;
     }
 
-    /* Retrieve the 'native' object info fields for this object */
-    loc_params.type         = H5VL_OBJECT_BY_SELF;
-    loc_params.obj_type     = H5I_get_type(obj_id);
+    /* Fill out location struct */
+    loc_params.type                         = H5VL_OBJECT_BY_NAME;
+    loc_params.loc_data.loc_by_name.name    = name;
+    loc_params.loc_data.loc_by_name.lapl_id = H5P_LINK_ACCESS_DEFAULT;
+    loc_params.obj_type                     = H5I_get_type(obj_id);
 
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(obj_id)))
