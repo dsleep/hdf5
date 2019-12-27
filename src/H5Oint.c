@@ -2187,7 +2187,8 @@ H5O_get_info(const H5O_loc_t *loc, H5O_info2_t *oinfo, unsigned fields)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to determine object class")
 
     /* Reset the object info structure */
-    HDmemset(oinfo, 0, sizeof(*oinfo));
+    if (H5O_reset_info2(oinfo) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't reset object data struct")
 
     /* Get basic information, if requested */
     if(fields & H5O_INFO_BASIC) {
@@ -3068,4 +3069,47 @@ H5O__free(H5O_t *oh)
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5O__free() */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5O_reset_info1
+ *
+ * Purpose:     Resets/initializes an H5O_info1_t struct.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5O_reset_info1(H5O_info1_t *oinfo)
+{
+    FUNC_ENTER_NOAPI_NOINIT_NOERR;
+
+    /* Reset the passed-in info struct */
+    HDmemset(oinfo, 0, sizeof(H5O_info1_t));
+    oinfo->type = H5O_TYPE_UNKNOWN;
+    oinfo->addr = HADDR_UNDEF;
+
+    FUNC_LEAVE_NOAPI(SUCCEED);
+} /* end H5O_reset_info1() */
+
+/*-------------------------------------------------------------------------
+ * Function:    H5O_reset_info2
+ *
+ * Purpose:     Resets/initializes an H5O_info2_t struct.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5O_reset_info2(H5O_info2_t *oinfo)
+{
+    FUNC_ENTER_NOAPI_NOINIT_NOERR;
+
+    /* Reset the passed-in info struct */
+    HDmemset(oinfo, 0, sizeof(H5O_info2_t));
+    oinfo->type = H5O_TYPE_UNKNOWN;
+
+    FUNC_LEAVE_NOAPI(SUCCEED);
+} /* end H5O_reset_info2() */
 

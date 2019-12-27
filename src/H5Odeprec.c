@@ -53,6 +53,7 @@
 /* Adapter for using deprecated H5Ovisit1 callbacks with the VOL */
 typedef struct H5O_visit1_adapter_t {
     H5O_iterate1_t   real_op;           /* Application callback to invoke */
+    unsigned         fields;            /* Original fields passed to H5Ovisit */
     void            *real_op_data;      /* Application op_data */
 } H5O_visit1_adapter_t;
 
@@ -107,9 +108,10 @@ H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
 {
     H5O_visit1_adapter_t *shim_data = (H5O_visit1_adapter_t *)op_data;
     H5O_info1_t oinfo;                  /* Deprecated object info struct */
+    unsigned dm_fields;                 /* Fields for data model query */
+    unsigned nat_fields;                /* Fields for native query */
     H5VL_object_t *vol_obj;             /* Object token of obj_id */
     H5VL_loc_params_t loc_params;       /* Location parameters for VOL callback */
-    H5O_native_info_t nat_info;         /* Native object info */
     herr_t ret_value = H5_ITER_CONT;    /* Return value */
 
     FUNC_ENTER_STATIC
@@ -118,19 +120,29 @@ H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
     HDassert(oinfo2);
     HDassert(op_data);
 
-    /* Reset the deprecated object info struct */
-    HDmemset(&oinfo, 0, sizeof(H5O_info1_t));
+    /* Reset the legacy info struct */
+    if (H5O_reset_info1(&oinfo) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't reset object data struct")
 
-    /* Copy the data model info into the deprecated struct */
-    oinfo.fileno    = oinfo2->fileno;
-    HDmemcpy(&oinfo.addr, &oinfo2->token, sizeof(oinfo.addr));
-    oinfo.type      = oinfo2->type;
-    oinfo.rc        = oinfo2->rc;
-    oinfo.atime     = oinfo2->atime;
-    oinfo.mtime     = oinfo2->mtime;
-    oinfo.ctime     = oinfo2->ctime;
-    oinfo.btime     = oinfo2->btime;
-    oinfo.num_attrs = oinfo2->num_attrs;
+    /* Check for retrieving data model information */
+    dm_fields = shim_data->fields & (H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS);
+    if(dm_fields) {
+        /* Set the data model fields */
+        if(shim_data->fields & H5O_INFO_BASIC) {
+            oinfo.fileno    = oinfo2->fileno;
+            oinfo.type      = oinfo2->type;
+            oinfo.rc        = oinfo2->rc;
+            HDmemcpy(&oinfo.addr, &oinfo2->token, sizeof(oinfo.addr));
+        }
+        if(shim_data->fields & H5O_INFO_TIME) {
+            oinfo.atime     = oinfo2->atime;
+            oinfo.mtime     = oinfo2->mtime;
+            oinfo.ctime     = oinfo2->ctime;
+            oinfo.btime     = oinfo2->btime;
+        }
+        if(shim_data->fields & H5O_INFO_NUM_ATTRS)
+            oinfo.num_attrs = oinfo2->num_attrs;
+    }
 
     /* Retrieve the 'native' object info fields for this object */
     loc_params.type         = H5VL_OBJECT_BY_SELF;
@@ -140,14 +152,23 @@ H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
     if(NULL == (vol_obj = H5VL_vol_object(obj_id)))
         HGOTO_ERROR(H5E_OHDR, H5E_BADTYPE, H5_ITER_ERROR, "invalid location identifier")
 
-    /* Retrieve the object's native information */
-    if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, &nat_info, H5O_INFO_ALL) < 0)
-        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5_ITER_ERROR, "can't get native info for object")
+    /* Check for retrieving native information */
+    nat_fields = shim_data->fields & (H5O_INFO_HDR | H5O_INFO_META_SIZE);
+    if(nat_fields) {
+        H5O_native_info_t nat_info;         /* Native object info */
 
-    /* Set the native fields */
-    HDmemcpy(&(oinfo.hdr), &(nat_info.hdr), sizeof(H5O_hdr_info_t));
-    HDmemcpy(&(oinfo.meta_size.obj),  &(nat_info.meta_size.obj),  sizeof(H5_ih_info_t));
-    HDmemcpy(&(oinfo.meta_size.attr), &(nat_info.meta_size.attr), sizeof(H5_ih_info_t));
+        /* Retrieve the object's native information */
+        if(H5VL_object_optional(vol_obj, H5VL_NATIVE_OBJECT_GET_NATIVE_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &loc_params, &nat_info, nat_fields) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get native info for object")
+
+        /* Set the native fields */
+        if(shim_data->fields & H5O_INFO_HDR)
+            HDmemcpy(&(oinfo.hdr), &(nat_info.hdr), sizeof(H5O_hdr_info_t));
+        if(shim_data->fields & H5O_INFO_META_SIZE) {
+            HDmemcpy(&(oinfo.meta_size.obj),  &(nat_info.meta_size.obj),  sizeof(H5_ih_info_t));
+            HDmemcpy(&(oinfo.meta_size.attr), &(nat_info.meta_size.attr), sizeof(H5_ih_info_t));
+        }
+    }
 
     /* Invoke the application callback */
     ret_value = (shim_data->real_op)(obj_id, name, &oinfo, shim_data->real_op_data);
@@ -182,6 +203,10 @@ H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
     /* Sanity check */
     HDassert(vol_obj);
     HDassert(loc_params);
+
+    /* Reset the passed-in info struct */
+    if (H5O_reset_info1(oinfo) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't reset object data struct")
 
     /* Check for retrieving data model information */
     dm_fields = fields & (H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS);
@@ -617,6 +642,7 @@ H5Ovisit1(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
 
     /* Set up adapter */
     shim_data.real_op = op;
+    shim_data.fields = H5O_INFO_ALL;
     shim_data.real_op_data = op_data;
 
     /* Visit the objects */
@@ -701,6 +727,7 @@ H5Ovisit_by_name1(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
 
     /* Set up adapter */
     shim_data.real_op = op;
+    shim_data.fields = H5O_INFO_ALL;
     shim_data.real_op_data = op_data;
 
     /* Visit the objects */
@@ -779,6 +806,7 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
 
     /* Set up adapter */
     shim_data.real_op = op;
+    shim_data.fields = fields;
     shim_data.real_op_data = op_data;
 
     /* Visit the objects */
@@ -868,6 +896,7 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
 
     /* Set up adapter */
     shim_data.real_op = op;
+    shim_data.fields = fields;
     shim_data.real_op_data = op_data;
 
     /* Visit the objects */
