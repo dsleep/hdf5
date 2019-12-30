@@ -3422,7 +3422,7 @@ H5Gget_obj_info_full
     info.objno = objno;
     info.count = 0;
 
-    if (H5Literate(loc_id, (H5_index_t)indexType, (H5_iter_order_t)indexOrder, NULL, obj_info_all, (void *)&info) < 0) {
+    if (H5Literate1(loc_id, (H5_index_t)indexType, (H5_iter_order_t)indexOrder, NULL, obj_info_all, (void *)&info) < 0) {
         /*
          * Reset info stats; most importantly, reset the count.
          */
@@ -3435,7 +3435,7 @@ H5Gget_obj_info_full
         info.count = 0;
 
         /* Iteration failed, try normal alphabetical order */
-        if (H5Literate(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, obj_info_all, (void *)&info) < 0)
+        if (H5Literate1(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, obj_info_all, (void *)&info) < 0)
             return -1;
     }
 
@@ -3455,7 +3455,7 @@ H5Gget_obj_info_max
     info.objno = objno;
     info.count = 0;
 
-    if (H5Lvisit(loc_id, H5_INDEX_NAME, H5_ITER_NATIVE, obj_info_max, (void *)&info) < 0)
+    if (H5Lvisit1(loc_id, H5_INDEX_NAME, H5_ITER_NATIVE, obj_info_max, (void *)&info) < 0)
         return -1;
 
     return info.count;

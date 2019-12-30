@@ -296,6 +296,12 @@ static const H5VL_class_t H5VL_pass_through_g = {
         H5VL_pass_through_blob_specific,            /* specific */
         H5VL_pass_through_blob_optional             /* optional */
     },
+    {                                           /* token_cls */
+        NULL /* H5VL_pass_through_token_cmp,   */,  /* cmp            */
+        NULL /* H5VL_pass_through_token_to_str */,  /* to_str         */
+        NULL /* H5VL_pass_through_str_to_token */,  /* from_str       */
+        NULL /* H5VL_pass_through_free_token_str */ /* free_token_str */
+    },
     H5VL_pass_through_optional                  /* optional */
 };
 

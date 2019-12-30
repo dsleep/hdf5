@@ -111,6 +111,12 @@ H5_DLL herr_t H5VL__native_blob_put(void *obj, const void *buf, size_t size, voi
 H5_DLL herr_t H5VL__native_blob_get(void *obj, const void *blob_id, void *buf, size_t size, void *ctx);
 H5_DLL herr_t H5VL__native_blob_specific(void *obj, void *blob_id, H5VL_blob_specific_t specific_type, va_list arguments);
 
+/* Token callbacks */
+H5_DLL herr_t H5VL__native_token_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value);
+H5_DLL herr_t H5VL__native_token_to_str(hid_t loc_id, const h5token_t *token, char **token_str);
+H5_DLL herr_t H5VL__native_str_to_token(hid_t loc_id, const char *token_str, h5token_t *token);
+H5_DLL herr_t H5VL__native_free_token_str(hid_t loc_id, char *token_str);
+
 /* Helper functions */
 H5_DLL herr_t H5VL_native_get_file_addr_len(hid_t loc_id, size_t *addr_len);
 H5_DLL herr_t H5VL_native_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token);

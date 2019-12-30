@@ -796,13 +796,13 @@ MapIdToName(hid_t refobj_id, trav_table_t *travt)
         if(travt->objs[u].type == (h5trav_type_t)H5O_TYPE_DATASET ||
                 travt->objs[u].type == (h5trav_type_t)H5O_TYPE_GROUP ||
                 travt->objs[u].type == (h5trav_type_t)H5O_TYPE_NAMED_DATATYPE) {
-            H5O_info1_t   ref_oinfo;     /* Stat for the refobj id */
+            H5O_info2_t   ref_oinfo;     /* Stat for the refobj id */
 
             /* obtain information to identify the referenced object uniquely */
-            if(H5Oget_info2(refobj_id, &ref_oinfo, H5O_INFO_BASIC) < 0)
+            if(H5Oget_info3(refobj_id, &ref_oinfo, H5O_INFO_BASIC) < 0)
                 goto out;
 
-            if(ref_oinfo.addr == travt->objs[u].objno) {
+            if(!HDmemcmp(&ref_oinfo.token, &travt->objs[u].obj_token, sizeof(h5token_t))) {
                 ret = travt->objs[u].name;
                 goto out;
             } /* end if */

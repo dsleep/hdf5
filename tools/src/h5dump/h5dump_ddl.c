@@ -200,10 +200,10 @@ dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATT
     HDstrcat(obj_path, name);
 
     if(linfo->type == H5L_TYPE_HARD) {
-        H5O_info1_t  oinfo;
+        H5O_info2_t  oinfo;
 
         /* Stat the object */
-        if(H5Oget_info_by_name2(group, name, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT) < 0) {
+        if(H5Oget_info_by_name3(group, name, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT) < 0) {
             error_msg("unable to get object information for \"%s\"\n", name);
             h5tools_setstatus(EXIT_FAILURE);
             ret = FAIL;
@@ -259,7 +259,7 @@ dump_all_cb(hid_t group, const char *name, const H5L_info2_t *linfo, void H5_ATT
                 if(oinfo.rc > 1 || hit_elink) {
                     obj_t  *found_obj;    /* Found object */
 
-                    found_obj = search_obj(dset_table, oinfo.addr);
+                    found_obj = search_obj(dset_table, &oinfo.token);
 
                     if(found_obj == NULL) {
                         ctx.indent_level++;
@@ -612,7 +612,7 @@ link_iteration(hid_t gid, unsigned crt_order_flags)
 void
 dump_named_datatype(hid_t tid, const char *name)
 {
-    H5O_info1_t        oinfo;
+    H5O_info2_t       oinfo;
     unsigned          attr_crt_order_flags;
     hid_t             tcpl_id = -1;    /* datatype creation property list ID */
     hsize_t           curr_pos = 0;    /* total data element position   */
@@ -670,7 +670,7 @@ dump_named_datatype(hid_t tid, const char *name)
                         h5tools_dump_header_format->datatypeblockbegin);
     h5tools_render_element(rawoutstream, outputformat, &ctx, &buffer, &curr_pos, (size_t)outputformat->line_ncols, (hsize_t)0, (hsize_t)0);
 
-    H5Oget_info2(tid, &oinfo, H5O_INFO_BASIC);
+    H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC);
 
     /* Must check for uniqueness of all objects if we've traversed an elink,
      * otherwise only check if the reference count > 1.
@@ -678,7 +678,7 @@ dump_named_datatype(hid_t tid, const char *name)
     if(oinfo.rc > 1 || hit_elink) {
         obj_t  *found_obj;    /* Found object */
 
-        found_obj = search_obj(type_table, oinfo.addr);
+        found_obj = search_obj(type_table, &oinfo.token);
 
         if (found_obj == NULL) {
             error_msg("internal error (file %s:line %d)\n", __FILE__, __LINE__);
@@ -739,7 +739,7 @@ done:
 void
 dump_group(hid_t gid, const char *name)
 {
-    H5O_info1_t  oinfo;
+    H5O_info2_t oinfo;
     hid_t       dset;
     hid_t       type;
     hid_t       gcpl_id;
@@ -816,9 +816,15 @@ dump_group(hid_t gid, const char *name)
         /* dump unamed type in root group */
         for(u = 0; u < type_table->nobjs; u++)
             if(!type_table->objs[u].recorded) {
+                char *obj_addr_str = NULL;
+
                 dset = H5Dopen2(gid, type_table->objs[u].objname, H5P_DEFAULT);
                 type = H5Dget_type(dset);
-                HDsprintf(type_name, "#"H5_PRINTF_HADDR_FMT, type_table->objs[u].objno);
+
+                H5VLconnector_token_to_str(dset, &type_table->objs[u].obj_token, &obj_addr_str);
+                HDsprintf(type_name, "#%s", obj_addr_str);
+                H5VLfree_token_str(dset, obj_addr_str);
+
                 dump_function_table->dump_named_datatype_function(type, type_name);
                 H5Tclose(type);
                 H5Dclose(dset);
@@ -830,7 +836,7 @@ dump_group(hid_t gid, const char *name)
 
     h5tools_dump_comment(rawoutstream, outputformat, &ctx, gid);
 
-    H5Oget_info2(gid, &oinfo, H5O_INFO_BASIC);
+    H5Oget_info3(gid, &oinfo, H5O_INFO_BASIC);
 
     /* Must check for uniqueness of all objects if we've traversed an elink,
      * otherwise only check if the reference count > 1.
@@ -838,7 +844,7 @@ dump_group(hid_t gid, const char *name)
     if(oinfo.rc > 1 || hit_elink) {
         obj_t  *found_obj;    /* Found object */
 
-        found_obj = search_obj(group_table, oinfo.addr);
+        found_obj = search_obj(group_table, &oinfo.token);
 
         if (found_obj == NULL) {
             error_msg("internal error (file %s:line %d)\n", __FILE__, __LINE__);
@@ -1251,8 +1257,13 @@ dump_fcontents(hid_t fid)
         unsigned u;
 
         for (u = 0; u < type_table->nobjs; u++) {
-            if (!type_table->objs[u].recorded)
-                PRINTSTREAM(rawoutstream, " %-10s /#"H5_PRINTF_HADDR_FMT"\n", "datatype", type_table->objs[u].objno);
+            if (!type_table->objs[u].recorded) {
+                char *obj_addr_str = NULL;
+
+                H5VLconnector_token_to_str(fid, &type_table->objs[u].obj_token, &obj_addr_str);
+                PRINTSTREAM(rawoutstream, " %-10s /#%s\n", "datatype", obj_addr_str);
+                H5VLfree_token_str(fid, obj_addr_str);
+            }
         }
     }
 
@@ -1319,7 +1330,7 @@ attr_search(hid_t oid, const char *attr_name, const H5A_info_t H5_ATTR_UNUSED *a
 } /* end attr_search() */
 
 static herr_t
-obj_search(const char *path, const H5O_info1_t *oi, const char H5_ATTR_UNUSED *already_visited, void *_op_data)
+obj_search(const char *path, const H5O_info2_t *oi, const char H5_ATTR_UNUSED *already_visited, void *_op_data)
 {
     trav_handle_udata_t  *handle_data = (trav_handle_udata_t*)_op_data;
     const char *op_name = handle_data->op_name;
@@ -1608,7 +1619,7 @@ error:
 void
 handle_datasets(hid_t fid, const char *dset, void *data, int pe, const char *display_name)
 {
-    H5O_info1_t       oinfo;
+    H5O_info2_t      oinfo;
     hid_t            dsetid;
     hid_t            dapl_id = H5P_DEFAULT;  /* dataset access property list ID */
     struct subset_t *sset = (struct subset_t *)data;
@@ -1719,11 +1730,11 @@ handle_datasets(hid_t fid, const char *dset, void *data, int pe, const char *dis
     } /* end if */
 
 
-    H5Oget_info2(dsetid, &oinfo, H5O_INFO_BASIC);
+    H5Oget_info3(dsetid, &oinfo, H5O_INFO_BASIC);
     if(oinfo.rc > 1 || hit_elink) {
         obj_t  *found_obj;    /* Found object */
 
-        found_obj = search_obj(dset_table, oinfo.addr);
+        found_obj = search_obj(dset_table, &oinfo.token);
 
         if(found_obj) {
             if (found_obj->displayed) {
@@ -1903,8 +1914,12 @@ handle_datatypes(hid_t fid, const char *type, void H5_ATTR_UNUSED * data, int pe
             char name[128];
 
             if(!type_table->objs[idx].recorded) {
+                char *obj_addr_string = NULL;
+
                 /* unamed datatype */
-                HDsprintf(name, "/#"H5_PRINTF_HADDR_FMT, type_table->objs[idx].objno);
+                H5VLconnector_token_to_str(fid, &type_table->objs[idx].obj_token, &obj_addr_string);
+                HDsprintf(name, "/#%s", obj_addr_string);
+                H5VLfree_token_str(fid, obj_addr_string);
 
                 if(!HDstrcmp(name, real_name))
                     break;

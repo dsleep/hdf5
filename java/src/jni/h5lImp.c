@@ -294,7 +294,7 @@ Java_hdf_hdf5lib_H5_H5Lget_1info
 
     PIN_JAVA_STRING(ENVONLY, name, linkName, NULL, "H5Lget_info: link name not pinned");
 
-    if ((status = H5Lget_info((hid_t)loc_id, linkName, &infobuf, (hid_t)access_id)) < 0)
+    if ((status = H5Lget_info1((hid_t)loc_id, linkName, &infobuf, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
     args[0].i = infobuf.type;
@@ -335,7 +335,7 @@ Java_hdf_hdf5lib_H5_H5Lget_1info_1by_1idx
 
     PIN_JAVA_STRING(ENVONLY, name, groupName, NULL, "H5Lget_info_by_idx: group name not pinned");
 
-    if ((status = H5Lget_info_by_idx((hid_t)loc_id, groupName, (H5_index_t)index_field, (H5_iter_order_t)order, (hsize_t)link_n, &infobuf, (hid_t)access_id)) < 0)
+    if ((status = H5Lget_info_by_idx1((hid_t)loc_id, groupName, (H5_index_t)index_field, (H5_iter_order_t)order, (hsize_t)link_n, &infobuf, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
     args[0].i = infobuf.type;
@@ -426,7 +426,7 @@ Java_hdf_hdf5lib_H5_H5Lget_1value
     PIN_JAVA_STRING(ENVONLY, name, linkName, NULL, "H5Lget_value: link name not pinned");
 
     /* Get the length of the link value */
-    if ((status = H5Lget_info((hid_t)loc_id, linkName, &infobuf, H5P_DEFAULT)) < 0)
+    if ((status = H5Lget_info1((hid_t)loc_id, linkName, &infobuf, H5P_DEFAULT)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
     if (H5L_TYPE_HARD == infobuf.type)
@@ -516,7 +516,7 @@ Java_hdf_hdf5lib_H5_H5Lget_1value_1by_1idx
     PIN_JAVA_STRING(ENVONLY, name, grpName, NULL, "H5Lget_val_by_idx: group name not pinned");
 
     /* Get the length of the link value */
-    if ((status = H5Lget_info_by_idx((hid_t)loc_id, grpName, (H5_index_t)index_field, (H5_iter_order_t)order, (hsize_t)link_n, &infobuf, (hid_t)access_id)) < 0)
+    if ((status = H5Lget_info_by_idx1((hid_t)loc_id, grpName, (H5_index_t)index_field, (H5_iter_order_t)order, (hsize_t)link_n, &infobuf, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
     if (H5L_TYPE_HARD == infobuf.type)

@@ -1260,10 +1260,17 @@ print_type(h5tools_str_t *buffer, hid_t type, int ind)
 
     /* Shared? If so then print the type's OID */
     if (H5Tcommitted(type)) {
-        H5O_info1_t  oi;
+        H5O_info2_t oi;
 
-        if (H5Oget_info2(type, &oi, H5O_INFO_BASIC) >= 0)
-            h5tools_str_append(buffer,"shared-%lu:"H5_PRINTF_HADDR_FMT" ", oi.fileno, oi.addr);
+        if (H5Oget_info3(type, &oi, H5O_INFO_BASIC) >= 0) {
+            char *type_string = NULL;
+
+            H5VLconnector_token_to_str(type, &oi.token, &type_string);
+
+            h5tools_str_append(buffer,"shared-%lu:%s", oi.fileno, type_string);
+
+            H5VLfree_token_str(type, type_string);
+        } /* end if */
         else
             h5tools_str_append(buffer,"shared ");
     } /* end if */
@@ -2295,7 +2302,7 @@ datatype_list2(hid_t type, const char H5_ATTR_UNUSED *name)
  *-------------------------------------------------------------------------
  */
 static herr_t
-list_obj(const char *name, const H5O_info1_t *oinfo, const char *first_seen, void *_iter)
+list_obj(const char *name, const H5O_info2_t *oinfo, const char *first_seen, void *_iter)
 {
     H5TOOLS_ERR_INIT(herr_t, SUCCEED)
     H5O_type_t          obj_type = oinfo->type;          /* Type of the object */
@@ -2368,6 +2375,7 @@ list_obj(const char *name, const H5O_info1_t *oinfo, const char *first_seen, voi
         if (verbose_g > 0) {
             size_t buf_size = 0;
             char* comment = NULL;
+            char* obj_addr_str = NULL;
             ssize_t cmt_bufsize = -1;
 
             /* Display attributes */
@@ -2376,10 +2384,14 @@ list_obj(const char *name, const H5O_info1_t *oinfo, const char *first_seen, voi
                 H5Aiterate2(obj, H5_INDEX_NAME, H5_ITER_INC, NULL, list_attr, NULL);
 
             /* Object location & reference count */
+            H5VLconnector_token_to_str(obj, &oinfo->token, &obj_addr_str);
+
             h5tools_str_reset(&buffer);
-            h5tools_str_append(&buffer, "    %-10s %lu:"H5_PRINTF_HADDR_FMT"\n", "Location:", oinfo->fileno, oinfo->addr);
+            h5tools_str_append(&buffer, "    %-10s %lu:%s\n", "Location:", oinfo->fileno, obj_addr_str);
             h5tools_str_append(&buffer, "    %-10s %u\n", "Links:", (unsigned)oinfo->rc);
             h5tools_render_element(rawoutstream, info, &ctx, &buffer, &curr_pos, (size_t)info->line_ncols, (hsize_t)0, (hsize_t)0);
+
+            H5VLfree_token_str(obj, obj_addr_str);
 
             /* Modification time */
             if (oinfo->mtime > 0) {
@@ -2642,7 +2654,7 @@ static herr_t
 visit_obj(hid_t file, const char *oname, iter_t *iter)
 {
     int                 retval = 0;
-    H5O_info1_t         oi;              /* Information for object */
+    H5O_info2_t         oi;              /* Information for object */
     hsize_t             curr_pos = 0;    /* total data element position   */
     h5tools_str_t       buffer;          /* string into which to render   */
     h5tools_context_t   ctx;             /* print context  */
@@ -2654,7 +2666,7 @@ visit_obj(hid_t file, const char *oname, iter_t *iter)
     h5tools_str_reset(&buffer);
 
     /* Retrieve info for object to list */
-    if (H5Oget_info_by_name2(file, oname, &oi, H5O_INFO_BASIC|H5O_INFO_TIME, H5P_DEFAULT) < 0) {
+    if (H5Oget_info_by_name3(file, oname, &oi, H5O_INFO_BASIC|H5O_INFO_TIME, H5P_DEFAULT) < 0) {
         if (iter->symlink_target) {
             h5tools_str_append(&buffer, "{**NOT FOUND**}\n");
             iter->symlink_target = FALSE;

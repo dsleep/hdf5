@@ -21,11 +21,11 @@ extern "C" {
 #endif
 
 H5TOOLS_DLL herr_t      fill_ref_path_table(hid_t fid);
-H5TOOLS_DLL const char *lookup_ref_path(haddr_t ref);
+H5TOOLS_DLL const char *lookup_ref_path(H5R_ref_t refbuf);
 H5TOOLS_DLL int         get_next_xid(void);
-H5TOOLS_DLL haddr_t     get_fake_xid(void);
-H5TOOLS_DLL haddr_t     ref_path_table_lookup(const char *);
-H5TOOLS_DLL haddr_t     ref_path_table_gen_fake(const char *);
+H5TOOLS_DLL void        get_fake_token(h5token_t *token);
+H5TOOLS_DLL int         ref_path_table_lookup(const char *thepath, h5token_t *token);
+H5TOOLS_DLL void        ref_path_table_gen_fake(const char *path, h5token_t *token);
 H5TOOLS_DLL int         term_ref_path_table(void);
 
 #ifdef __cplusplus

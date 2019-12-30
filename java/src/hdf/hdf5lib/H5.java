@@ -10736,7 +10736,8 @@ public class H5 implements java.io.Serializable {
     public synchronized static native long H5VLregister_connector_by_name(String connector_name, long vipl_id);
     public synchronized static native long H5VLregister_connector_by_value(int connector_value, long vipl_id);
     public synchronized static native boolean H5VLis_connector_registered(String name);
-    public synchronized static native long H5VLget_connector_id(String name);
+    public synchronized static native long H5VLget_connector_id(long object_id);
+    public synchronized static native long H5VLget_connector_id_by_name(String name);
     public synchronized static native String H5VLget_connector_name(long object_id);
     public synchronized static native void H5VLclose(long connector_id);
     public synchronized static native void H5VLunregister_connector(long connector_id);

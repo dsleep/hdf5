@@ -3228,6 +3228,9 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                                 case H5VL_SUBCLS_BLOB:
                                     HDfprintf(out, "H5VL_SUBCLS_BLOB");
                                     break;
+                                case H5VL_SUBCLS_TOKEN:
+                                    HDfprintf(out, "H5VL_SUBCLS_TOKEN");
+                                    break;
                                 default:
                                     HDfprintf(out, "%ld", (long)subclass);
                                     break;

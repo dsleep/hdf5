@@ -1104,14 +1104,13 @@ h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t contai
                             case H5R_OBJECT1:
                                 {
                                 /* Object references -- show the type and OID of the referenced object. */
-                                H5O_info1_t  oi;
+                                H5O_info2_t oi;
+                                char *obj_addr_str = NULL;
 
                                 H5TOOLS_DEBUG(H5E_tools_min_dbg_id_g, "ref_type is H5R_OBJECT1");
                                 if((obj = H5Ropen_object(ref_vp, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
-                                    H5Oget_info2(obj, &oi, H5O_INFO_BASIC);
-                                    if(H5Oclose(obj) < 0)
-                                        H5Epush2(H5tools_ERR_STACK_g, __FILE__, FUNC, __LINE__, H5tools_ERR_CLS_g, H5E_tools_g, H5E_tools_min_id_g,
-                                                "H5Oclose H5R_OBJECT1 failed");
+                                    H5Oget_info3(obj, &oi, H5O_INFO_BASIC);
+                                    H5VLconnector_token_to_str(obj, &oi.token, &obj_addr_str);
                                 }
                                 else
                                     H5Epush2(H5tools_ERR_STACK_g, __FILE__, FUNC, __LINE__, H5tools_ERR_CLS_g, H5E_tools_g, H5E_tools_min_id_g,
@@ -1138,15 +1137,25 @@ h5tools_str_sprint(h5tools_str_t *str, const h5tool_format_t *info, hid_t contai
                                         h5tools_str_append(str, "%u-%s", (unsigned) oi.type, H5_TOOLS_UNKNOWN);
                                         break;
                                 } /* end switch */
-                                H5Oclose(obj);
+
                                 h5tools_str_sprint_reference(str, info, container, ref_vp);
 
                                 /* Print OID */
                                 if(info->obj_hidefileno)
-                                    h5tools_str_append(str, info->obj_format, oi.addr);
+                                    h5tools_str_append(str, info->obj_format, obj_addr_str);
                                 else
-                                    h5tools_str_append(str, info->obj_format, oi.fileno, oi.addr);
+                                    h5tools_str_append(str, info->obj_format, oi.fileno, obj_addr_str);
+
+                                if(obj_addr_str) {
+                                    H5VLfree_token_str(obj, obj_addr_str);
+                                    obj_addr_str = NULL;
                                 }
+
+                                if(obj >= 0)
+                                    if(H5Oclose(obj) < 0)
+                                        H5TOOLS_ERROR(NULL, H5E_tools_min_id_g, "H5Oclose H5R_OBJECT1 failed");
+                                }
+
                                 break;
                             case H5R_DATASET_REGION1:
                                 H5TOOLS_DEBUG(H5E_tools_min_dbg_id_g, "ref_type is H5R_DATASET_REGION1");

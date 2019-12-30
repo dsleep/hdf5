@@ -136,6 +136,12 @@ static const H5VL_class_t H5VL_native_cls_g = {
         H5VL__native_blob_specific,                 /* specific */
         NULL                                        /* optional */
     },
+    {   /* token_cls */
+        H5VL__native_token_cmp,                     /* cmp            */
+        H5VL__native_token_to_str,                  /* to_str         */
+        H5VL__native_str_to_token,                  /* from_str       */
+        H5VL__native_free_token_str                 /* free_token_str */
+    },
     NULL                                            /* optional     */
 };
 

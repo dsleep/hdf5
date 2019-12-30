@@ -7280,6 +7280,260 @@ done:
 
 
 /*-------------------------------------------------------------------------
+ * Function:    H5VL_cmp_token
+ *
+ * Purpose:     Compares two VOL connector object tokens. Sets *cmp_value
+ *              to positive if token1 is greater than token2, negative if
+ *              token2 is greater than token1 and zero if token1 and
+ *              token2 are equal.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL_cmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value)
+{
+    H5VL_object_t *vol_obj;
+    H5VL_class_t *cls;                  /* VOL connector's class struct */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Sanity checks */
+    HDassert(loc_id > 0);
+    HDassert(cmp_value);
+
+    /* Take care of cases where one or both pointers is NULL */
+    if(token1 == NULL && token2 != NULL) {
+        *cmp_value = -1;
+        HGOTO_DONE(SUCCEED);
+    } /* end if */
+    if(token1 != NULL && token2 == NULL) {
+        *cmp_value = 1;
+        HGOTO_DONE(SUCCEED);
+    } /* end if */
+    if(token1 == NULL && token2 == NULL) {
+        *cmp_value = 0;
+        HGOTO_DONE(SUCCEED);
+    } /* end if */
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+    cls = vol_obj->connector->cls;
+
+    /* Use the class's token comparison routine to compare the tokens,
+     * if there is a callback, otherwise just compare the tokens as
+     * memory buffers.
+     */
+    if(cls->token_cls.cmp) {
+        if((cls->token_cls.cmp)(loc_id, token1, token2, cmp_value) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTCOMPARE, FAIL, "can't compare object tokens")
+    } /* end if */
+    else {
+        *cmp_value = HDmemcmp(token1, token2, sizeof(h5token_t));
+    } /* end else */
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_cmp_token() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5VLcmp_token
+ *
+ * Purpose:     Compares two VOL connector object tokens
+ *
+ * Note:        Both object tokens must be from the same VOL connector class
+ *
+ * Return:      Success:    Non-negative, with *cmp_value set to positive if
+ *                          token1 is greater than token2, negative if token2
+ *                          is greater than token1 and zero if token1 and
+ *                          token2 are equal.
+ *              Failure:    Negative
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VLcmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value)
+{
+    herr_t ret_value = SUCCEED;  /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE4("e", "i*k*k*Is", loc_id, token1, token2, cmp_value);
+
+    /* Compare the two tokens */
+    if(cmp_value)
+        if(H5VL_cmp_token(loc_id, token1, token2, cmp_value) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTCOMPARE, FAIL, "object token comparison failed")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5VLcmp_token() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5VLconnector_token_to_str
+ *
+ * Purpose:     Serialize a connector's object token into a string
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VLconnector_token_to_str(hid_t loc_id, const h5token_t *token, char **token_str)
+{
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_API_NOINIT
+    H5TRACE3("e", "i*k**s", loc_id, token, token_str);
+
+    /* Only serialize object token, if it's non-NULL */
+    if(token) {
+        H5VL_object_t *vol_obj;
+        H5VL_class_t *cls;                  /* VOL connector's class struct */
+
+        /* Get the location object */
+        if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+        cls = vol_obj->connector->cls;
+
+        /* Allow the connector to serialize the object token */
+        if(cls->token_cls.to_str) {
+            if((cls->token_cls.to_str)(loc_id, token, token_str) < 0)
+                HGOTO_ERROR(H5E_VOL, H5E_CANTSERIALIZE, FAIL, "can't serialize object token")
+        } /* end if */
+        else
+            *token_str = NULL;
+    } /* end if */
+    else
+        *token_str = NULL;
+
+done:
+    FUNC_LEAVE_API_NOINIT(ret_value)
+} /* end H5VLconnector_token_to_str() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5VLconnector_str_to_token
+ *
+ * Purpose:     Deserialize a string into a connector object token
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VLconnector_str_to_token(hid_t loc_id, const char *token_str, h5token_t *token)
+{
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_API_NOINIT
+    H5TRACE3("e", "i*s*k", loc_id, token_str, token);
+
+    /* Only deserialize object token string, if it's non-NULL */
+    if(token_str) {
+        H5VL_object_t *vol_obj;
+        H5VL_class_t *cls;                  /* VOL connector's class struct */
+
+        /* Get the location object */
+        if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+        cls = vol_obj->connector->cls;
+
+        /* Allow the connector to deserialize object token string */
+        if(cls->token_cls.from_str) {
+            if((cls->token_cls.from_str)(loc_id, token_str, token) < 0)
+                HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token string")
+        } /* end if */
+        else
+            HDmemset(token, 0, sizeof(h5token_t));
+    } /* end if */
+    else
+        HDmemset(token, 0, sizeof(h5token_t));
+
+done:
+    FUNC_LEAVE_API_NOINIT(ret_value)
+} /* end H5VLconnector_str_to_token() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL_free_token_str
+ *
+ * Purpose:     Frees a VOL connector object token string
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL_free_token_str(hid_t loc_id, char *token_str)
+{
+    H5VL_object_t *vol_obj;
+    H5VL_class_t *cls;                  /* VOL connector's class struct */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Sanity check */
+    HDassert(loc_id > 0);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+    cls = vol_obj->connector->cls;
+
+    /* Only free object token string, if it's non-NULL */
+    if(token_str) {
+        /* Allow the connector to free object token string or do it ourselves */
+        if(cls->token_cls.free_token_str) {
+            if((cls->token_cls.free_token_str)(loc_id, token_str) < 0)
+                HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "connector object token string free request failed")
+        } /* end if */
+        else
+            if(H5free_memory(token_str) < 0)
+                HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "failed to free object token string")
+    } /* end if */
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_free_token_str() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5VLfree_token_str
+ *
+ * Purpose:     Frees a VOL connector object token string
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VLfree_token_str(hid_t loc_id, char *token_str)
+{
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_API_NOINIT
+    H5TRACE2("e", "i*s", loc_id, token_str);
+
+    /* Free the object token string */
+    if(H5VL_free_token_str(loc_id, token_str) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "unable to release VOL connector object token string")
+
+done:
+    FUNC_LEAVE_API_NOINIT(ret_value)
+} /* end H5VLfree_token_str() */
+
+
+/*-------------------------------------------------------------------------
  * Function:    H5VL__optional
  *
  * Purpose:     Optional operation specific to connectors.

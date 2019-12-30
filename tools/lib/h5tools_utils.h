@@ -95,10 +95,10 @@ H5TOOLS_DLL int get_option(int argc, const char **argv, const char *opt, const s
 
 /*struct taken from the dumper. needed in table struct*/
 typedef struct obj_t {
-    haddr_t objno;
-    char   *objname;
-    hbool_t displayed;          /* Flag to indicate that the object has been displayed */
-    hbool_t recorded;           /* Flag for named datatypes to indicate they were found in the group hierarchy */
+    h5token_t  obj_token;
+    char      *objname;
+    hbool_t    displayed;          /* Flag to indicate that the object has been displayed */
+    hbool_t    recorded;           /* Flag for named datatypes to indicate they were found in the group hierarchy */
 } obj_t;
 
 /*struct for the tables that the find_objs function uses*/
@@ -131,7 +131,7 @@ H5TOOLS_DLL void free_table(table_t *table);
 H5TOOLS_DLL void dump_tables(find_objs_t *info)
 #endif  /* H5DUMP_DEBUG */
 H5TOOLS_DLL herr_t init_objs(hid_t fid, find_objs_t *info, table_t **group_table, table_t **dset_table, table_t **type_table);
-H5TOOLS_DLL obj_t *search_obj(table_t *temp, haddr_t objno);
+H5TOOLS_DLL obj_t *search_obj(table_t *temp, const h5token_t *obj_token);
 #ifndef H5_HAVE_TMPFILE
 H5TOOLS_DLL FILE *tmpfile(void);
 #endif
@@ -158,7 +158,7 @@ typedef struct {
     H5O_type_t    trg_type;  /* OUT: target type */
     char         *trg_path;  /* OUT: target obj path. This must be freed
                               *      when used with H5tools_get_symlink_info() */
-    haddr_t       objno;     /* OUT: target object address */
+    h5token_t     obj_token; /* OUT: target object token */
     unsigned long fileno;    /* OUT: File number that target object is located in */
     H5L_info2_t   linfo;     /* OUT: link info */
     h5tool_opt_t  opt;       /* IN: options */

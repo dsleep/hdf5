@@ -939,6 +939,7 @@
 ./src/H5VLnative_link.c
 ./src/H5VLnative_introspect.c
 ./src/H5VLnative_object.c
+./src/H5VLnative_token.c
 ./src/H5VLnative_private.h
 ./src/H5VLpassthru.c
 ./src/H5VLpassthru.h
