@@ -157,6 +157,7 @@ const char *FILENAME[] = {
 #define NUM_SUB_GROUPS  20
 #define NUM_WIDE_LOOP_GROUPS  10
 #define NUM_DATASETS  10
+#define ATTR_CMPD_STRING    "ThisIsAString"
 
 char src_obj_full_name[215];  /* the full path + name of the object to be copied */
 
@@ -5784,7 +5785,8 @@ attach_attribute_compound_vlstr(hid_t loc_id)
         int i;
         char *v;
     } s1;
-    s1 buf;                     /* Buffer */
+    size_t len;
+    s1 buf = {0, NULL};         /* Buffer */
     int ret_value = -1;        /* Return value */
 
     /* Create dataspace */
@@ -5814,8 +5816,11 @@ attach_attribute_compound_vlstr(hid_t loc_id)
         goto done;
 
     /* Write to the attribute */
+    len = HDstrlen(ATTR_CMPD_STRING) + 1;
     buf.i = 9;
-    buf.v = "ThisIsAString";
+    if(NULL == (buf.v = (char *)HDcalloc(len, sizeof(char))))
+        goto done;
+    HDstrncpy(buf.v, ATTR_CMPD_STRING, len);
     if(H5Awrite(aid, cmpd_tid, &buf) < 0)
         goto done;
 
@@ -5832,6 +5837,9 @@ done:
         H5Tclose(cmpd_tid);
     if(aid > 0)
         H5Aclose(aid);
+
+    HDfree(buf.v);
+
     return ret_value;
 } /* attach_attribute_compound_vlstr */
 
