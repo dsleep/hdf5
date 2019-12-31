@@ -1058,20 +1058,20 @@ static void test_links_deprec(hid_t fapl)
 
     /* Test these two functions, H5Oget_info_by_idx and H5Lget_name_by_idx */
     for(i = 0; i < ginfo.nlinks; i++) {
-        H5O_info1_t oinfo;              /* Object info */
-        H5L_info1_t linfo;              /* Link info */
+        H5O_info2_t oinfo;              /* Object info */
+        H5L_info2_t linfo;              /* Link info */
 
         /* Get link name */
         name_len = H5Lget_name_by_idx(gid, ".", H5_INDEX_NAME, H5_ITER_INC, i, obj_name, (size_t)NAMELEN, H5P_DEFAULT);
         CHECK(name_len, FAIL, "H5Lget_name_by_idx");
 
         /* Get link type */
-        ret = H5Lget_info_by_idx1(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &linfo, H5P_DEFAULT);
+        ret = H5Lget_info_by_idx2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &linfo, H5P_DEFAULT);
         CHECK(ret, FAIL, "H5Lget_info_by_idx1");
 
         /* Get object type */
         if(linfo.type == H5L_TYPE_HARD) {
-            ret = H5Oget_info_by_idx2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+            ret = H5Oget_info_by_idx3(gid, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
             CHECK(ret, FAIL, "H5Oget_info_by_idx");
         } /* end if */
 
