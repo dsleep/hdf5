@@ -766,7 +766,7 @@ static int
 ck_new_links(hid_t fapl, hbool_t new_format)
 {
     hid_t         file;
-    H5O_info1_t   oi_dset, oi_hard1, oi_hard2;
+    H5O_info2_t   oi_dset, oi_hard1, oi_hard2;
     char          filename[NAME_BUF_SIZE];
 
     if(new_format)
@@ -779,9 +779,9 @@ ck_new_links(hid_t fapl, hbool_t new_format)
     if((file = H5Fopen(filename, H5F_ACC_RDONLY, fapl)) < 0) TEST_ERROR
 
     /* Get hard link info */
-    if(H5Oget_info_by_name2(file, "/grp1/dataset2", &oi_dset, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file, "/grp1/hard1", &oi_hard1, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
-    if(H5Oget_info_by_name2(file, "/grp2/hard2", &oi_hard2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file, "/grp1/dataset2", &oi_dset, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file, "/grp1/hard1", &oi_hard1, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Oget_info_by_name3(file, "/grp2/hard2", &oi_hard2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
 
     /* Check hard links */
     if(H5O_TYPE_DATASET != oi_hard1.type || H5O_TYPE_DATASET != oi_hard2.type) {
@@ -789,7 +789,8 @@ ck_new_links(hid_t fapl, hbool_t new_format)
         HDprintf("    %d: Unexpected object type should have been a dataset\n", __LINE__);
         TEST_ERROR
     }
-    if(H5F_addr_ne(oi_dset.addr, oi_hard1.addr) || H5F_addr_ne(oi_dset.addr, oi_hard2.addr)) {
+    if(         HDmemcmp(&oi_dset.token, &oi_hard1.token, sizeof(oi_hard1.token))
+            ||  HDmemcmp(&oi_dset.token, &oi_hard2.token, sizeof(oi_hard2.token))) {
         H5_FAILED();
         HDputs("    Hard link test failed.  Link seems not to point to the ");
         HDputs("    expected file location.");
@@ -800,11 +801,11 @@ ck_new_links(hid_t fapl, hbool_t new_format)
     if(H5Fclose(file) < 0) TEST_ERROR
 
     PASSED();
-    return SUCCEED;
+    return 0;
 
 error:
-    return FAIL;
-}
+    return -1;
+} /* end ck_new_links() */
 
 
 /*-------------------------------------------------------------------------
@@ -1890,7 +1891,7 @@ cklinks_deprec(hid_t fapl, hbool_t new_format)
 
 error:
     return FAIL;
-}
+} /* end chklinks_deprec() */
 
 /*-------------------------------------------------------------------------
  * Function:    test_lcpl_deprec
@@ -16255,12 +16256,12 @@ error:
  */
 static int
 open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
-    H5_index_t idx_type, H5_iter_order_t order, unsigned max_links, haddr_t *objno)
+    H5_index_t idx_type, H5_iter_order_t order, unsigned max_links, h5token_t *objno)
 {
     char        mntname[NAME_BUF_SIZE]; /* Link value */
     hid_t       group_id = -1;  /* ID of group to test */
-    H5O_info1_t oi;             /* Buffer for querying object's info */
-    haddr_t     mnt_root_addr;  /* Address of root group in file to mount */
+    H5O_info2_t oi;             /* Buffer for querying object's info */
+    h5token_t   mnt_root_token; /* Token (address) of root group in file to mount */
     hid_t       obj_id;         /* ID of object opened */
     unsigned    mnt_idx;        /* Index to mount group on */
     unsigned    u, v;           /* Local index variables */
@@ -16279,16 +16280,18 @@ open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
             if((obj_id = H5Oopen_by_idx(group_id, ".", idx_type, order, (hsize_t)u, H5P_DEFAULT)) < 0) TEST_ERROR
 
             /* Get the object's information */
-            if(H5Oget_info2(obj_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
+            if(H5Oget_info3(obj_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
 
             /* Check that the object is the correct one */
             if(order == H5_ITER_INC) {
-                if(H5F_addr_ne(oi.addr, objno[u])) TEST_ERROR
+                if(HDmemcmp(&oi.token, &objno[u], sizeof(oi.token)))
+                    TEST_ERROR
             } /* end if */
             else if(order == H5_ITER_DEC) {
                 unsigned dec_u = max_links - (u + 1);       /* Decreasing mapped index */
 
-                if(H5F_addr_ne(oi.addr, objno[dec_u])) TEST_ERROR
+                if(HDmemcmp(&oi.token, &objno[dec_u], sizeof(oi.token)))
+                    TEST_ERROR
             } /* end if */
             else {
                 /* XXX: What to do about native order? */
@@ -16302,8 +16305,9 @@ open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
     /* Verify opening correct object by index when file mounting is present */
 
     /* Get the address of the root group in the file to mount */
-    if(H5Oget_info2(mount_file_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
-    mnt_root_addr = oi.addr;
+    if(H5Oget_info3(mount_file_id, &oi, H5O_INFO_BASIC) < 0)
+        TEST_ERROR
+    HDmemcpy(&mnt_root_token, &oi.token, sizeof(mnt_root_token));
 
     /* Mount a file over a group in main group */
     mnt_idx = 2;
@@ -16314,11 +16318,11 @@ open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
     if((obj_id = H5Oopen_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)mnt_idx, H5P_DEFAULT)) < 0) TEST_ERROR
 
     /* Get the object's information */
-    if(H5Oget_info2(obj_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
+    if(H5Oget_info3(obj_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
 
     /* Check that the object is the root of the mounted file and not in the previous file */
-    if(H5F_addr_ne(oi.addr, mnt_root_addr)) TEST_ERROR
-    if(H5F_addr_eq(oi.addr, objno[mnt_idx])) TEST_ERROR
+    if(HDmemcmp(&oi.token, &mnt_root_token, sizeof(oi.token))) TEST_ERROR
+    if(!HDmemcmp(&oi.token, &objno[mnt_idx], sizeof(oi.token))) TEST_ERROR
 
     /* Close object */
     if(H5Oclose(obj_id) < 0) TEST_ERROR
@@ -16357,11 +16361,11 @@ open_by_idx(hid_t fapl)
     unsigned    use_index;              /* Use index on creation order values */
     unsigned    max_compact;            /* Maximum # of links to store in group compactly */
     unsigned    min_dense;              /* Minimum # of links to store in group "densely" */
-    H5O_info1_t oi;                     /* Buffer for querying object's info */
+    H5O_info2_t oi;                     /* Buffer for querying object's info */
     char        filename[NAME_BUF_SIZE];/* File name */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */
-    haddr_t     *objno = NULL;          /* Addresses of the objects created */
+    h5token_t   *objno = NULL;          /* Addresses of the objects created */
     unsigned    u;                      /* Local index variable */
     hid_t       ret;                    /* Generic return value */
 
@@ -16372,7 +16376,7 @@ open_by_idx(hid_t fapl)
     if(H5Pget_link_phase_change(gcpl_id, &max_compact, &min_dense) < 0) TEST_ERROR
 
     /* Allocate object address array */
-    if(NULL == (objno = (haddr_t *)HDmalloc(sizeof(haddr_t) * (max_compact * 2)))) TEST_ERROR
+    if(NULL == (objno = (h5token_t *)HDmalloc(sizeof(h5token_t) * (max_compact * 2)))) TEST_ERROR
 
     /* Create file to mount */
     h5_fixname(FILENAME[1], fapl, filename, sizeof filename);
@@ -16458,8 +16462,8 @@ open_by_idx(hid_t fapl)
                     if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
 
                     /* Retrieve group's address on disk */
-                    if(H5Oget_info2(group_id2, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    objno[u] = oi.addr;
+                    if(H5Oget_info3(group_id2, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
+                    objno[u] = oi.token;
 
                     /* Close group created */
                     if(H5Gclose(group_id2) < 0) TEST_ERROR
@@ -16467,7 +16471,7 @@ open_by_idx(hid_t fapl)
                     /* Create soft link in another group, to objects in main group */
                     HDsnprintf(valname, sizeof(valname), "/%s/%s", CORDER_GROUP_NAME, objname);
                     if(H5Lcreate_soft(valname, soft_group_id, objname, H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
-                } /* end for */
+                }
 
                 /* Verify state of group (compact) */
                 if(H5G__has_links_test(group_id, NULL) != TRUE) TEST_ERROR
@@ -16492,8 +16496,8 @@ open_by_idx(hid_t fapl)
                     if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
 
                     /* Retrieve group's address on disk */
-                    if(H5Oget_info2(group_id2, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    objno[u] = oi.addr;
+                    if(H5Oget_info3(group_id2, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
+                    objno[u] = oi.token;
 
                     /* Close group created */
                     if(H5Gclose(group_id2) < 0) TEST_ERROR
@@ -16555,6 +16559,95 @@ error:
     return FAIL;
 } /* end open_by_idx() */
 
+
+/*-------------------------------------------------------------------------
+ * Function:    open_by_idx_check_old
+ *
+ * Purpose:     Check opening by index in a group
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+open_by_idx_check_old(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
+    H5_index_t idx_type, H5_iter_order_t order, unsigned max_links, haddr_t *objno)
+{
+    char        mntname[NAME_BUF_SIZE]; /* Link value */
+    hid_t       group_id = -1;  /* ID of group to test */
+    H5O_info1_t oi;             /* Buffer for querying object's info */
+    haddr_t     mnt_root_addr;  /* Address of root group in file to mount */
+    hid_t       obj_id;         /* ID of object opened */
+    unsigned    mnt_idx;        /* Index to mount group on */
+    unsigned    u, v;           /* Local index variables */
+
+    /* Work through main & soft link groups */
+    for(v = 0; v < 2; v++) {
+        /* Choose appropriate group to open links within */
+        if(0 == v)
+            group_id = main_group_id;
+        else
+            group_id = soft_group_id;
+
+        /* Open each object in main group by index and check that it's the correct one */
+        for(u = 0; u < max_links; u++) {
+            /* Open the object */
+            if((obj_id = H5Oopen_by_idx(group_id, ".", idx_type, order, (hsize_t)u, H5P_DEFAULT)) < 0) TEST_ERROR
+
+            /* Get the object's information */
+            if(H5Oget_info2(obj_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
+
+            /* Check that the object is the correct one */
+            if(order == H5_ITER_INC) {
+                if(H5F_addr_ne(oi.addr, objno[u])) TEST_ERROR
+            } /* end if */
+            else if(order == H5_ITER_DEC) {
+                unsigned dec_u = max_links - (u + 1);       /* Decreasing mapped index */
+
+                if(H5F_addr_ne(oi.addr, objno[dec_u])) TEST_ERROR
+            } /* end if */
+            else {
+                /* XXX: What to do about native order? */
+            } /* end else */
+
+            /* Close object */
+            if(H5Oclose(obj_id) < 0) TEST_ERROR
+        } /* end for */
+    } /* end for */
+
+    /* Verify opening correct object by index when file mounting is present */
+
+    /* Get the address of the root group in the file to mount */
+    if(H5Oget_info2(mount_file_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
+    mnt_root_addr = oi.addr;
+
+    /* Mount a file over a group in main group */
+    mnt_idx = 2;
+    HDsnprintf(mntname, sizeof(mntname), "/%s/filler %02u", CORDER_GROUP_NAME, mnt_idx);
+    if(H5Fmount(main_group_id, mntname, mount_file_id, H5P_DEFAULT) < 0) TEST_ERROR
+
+    /* Open the object that the file is mounted on */
+    if((obj_id = H5Oopen_by_idx(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)mnt_idx, H5P_DEFAULT)) < 0) TEST_ERROR
+
+    /* Get the object's information */
+    if(H5Oget_info2(obj_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
+
+    /* Check that the object is the root of the mounted file and not in the previous file */
+    if(H5F_addr_ne(oi.addr, mnt_root_addr)) TEST_ERROR
+    if(H5F_addr_eq(oi.addr, objno[mnt_idx])) TEST_ERROR
+
+    /* Close object */
+    if(H5Oclose(obj_id) < 0) TEST_ERROR
+
+    /* Unmount the file */
+    if(H5Funmount(main_group_id, mntname) < 0) TEST_ERROR
+
+    /* Success */
+    return SUCCEED;
+
+error:
+    return FAIL;
+} /* end open_by_idx_check_old() */
 
 /*-------------------------------------------------------------------------
  * Function:    open_by_idx_old
@@ -16655,7 +16748,7 @@ open_by_idx_old(hid_t fapl)
         if(ret >= 0) TEST_ERROR
 
         /* Verify opening objects by index */
-        if(open_by_idx_check(group_id, soft_group_id, mount_file_id, H5_INDEX_NAME, order, u, objno) < 0) TEST_ERROR
+        if(open_by_idx_check_old(group_id, soft_group_id, mount_file_id, H5_INDEX_NAME, order, u, objno) < 0) TEST_ERROR
 
         /* Close the groups */
         if(H5Gclose(group_id) < 0) TEST_ERROR
@@ -16696,11 +16789,11 @@ error:
  */
 static int
 object_info_check(hid_t main_group_id, hid_t soft_group_id, H5_index_t idx_type,
-    H5_iter_order_t order, unsigned max_links, haddr_t *objno)
+    H5_iter_order_t order, unsigned max_links, h5token_t *objno)
 {
     char        objname[NAME_BUF_SIZE]; /* Object name */
     hid_t       group_id = -1;  /* ID of group to test */
-    H5O_info1_t oinfo;          /* Buffer for querying object's info */
+    H5O_info2_t oinfo;          /* Buffer for querying object's info */
     unsigned    u, v;           /* Local index variables */
 
     /* Work through main & soft link groups */
@@ -16717,25 +16810,25 @@ object_info_check(hid_t main_group_id, hid_t soft_group_id, H5_index_t idx_type,
             HDsnprintf(objname, sizeof(objname), "filler %02u", u);
 
             /* Query the object's information, by name */
-            if(H5Oget_info_by_name2(group_id, objname, &oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS, H5P_DEFAULT) < 0) TEST_ERROR
+            if(H5Oget_info_by_name3(group_id, objname, &oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS, H5P_DEFAULT) < 0) TEST_ERROR
 
             /* Check that the object is the correct one */
-            if(H5F_addr_ne(oinfo.addr, objno[u])) TEST_ERROR
-            if(H5F_addr_ne(oinfo.num_attrs, u)) TEST_ERROR
+            if(HDmemcmp(&oinfo.token, &objno[u], sizeof(oinfo.token))) TEST_ERROR
+            if(oinfo.num_attrs != u) TEST_ERROR
 
             /* Query the object's information, by index */
-            if(H5Oget_info_by_idx2(group_id, ".", idx_type, order, (hsize_t)u, &oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS, H5P_DEFAULT) < 0) TEST_ERROR
+            if(H5Oget_info_by_idx3(group_id, ".", idx_type, order, (hsize_t)u, &oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS, H5P_DEFAULT) < 0) TEST_ERROR
 
             /* Check that the object is the correct one */
             if(order == H5_ITER_INC) {
-                if(H5F_addr_ne(oinfo.addr, objno[u])) TEST_ERROR
-                if(H5F_addr_ne(oinfo.num_attrs, u)) TEST_ERROR
+                if(HDmemcmp(&oinfo.token, &objno[u], sizeof(oinfo.token))) TEST_ERROR
+                if(oinfo.num_attrs != u) TEST_ERROR
             } /* end if */
             else if(order == H5_ITER_DEC) {
                 unsigned dec_u = max_links - (u + 1);       /* Decreasing mapped index */
 
-                if(H5F_addr_ne(oinfo.addr, objno[dec_u])) TEST_ERROR
-                if(H5F_addr_ne(oinfo.num_attrs, dec_u)) TEST_ERROR
+                if(HDmemcmp(&oinfo.token, &objno[dec_u], sizeof(oinfo.token))) TEST_ERROR
+                if(oinfo.num_attrs != dec_u) TEST_ERROR
             } /* end if */
             else {
                 /* XXX: What to do about native order? */
@@ -16775,12 +16868,12 @@ object_info(hid_t fapl)
     unsigned    use_index;              /* Use index on creation order values */
     unsigned    max_compact;            /* Maximum # of links to store in group compactly */
     unsigned    min_dense;              /* Minimum # of links to store in group "densely" */
-    H5O_info1_t oinfo;                  /* Buffer for querying object's info */
+    H5O_info2_t oinfo;                  /* Buffer for querying object's info */
     char        filename[NAME_BUF_SIZE];/* File name */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */
     char        attrname[NAME_BUF_SIZE]; /* Attribute name */
-    haddr_t     *objno = NULL;          /* Addresses of the objects created */
+    h5token_t   *objno = NULL;          /* Tokens (addresses) of the objects created */
     herr_t      ret;                    /* Generic return value */
     unsigned    u, v;                   /* Local index variables */
 
@@ -16791,7 +16884,7 @@ object_info(hid_t fapl)
     if(H5Pget_link_phase_change(gcpl_id, &max_compact, &min_dense) < 0) TEST_ERROR
 
     /* Allocate object address array */
-    if(NULL == (objno = (haddr_t *)HDmalloc(sizeof(haddr_t) * (max_compact * 2)))) TEST_ERROR
+    if(NULL == (objno = (h5token_t *)HDmalloc(sizeof(h5token_t) * (max_compact * 2)))) TEST_ERROR
 
     /* Create dataspace for attributes */
     if((space_id = H5Screate(H5S_SCALAR)) < 0) TEST_ERROR
@@ -16862,7 +16955,7 @@ object_info(hid_t fapl)
 
                 /* Check for out of bound query by index on empty group */
                 H5E_BEGIN_TRY {
-                    ret = H5Oget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)0, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+                    ret = H5Oget_info_by_idx3(group_id, ".", H5_INDEX_NAME, order, (hsize_t)0, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
@@ -16878,8 +16971,8 @@ object_info(hid_t fapl)
                     if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
 
                     /* Retrieve group's address on disk */
-                    if(H5Oget_info2(group_id2, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    objno[u] = oinfo.addr;
+                    if(H5Oget_info3(group_id2, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
+                    objno[u] = oinfo.token;
 
                     /* Create attributes on new object */
                     for(v = 0; v < u; v++) {
@@ -16906,7 +16999,7 @@ object_info(hid_t fapl)
 
                 /* Check for out of bound query by index */
                 H5E_BEGIN_TRY {
-                    ret = H5Oget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)u, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+                    ret = H5Oget_info_by_idx3(group_id, ".", H5_INDEX_NAME, order, (hsize_t)u, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
@@ -16926,8 +17019,8 @@ object_info(hid_t fapl)
                     if((group_id2 = H5Gcreate2(group_id, objname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
 
                     /* Retrieve group's address on disk */
-                    if(H5Oget_info2(group_id2, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    objno[u] = oinfo.addr;
+                    if(H5Oget_info3(group_id2, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
+                    objno[u] = oinfo.token;
 
                     /* Create attributes on new object */
                     for(v = 0; v < u; v++) {
@@ -16954,7 +17047,7 @@ object_info(hid_t fapl)
 
                 /* Check for out of bound query by index */
                 H5E_BEGIN_TRY {
-                    ret = H5Oget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)u, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
+                    ret = H5Oget_info_by_idx3(group_id, ".", H5_INDEX_NAME, order, (hsize_t)u, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT);
                 } H5E_END_TRY;
                 if(ret >= 0) TEST_ERROR
 
@@ -16998,6 +17091,72 @@ error:
     return FAIL;
 } /* end object_info() */
 
+
+/*-------------------------------------------------------------------------
+ * Function:    object_info_check_old
+ *
+ * Purpose:     Check querying object info in a group
+ *
+ * Return:      Success:        0
+ *              Failure:        -1
+ *-------------------------------------------------------------------------
+ */
+static int
+object_info_check_old(hid_t main_group_id, hid_t soft_group_id, H5_index_t idx_type,
+    H5_iter_order_t order, unsigned max_links, haddr_t *objno)
+{
+    char        objname[NAME_BUF_SIZE]; /* Object name */
+    hid_t       group_id = -1;  /* ID of group to test */
+    H5O_info1_t oinfo;          /* Buffer for querying object's info */
+    unsigned    u, v;           /* Local index variables */
+
+    /* Work through main & soft link groups */
+    for(v = 0; v < 2; v++) {
+        /* Choose appropriate group to open links within */
+        if(0 == v)
+            group_id = main_group_id;
+        else
+            group_id = soft_group_id;
+
+        /* Open each object in group by name and check that it's the correct one */
+        for(u = 0; u < max_links; u++) {
+            /* Make name for link */
+            HDsnprintf(objname, sizeof(objname), "filler %02u", u);
+
+            /* Query the object's information, by name */
+            if(H5Oget_info_by_name2(group_id, objname, &oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS, H5P_DEFAULT) < 0) TEST_ERROR
+
+            /* Check that the object is the correct one */
+            if(H5F_addr_ne(oinfo.addr, objno[u])) TEST_ERROR
+            if(oinfo.num_attrs != u) TEST_ERROR
+
+            /* Query the object's information, by index */
+            if(H5Oget_info_by_idx2(group_id, ".", idx_type, order, (hsize_t)u, &oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS, H5P_DEFAULT) < 0) TEST_ERROR
+
+            /* Check that the object is the correct one */
+            if(order == H5_ITER_INC) {
+                if(H5F_addr_ne(oinfo.addr, objno[u])) TEST_ERROR
+                if(oinfo.num_attrs != u) TEST_ERROR
+            }
+            else if(order == H5_ITER_DEC) {
+                unsigned dec_u = max_links - (u + 1);       /* Decreasing mapped index */
+
+                if(H5F_addr_ne(oinfo.addr, objno[dec_u])) TEST_ERROR
+                if(oinfo.num_attrs != dec_u) TEST_ERROR
+            }
+            else {
+                /* XXX: What to do about native order? */
+            }
+
+        } /* end for */
+    } /* end for */
+
+    /* Success */
+    return SUCCEED;
+
+error:
+    return FAIL;
+} /* end object_info_check_old() */
 
 /*-------------------------------------------------------------------------
  * Function:    object_info_old
@@ -17110,7 +17269,7 @@ object_info_old(hid_t fapl)
         if(ret >= 0) TEST_ERROR
 
         /* Verify querying objects by name */
-        if(object_info_check(group_id, soft_group_id, H5_INDEX_NAME, order, u, objno) < 0) TEST_ERROR
+        if(object_info_check_old(group_id, soft_group_id, H5_INDEX_NAME, order, u, objno) < 0) TEST_ERROR
 
         /* Close the groups */
         if(H5Gclose(group_id) < 0) TEST_ERROR
