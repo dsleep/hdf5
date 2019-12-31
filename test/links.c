@@ -7593,7 +7593,7 @@ external_set_elink_fapl2(hid_t fapl, hbool_t new_format)
             points[i][j] = n++;
 
     /* Write the data to the dataset */
-    if(H5Dwrite(did, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, points) < 0) TEST_ERROR
+    if(H5Dwrite(did, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, points_data) < 0) TEST_ERROR
 
     if(H5Pclose(dapl_id) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR

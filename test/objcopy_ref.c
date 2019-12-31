@@ -1134,12 +1134,12 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
 
                 /* Compare some pieces of the object info */
                 /* Get data model object info */
-                if(H5Oget_info_by_name3(gid, objname, &oinfo, H5O_INFO_BASIC|H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
-                if(H5Oget_info_by_name3(gid2, objname2, &oinfo2, H5O_INFO_BASIC|H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Oget_info_by_name3(gid, objname, &oinfo, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Oget_info_by_name3(gid2, objname2, &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
 
                 /* Get native object info */
-                if(H5Oget_native_info_by_name(gid, objname, &ninfo, H5O_INFO_BASIC|H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
-                if(H5Oget_native_info_by_name(gid2, objname2, &ninfo2, H5O_INFO_BASIC|H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Oget_native_info_by_name(gid, objname, &ninfo, H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Oget_native_info_by_name(gid2, objname2, &ninfo2, H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
 
                 if(oinfo.type != oinfo2.type) TEST_ERROR
                 if(oinfo.rc != oinfo2.rc) TEST_ERROR
