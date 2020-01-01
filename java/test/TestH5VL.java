@@ -69,14 +69,38 @@ public class TestH5VL {
 
     @Test
     public void testH5VLget_connector_id() {
+    	String H5_FILE = "testFvl.h5";
+
+        long H5fid = H5.H5Fcreate(H5_FILE, HDF5Constants.H5F_ACC_TRUNC,
+                HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+    	try {
+    		long native_id = H5.H5VLget_connector_id(H5fid);
+    		assertTrue("H5.H5VLget_connector_id", native_id >= 0);
+    		assertEquals(HDF5Constants.H5VL_NATIVE, native_id);
+    	}
+    	catch (Throwable err) {
+    		err.printStackTrace();
+    		fail("H5.H5VLget_connector_id " + err);
+    	}
+        finally {
+            if (H5fid > 0) {
+                try {H5.H5Fclose(H5fid);} catch (Exception ex) {}
+            }
+            _deleteFile(H5_FILE);
+        }
+    }
+
+    @Test
+    public void testH5VLget_connector_id_by_name() {
         try {
-            long native_id = H5.H5VLget_connector_id(HDF5Constants.H5VL_NATIVE_NAME);
-            assertTrue("H5.H5VLget_connector_id H5VL_NATIVE_NAME", native_id >= 0);
+            long native_id = H5.H5VLget_connector_id_by_name(HDF5Constants.H5VL_NATIVE_NAME);
+            assertTrue("H5.H5VLget_connector_id_by_name H5VL_NATIVE_NAME", native_id >= 0);
             assertEquals(HDF5Constants.H5VL_NATIVE, native_id);
         }
         catch (Throwable err) {
             err.printStackTrace();
-            fail("H5.H5VLget_connector_id " + err);
+            fail("H5.H5VLget_connector_id_by_name " + err);
         }
     }
 

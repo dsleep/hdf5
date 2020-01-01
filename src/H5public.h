@@ -237,6 +237,13 @@ H5_GCC_DIAG_ON(long-long)
 /* The maximum size allowed for tokens */
 #define H5_MAX_TOKEN_SIZE       (16)    /* Allows for 128-bit tokens */
 
+/* Set token to 'undefined' value; similar to HADDR_UNDEF.
+ * Depends on tokens being comprised of signed character types. */
+#define H5TOKEN_UNDEF(token)                  \
+do {                                          \
+    HDmemset(&token, 127, sizeof(h5token_t)); \
+} while(0)
+
 /* Type for tokens */
 typedef struct h5token_t {
     char __data[H5_MAX_TOKEN_SIZE];

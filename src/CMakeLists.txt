@@ -659,6 +659,7 @@ set (H5VL_SOURCES
     ${HDF5_SRC_DIR}/H5VLnative_link.c
     ${HDF5_SRC_DIR}/H5VLnative_introspect.c
     ${HDF5_SRC_DIR}/H5VLnative_object.c
+    ${HDF5_SRC_DIR}/H5VLnative_token.c
     ${HDF5_SRC_DIR}/H5VLpassthru.c
 )
 set (H5VL_HDRS

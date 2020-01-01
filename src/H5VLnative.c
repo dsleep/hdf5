@@ -136,6 +136,12 @@ static const H5VL_class_t H5VL_native_cls_g = {
         H5VL__native_blob_specific,                 /* specific */
         NULL                                        /* optional */
     },
+    {   /* token_cls */
+        H5VL__native_token_cmp,                     /* cmp            */
+        H5VL__native_token_to_str,                  /* to_str         */
+        H5VL__native_str_to_token,                  /* from_str       */
+        H5VL__native_free_token_str                 /* free_token_str */
+    },
     NULL                                            /* optional     */
 };
 
@@ -233,9 +239,8 @@ H5VL__native_introspect_get_conn_cls(void H5_ATTR_UNUSED *obj,
 herr_t
 H5VL_native_get_file_addr_len(hid_t loc_id, size_t *addr_len)
 {
-    H5VL_object_t   *vol_obj        = NULL;             /* Object token of loc_id */
     H5I_type_t      vol_obj_type    = H5I_BADID;        /* Object type of loc_id */
-    H5F_t           *file           = NULL;             /* File stuct pointer */
+    void           *vol_obj         = NULL;             /* VOL Object of loc_id */
     herr_t          ret_value       = SUCCEED;          /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -247,18 +252,52 @@ H5VL_native_get_file_addr_len(hid_t loc_id, size_t *addr_len)
     if((vol_obj_type = H5I_get_type(loc_id)) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
 
-    /* Retrieve file from the underlying VOL object */
-    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+    /* Retrieve underlying VOL object */
+    if(NULL == (vol_obj = H5VL_object(loc_id)))
         HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
-    if(H5VL_native_get_file_struct(vol_obj->data, vol_obj_type, &file) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get file from loc_id")
+
+    /* Retrieve file address length */
+    if(H5VL__native_get_file_addr_len(vol_obj, vol_obj_type, addr_len) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get file address length")
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_native_get_file_addr_len() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__native_get_file_addr_len
+ *
+ * Purpose:     Convenience function to get a file's address length from a
+ *              VOL object. Useful when you have to encode/decode addresses
+ *              to/from tokens.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL__native_get_file_addr_len(void *obj, H5I_type_t obj_type, size_t *addr_len)
+{
+    H5F_t  *file      = NULL;             /* File stuct pointer */
+    herr_t  ret_value = SUCCEED;
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* check arguments */
+    HDassert(obj);
+    HDassert(addr_len);
+
+    /* Retrieve file from the VOL object */
+    if(H5VL_native_get_file_struct(obj, obj_type, &file) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get file from VOL object")
 
     /* Get the length of an address in this file */
     *addr_len = H5F_SIZEOF_ADDR(file);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_native_get_file_addr_len() */
+} /* end H5VL__native_get_file_addr_len() */
 
 
 /*-------------------------------------------------------------------------
@@ -273,24 +312,63 @@ done:
 herr_t
 H5VL_native_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token)
 {
-    size_t          addr_len = 0;                   /* Size of haddr_t      */
-    herr_t          ret_value = SUCCEED;            /* Return value         */
+    H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
+    void           *vol_obj         = NULL;         /* VOL Object of loc_id */
+    herr_t          ret_value       = SUCCEED;      /* Return value         */
 
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Check args */
     HDassert(token);
 
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve underlying VOL object */
+    if(NULL == (vol_obj = H5VL_object(loc_id)))
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+    /* Convert the haddr_t to an object token */
+    if(H5VL__native_addr_to_token(vol_obj, vol_obj_type, addr, token) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTSERIALIZE, FAIL, "couldn't serialize haddr_t into object token")
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_native_addr_to_token() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__native_addr_to_token
+ *
+ * Purpose:     Converts a native VOL haddr_t address to an abstract VOL token.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL__native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token_t *token)
+{
+    size_t addr_len = 0;                   /* Size of haddr_t      */
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Check args */
+    HDassert(obj);
+    HDassert(token);
+
     /* Get the length of an haddr_t in the file */
-    if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from loc_id")
+    if(H5VL__native_get_file_addr_len(obj, obj_type, &addr_len) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from VOL object")
 
     /* Encode token */
     HDmemcpy(token, &addr, addr_len);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_native_addr_to_token() */
+} /* end H5VL__native_addr_to_token() */
 
 
 /*-------------------------------------------------------------------------
@@ -305,24 +383,63 @@ done:
 herr_t
 H5VL_native_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr)
 {
-    size_t          addr_len = 0;                   /* Size of haddr_t      */
-    herr_t          ret_value = SUCCEED;            /* Return value         */
+    H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
+    void           *vol_obj         = NULL;         /* VOL Object of loc_id */
+    herr_t          ret_value       = SUCCEED;      /* Return value         */
 
     FUNC_ENTER_NOAPI(FAIL)
 
     /* Check args */
     HDassert(addr);
 
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve underlying VOL object */
+    if(NULL == (vol_obj = H5VL_object(loc_id)))
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+    /* Convert the object token to an haddr_t */
+    if(H5VL__native_token_to_addr(vol_obj, vol_obj_type, token, addr) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "couldn't deserialize object token into haddr_t")
+
+done:
+    FUNC_LEAVE_NOAPI(ret_value)
+} /* end H5VL_native_token_to_addr() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VL__native_token_to_addr
+ *
+ * Purpose:     Converts an abstract VOL token to a native VOL haddr_t address.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VL__native_token_to_addr(void *obj, H5I_type_t obj_type, h5token_t token, haddr_t *addr)
+{
+    size_t addr_len = 0;                   /* Size of haddr_t      */
+    herr_t ret_value = SUCCEED;
+
+    FUNC_ENTER_NOAPI(FAIL)
+
+    /* Check args */
+    HDassert(obj);
+    HDassert(addr);
+
     /* Get the length of an haddr_t in the file */
-    if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from loc_id")
+    if(H5VL__native_get_file_addr_len(obj, obj_type, &addr_len) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from VOL object")
 
     /* Decode token */
     HDmemcpy(addr, &token, addr_len);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_native_token_to_addr() */
+} /* end H5VL__native_token_to_addr() */
 
 
 /*---------------------------------------------------------------------------

@@ -141,6 +141,12 @@ static const H5VL_class_t fake_vol_g = {
         NULL,                                       /* specific     */
         NULL                                        /* optional     */
     },
+    {   /* token_cls */
+        NULL,                                       /* cmp              */
+        NULL,                                       /* to_str           */
+        NULL,                                       /* from_str         */
+        NULL                                        /* free_token_str   */
+    },
     NULL                                            /* optional     */
 };
 
@@ -228,7 +234,7 @@ test_vol_registration(void)
         TEST_ERROR;
 
     /* Try to unregister the native VOL connector (should fail) */
-    if (H5I_INVALID_HID == (native_id = H5VLget_connector_id(H5VL_NATIVE_NAME)))
+    if (H5I_INVALID_HID == (native_id = H5VLget_connector_id_by_name(H5VL_NATIVE_NAME)))
         TEST_ERROR;
     H5E_BEGIN_TRY {
         ret = H5VLunregister_connector(native_id);

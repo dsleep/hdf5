@@ -1804,9 +1804,9 @@ h5tools_is_zero(const void *_mem, size_t size)
  */
 hbool_t
 h5tools_is_obj_same(hid_t loc_id1, const char *name1,
-                        hid_t loc_id2, const char *name2)
+                    hid_t loc_id2, const char *name2)
 {
-    H5O_info2_t oinfo1,  oinfo2;
+    H5O_info2_t oinfo1, oinfo2;
     hbool_t ret_val = FALSE;
 
     if ( name1 && HDstrcmp(name1, "."))
@@ -1819,8 +1819,14 @@ h5tools_is_obj_same(hid_t loc_id1, const char *name1,
     else
       H5Oget_info3(loc_id2, &oinfo2, H5O_INFO_BASIC);
 
-    if (oinfo1.fileno == oinfo2.fileno && !HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(h5token_t)))
-      ret_val = TRUE;
+    if (oinfo1.fileno == oinfo2.fileno) {
+        int token_cmp_val;
+
+        H5VLcmp_token(loc_id1, &oinfo1.token, &oinfo2.token, &token_cmp_val);
+
+        if(!token_cmp_val)
+            ret_val = TRUE;
+    }
 
     return ret_val;
 }

@@ -62,7 +62,8 @@ typedef enum H5VL_subclass_t {
     H5VL_SUBCLS_LINK,                   /* 'Link' subclass */
     H5VL_SUBCLS_OBJECT,                 /* 'Object' subclass */
     H5VL_SUBCLS_REQUEST,                /* 'Request' subclass */
-    H5VL_SUBCLS_BLOB                    /* 'Blob' subclass */
+    H5VL_SUBCLS_BLOB,                   /* 'Blob' subclass */
+    H5VL_SUBCLS_TOKEN                   /* 'Token' subclass */
 } H5VL_subclass_t;
 
 /* types for attribute GET callback */
@@ -452,6 +453,14 @@ typedef struct H5VL_blob_class_t {
     herr_t (*optional)(void *obj, void *blob_id, H5VL_blob_optional_t opt_type, va_list arguments);
 } H5VL_blob_class_t;
 
+/* Object token routines */
+typedef struct H5VL_token_class_t {
+    herr_t (*cmp)(void *obj, const H5VL_loc_params_t *loc_params, const h5token_t *token1, const h5token_t *token2, int *cmp_value); /* Callback to compare two object tokens                 */
+    herr_t (*to_str)(void *obj, const H5VL_loc_params_t *loc_params, const h5token_t *token, char **token_str);                      /* Callback to serialize an object token into a string   */
+    herr_t (*from_str)(void *obj, const H5VL_loc_params_t *loc_params, const char *token_str, h5token_t *token);                     /* Callback to deserialize a string into an object token */
+    herr_t (*free_token_str)(void *obj, const H5VL_loc_params_t *loc_params, char *token_str);                                       /* Callback to free a serialized object token string     */
+} H5VL_token_class_t;
+
 /* Class information for each VOL connector */
 typedef struct H5VL_class_t {
     /* Overall connector fields & callbacks */
@@ -479,6 +488,7 @@ typedef struct H5VL_class_t {
     H5VL_introspect_class_t introspect_cls; /* Container/connector introspection class callbacks */
     H5VL_request_class_t    request_cls;    /* Asynchronous request class callbacks */
     H5VL_blob_class_t       blob_cls;       /* 'Blob' class callbacks */
+    H5VL_token_class_t      token_cls;      /* VOL connector object token class callbacks */
 
     /* Catch-all */
     herr_t (*optional)(void *obj, int op_type, hid_t dxpl_id, void **req, va_list arguments); /* Optional callback */
@@ -504,6 +514,15 @@ H5_DLL void *H5VLobject(hid_t obj_id);
 H5_DLL hid_t H5VLget_file_type(void *file_obj, hid_t connector_id,
     hid_t dtype_id);
 H5_DLL hid_t H5VLpeek_connector_id(const char *name);
+
+/* Routines for interacting with VOL connector object tokens */
+H5_DLL herr_t H5VLcmp_token(hid_t loc_id, const h5token_t *token1,
+    const h5token_t *token2, int *cmp_value);
+H5_DLL herr_t H5VLconnector_token_to_str(hid_t loc_id, const h5token_t *token,
+    char **token_str);
+H5_DLL herr_t H5VLconnector_str_to_token(hid_t loc_id, const char *token_str,
+    h5token_t *token);
+H5_DLL herr_t H5VLfree_token_str(hid_t loc_id, char *token_str);
 
 #ifdef __cplusplus
 }

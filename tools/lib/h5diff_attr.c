@@ -158,11 +158,11 @@ static herr_t build_match_list_attrs(hid_t loc1_id, hid_t loc2_id, table_attrs_t
     if(H5Oget_info3(loc1_id, &oinfo1, H5O_INFO_NUM_ATTRS) < 0) {
         H5TOOLS_GOTO_ERROR(FAIL, "H5Oget_info first object failed");
     }
-    H5TOOLS_DEBUG("H5Oget_info2 loc1id=%d", oinfo1.num_attrs);
+    H5TOOLS_DEBUG("H5Oget_info3 loc1id=%d", oinfo1.num_attrs);
     if(H5Oget_info3(loc2_id, &oinfo2, H5O_INFO_NUM_ATTRS) < 0) {
         H5TOOLS_GOTO_ERROR(FAIL, "H5Oget_info second object failed");
     }
-    H5TOOLS_DEBUG("H5Oget_info2 loc2id=%d", oinfo2.num_attrs);
+    H5TOOLS_DEBUG("H5Oget_info3 loc2id=%d", oinfo2.num_attrs);
 
     table_attrs_init(&table_lp);
     if (table_lp == NULL)

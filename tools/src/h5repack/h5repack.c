@@ -222,17 +222,17 @@ h5repack_addlayout(const char *str, pack_opt_t *options)
 hid_t
 copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, trav_table_t *travt, pack_opt_t *options)
 {
-    named_dt_t *dt = *named_dt_head_p; /* Stack pointer */
-    named_dt_t *dt_ret = NULL;         /* Datatype to return */
-    H5O_info1_t oinfo;                 /* Object info of input dtype */
-    hid_t       ret_value = H5I_INVALID_HID;
+    named_dt_t  *dt = *named_dt_head_p; /* Stack pointer */
+    named_dt_t  *dt_ret = NULL;         /* Datatype to return */
+    H5O_info2_t  oinfo;                 /* Object info of input dtype */
+    hid_t        ret_value = H5I_INVALID_HID;
 
-    if (H5Oget_info2(type_in, &oinfo, H5O_INFO_BASIC) < 0)
+    if (H5Oget_info3(type_in, &oinfo, H5O_INFO_BASIC) < 0)
         H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "H5Oget_info failed");
 
     if (*named_dt_head_p) {
         /* Stack already exists, search for the datatype */
-        while (dt && dt->addr_in != oinfo.addr)
+        while (dt && HDmemcmp(&dt->obj_token, &oinfo.token, sizeof(h5token_t)))
             dt = dt->next;
         dt_ret = dt;
     }
@@ -249,11 +249,11 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
                 *named_dt_head_p = dt;
 
                 /* Update the address and id */
-                dt->addr_in = travt->objs[i].objno;
+                HDmemcpy(&dt->obj_token, &travt->objs[i].obj_token, sizeof(h5token_t));
                 dt->id_out = -1;
 
                 /* Check if this type is the one requested */
-                if (oinfo.addr == dt->addr_in) {
+                if (!HDmemcmp(&oinfo.token, &dt->obj_token, sizeof(h5token_t))) {
                     dt_ret = dt;
                 }
             } /* end if named datatype */
@@ -271,7 +271,7 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
         *named_dt_head_p = dt_ret;
 
         /* Update the address and id */
-        dt_ret->addr_in = oinfo.addr;
+        HDmemcpy(&dt_ret->obj_token, &oinfo.token, sizeof(h5token_t));
         dt_ret->id_out = -1;
     } /* end if requested datatype not found */
 
