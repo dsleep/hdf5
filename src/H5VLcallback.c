@@ -7295,8 +7295,8 @@ done:
 herr_t
 H5VL_cmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value)
 {
+    const H5VL_class_t *cls;            /* VOL connector's class struct */
     H5VL_object_t *vol_obj;
-    H5VL_class_t *cls;                  /* VOL connector's class struct */
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -7321,7 +7321,7 @@ H5VL_cmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, i
 
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
     cls = vol_obj->connector->cls;
 
     /* Use the class's token comparison routine to compare the tokens,
@@ -7329,7 +7329,23 @@ H5VL_cmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, i
      * memory buffers.
      */
     if(cls->token_cls.cmp) {
-        if((cls->token_cls.cmp)(loc_id, token1, token2, cmp_value) < 0)
+        H5VL_loc_params_t loc_params;
+        H5I_type_t vol_obj_data_type;
+        void *vol_obj_data;
+
+        /* Retrieve the underlying VOL object (after potentially unwrapping) */
+        if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+            HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+        /* Get object type */
+        if((vol_obj_data_type = H5I_get_type(loc_id)) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object type")
+
+        /* Set location struct fields */
+        loc_params.type = H5VL_OBJECT_BY_SELF;
+        loc_params.obj_type = vol_obj_data_type;
+
+        if((cls->token_cls.cmp)(vol_obj_data, &loc_params, token1, token2, cmp_value) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTCOMPARE, FAIL, "can't compare object tokens")
     } /* end if */
     else {
@@ -7394,17 +7410,33 @@ H5VLconnector_token_to_str(hid_t loc_id, const h5token_t *token, char **token_st
 
     /* Only serialize object token, if it's non-NULL */
     if(token) {
+        const H5VL_class_t *cls;            /* VOL connector's class struct */
         H5VL_object_t *vol_obj;
-        H5VL_class_t *cls;                  /* VOL connector's class struct */
 
         /* Get the location object */
         if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
-            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
         cls = vol_obj->connector->cls;
 
         /* Allow the connector to serialize the object token */
         if(cls->token_cls.to_str) {
-            if((cls->token_cls.to_str)(loc_id, token, token_str) < 0)
+            H5VL_loc_params_t loc_params;
+            H5I_type_t vol_obj_data_type;
+            void *vol_obj_data;
+
+            /* Retrieve the underlying VOL object (after potentially unwrapping) */
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+            /* Get object type */
+            if((vol_obj_data_type = H5I_get_type(loc_id)) < 0)
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object type")
+
+            /* Set location struct fields */
+            loc_params.type = H5VL_OBJECT_BY_SELF;
+            loc_params.obj_type = vol_obj_data_type;
+
+            if((cls->token_cls.to_str)(vol_obj_data, &loc_params, token, token_str) < 0)
                 HGOTO_ERROR(H5E_VOL, H5E_CANTSERIALIZE, FAIL, "can't serialize object token")
         } /* end if */
         else
@@ -7438,17 +7470,33 @@ H5VLconnector_str_to_token(hid_t loc_id, const char *token_str, h5token_t *token
 
     /* Only deserialize object token string, if it's non-NULL */
     if(token_str) {
+        const H5VL_class_t *cls;            /* VOL connector's class struct */
         H5VL_object_t *vol_obj;
-        H5VL_class_t *cls;                  /* VOL connector's class struct */
 
         /* Get the location object */
         if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
-            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
         cls = vol_obj->connector->cls;
 
         /* Allow the connector to deserialize object token string */
         if(cls->token_cls.from_str) {
-            if((cls->token_cls.from_str)(loc_id, token_str, token) < 0)
+            H5VL_loc_params_t loc_params;
+            H5I_type_t vol_obj_data_type;
+            void *vol_obj_data;
+
+            /* Retrieve the underlying VOL object (after potentially unwrapping) */
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+            /* Get object type */
+            if((vol_obj_data_type = H5I_get_type(loc_id)) < 0)
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object type")
+
+            /* Set location struct fields */
+            loc_params.type = H5VL_OBJECT_BY_SELF;
+            loc_params.obj_type = vol_obj_data_type;
+
+            if((cls->token_cls.from_str)(vol_obj_data, &loc_params, token_str, token) < 0)
                 HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token string")
         } /* end if */
         else
@@ -7475,8 +7523,8 @@ done:
 herr_t
 H5VL_free_token_str(hid_t loc_id, char *token_str)
 {
+    const H5VL_class_t *cls;            /* VOL connector's class struct */
     H5VL_object_t *vol_obj;
-    H5VL_class_t *cls;                  /* VOL connector's class struct */
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_NOAPI(FAIL)
@@ -7486,14 +7534,30 @@ H5VL_free_token_str(hid_t loc_id, char *token_str)
 
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
     cls = vol_obj->connector->cls;
 
     /* Only free object token string, if it's non-NULL */
     if(token_str) {
         /* Allow the connector to free object token string or do it ourselves */
         if(cls->token_cls.free_token_str) {
-            if((cls->token_cls.free_token_str)(loc_id, token_str) < 0)
+            H5VL_loc_params_t loc_params;
+            H5I_type_t vol_obj_data_type;
+            void *vol_obj_data;
+
+            /* Retrieve the underlying VOL object (after potentially unwrapping) */
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+            /* Get object type */
+            if((vol_obj_data_type = H5I_get_type(loc_id)) < 0)
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object type")
+
+            /* Set location struct fields */
+            loc_params.type = H5VL_OBJECT_BY_SELF;
+            loc_params.obj_type = vol_obj_data_type;
+
+            if((cls->token_cls.free_token_str)(vol_obj_data, &loc_params, token_str) < 0)
                 HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "connector object token string free request failed")
         } /* end if */
         else

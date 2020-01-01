@@ -338,8 +338,9 @@ trav_info_add(trav_info_t *info, const char *path, h5trav_type_t obj_type)
         info->paths[idx].path = HDstrdup(path);
         info->paths[idx].type = obj_type;
         info->paths[idx].fileno = 0;
-        /* TODO: All zeroes might be a valid token? */
-        HDmemset(&info->paths[idx].obj_token, 0, sizeof(h5token_t));
+
+        /* Set token to 'undefined' values */
+        H5TOKEN_UNDEF(info->paths[idx].obj_token);
     }
 } /* end trav_info_add() */
 
@@ -678,8 +679,8 @@ trav_table_add(trav_table_t *table, const char *path, const H5O_info2_t *oinfo)
         if(oinfo)
             HDmemcpy(&table->objs[new_obj].obj_token, &oinfo->token, sizeof(h5token_t));
         else
-            /* TODO: All zeroes might be a valid token? */
-            HDmemset(&table->objs[new_obj].obj_token, 0, sizeof(h5token_t));
+            /* Set token to 'undefined' values */
+            H5TOKEN_UNDEF(table->objs[new_obj].obj_token);
         table->objs[new_obj].flags[0] = table->objs[new_obj].flags[1] = 0;
         table->objs[new_obj].is_same_trgobj = 0;
         table->objs[new_obj].name = (char *)HDstrdup(path);
@@ -751,8 +752,10 @@ void trav_table_addflags(unsigned *flags,
         } /* end if */
 
         new_obj = table->nobjs++;
-        /* TODO: All zeroes might be a valid token? */
-        HDmemset(&table->objs[new_obj].obj_token, 0, sizeof(h5token_t));
+
+        /* Set token to 'undefined' values */
+        H5TOKEN_UNDEF(table->objs[new_obj].obj_token);
+
         table->objs[new_obj].flags[0] = flags[0];
         table->objs[new_obj].flags[1] = flags[1];
         table->objs[new_obj].is_same_trgobj = 0;

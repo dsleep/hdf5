@@ -455,10 +455,10 @@ typedef struct H5VL_blob_class_t {
 
 /* Object token routines */
 typedef struct H5VL_token_class_t {
-    herr_t (*cmp)(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value); /* Callback to compare two object tokens                 */
-    herr_t (*to_str)(hid_t loc_id, const h5token_t *token, char **token_str);                      /* Callback to serialize an object token into a string   */
-    herr_t (*from_str)(hid_t loc_id, const char *token_str, h5token_t *token);                     /* Callback to deserialize a string into an object token */
-    herr_t (*free_token_str)(hid_t loc_id, char *token_str);                                       /* Callback to free a serialized object token string     */
+    herr_t (*cmp)(void *obj, const H5VL_loc_params_t *loc_params, const h5token_t *token1, const h5token_t *token2, int *cmp_value); /* Callback to compare two object tokens                 */
+    herr_t (*to_str)(void *obj, const H5VL_loc_params_t *loc_params, const h5token_t *token, char **token_str);                      /* Callback to serialize an object token into a string   */
+    herr_t (*from_str)(void *obj, const H5VL_loc_params_t *loc_params, const char *token_str, h5token_t *token);                     /* Callback to deserialize a string into an object token */
+    herr_t (*free_token_str)(void *obj, const H5VL_loc_params_t *loc_params, char *token_str);                                       /* Callback to free a serialized object token string     */
 } H5VL_token_class_t;
 
 /* Class information for each VOL connector */
