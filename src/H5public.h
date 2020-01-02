@@ -237,17 +237,17 @@ H5_GCC_DIAG_ON(long-long)
 /* The maximum size allowed for tokens */
 #define H5_MAX_TOKEN_SIZE       (16)    /* Allows for 128-bit tokens */
 
-/* Set token to 'undefined' value; similar to HADDR_UNDEF.
- * Depends on tokens being comprised of signed character types. */
-#define H5TOKEN_UNDEF(token)                  \
-do {                                          \
-    HDmemset(&token, 127, sizeof(h5token_t)); \
-} while(0)
-
 /* Type for tokens */
 typedef struct h5token_t {
-    char __data[H5_MAX_TOKEN_SIZE];
+    uint8_t __data[H5_MAX_TOKEN_SIZE];
 } h5token_t;
+
+/* The canonical 'undefined' token value */
+H5_DLLVAR const h5token_t H5TOKEN_UNDEF_g;
+#define H5TOKEN_UNDEF H5TOKEN_UNDEF_g
+
+/* Check if the token is the 'undefined' token */
+#define H5_IS_TOKEN_UNDEF(token)    (!HDmemcmp(&token, &H5TOKEN_UNDEF_g, sizeof(h5token_t)))
 
 /* uint32_t type is used for creation order field for messages.  It may be
  * defined in Posix.1g, otherwise it is defined here.

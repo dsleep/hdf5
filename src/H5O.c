@@ -497,6 +497,10 @@ H5Oopen_by_token(hid_t loc_id, h5token_t token)
     FUNC_ENTER_API(H5I_INVALID_HID)
     H5TRACE2("i", "ik", loc_id, token);
 
+    /* Check args */
+    if(H5_IS_TOKEN_UNDEF(token))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, H5I_INVALID_HID, "can't open H5TOKEN_UNDEF")
+
     /* Get the location object */
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
