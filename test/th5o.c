@@ -392,9 +392,6 @@ test_h5o_open_by_token(void)
     hid_t       fid;                        /* HDF5 File ID      */
     hid_t       grp, dset, dtype, dspace;   /* Object identifiers */
     H5L_info2_t li;                         /* Buffer for H5Lget_info */
-    haddr_t     grp_addr;                   /* Addresses for objects */
-    haddr_t     dtype_addr;
-    size_t      addr_len;
     hsize_t     dims[RANK];
     H5I_type_t  id_type;                    /* Type of IDs returned from H5Oopen */
     H5G_info_t  ginfo;                      /* Group info struct */
@@ -434,23 +431,16 @@ test_h5o_open_by_token(void)
     ret = H5Sclose(dspace);
     CHECK(ret, FAIL, "H5Sclose");
 
-    /* Need the length of a haddr_t in the file to decode the address */
-    ret = H5VL_native_get_file_addr_len(fid, &addr_len);
-    CHECK(ret, FAIL, "H5VL_native_get_file_addr_len");
-
-    /* Get address for each object and make sure that H5Oopen_by_token
-     * can open all three types of objects */
+    /* Make sure that H5Oopen_by_token can open all three types of objects */
     ret = H5Lget_info2(fid, "group", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");
     grp = H5Oopen_by_token(fid, li.u.token);
     CHECK(grp, FAIL, "H5Oopen_by_token");
-    HDmemcpy(&grp_addr, &li.u.token, addr_len);
 
     ret = H5Lget_info2(fid, "group/datatype", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");
     dtype = H5Oopen_by_token(fid, li.u.token);
     CHECK(dtype, FAIL, "H5Oopen_by_token");
-    HDmemcpy(&dtype_addr, &li.u.token, addr_len);
 
     ret = H5Lget_info2(fid, "dataset", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info");
@@ -487,38 +477,22 @@ test_h5o_open_by_token(void)
     ret = H5Dclose(dset);
     CHECK(ret, FAIL, "H5Dclose");
 
-    /* Try giving some bogus values to H5O_open_by_addr. */
-    /* Try to open an object with a bad address */
-    grp_addr += 20;
+    /* Try giving some bogus values to H5O_open_by_token */
+    /* Try opening an object using H5TOKEN_UNDEF (should fail) */
     H5E_BEGIN_TRY{
-      grp = H5Oopen_by_addr(fid, grp_addr);
+      dtype = H5Oopen_by_token(fid, H5TOKEN_UNDEF);
     }H5E_END_TRY
-    VERIFY(grp, FAIL, "H5Oopen_by_addr");
-
-    /* For instance, an objectno smaller than the end of the file's superblock should
-     * trigger an error */
-    grp_addr = 10;
-    H5E_BEGIN_TRY{
-      grp = H5Oopen_by_addr(fid, grp_addr);
-    }H5E_END_TRY
-    VERIFY(grp, FAIL, "H5Oopen_by_addr");
-
-    /* Likewise, an objectno larger than the size of the file should fail */
-    grp_addr = 0;
-    grp_addr = 1000000000;
-    H5E_BEGIN_TRY{
-      grp = H5Oopen_by_addr(fid, grp_addr);
-    }H5E_END_TRY
-    VERIFY(grp, FAIL, "H5Oopen_by_addr");
+    VERIFY(dtype, FAIL, "H5Oopen_by_token");
 
     ret = H5Fclose(fid);
     CHECK(ret, FAIL, "H5Fclose");
 
     /* Also, trying to open an object without a valid location should fail */
     H5E_BEGIN_TRY{
-      dtype = H5Oopen_by_addr(fid, dtype_addr);
+      dtype = H5Oopen_by_token(fid, li.u.token);
     }H5E_END_TRY
-    VERIFY(dtype, FAIL, "H5Oopen_by_addr");
+    VERIFY(dtype, FAIL, "H5Oopen_by_token");
+
 } /* test_h5o_open_by_token() */
 
 /****************************************************************
