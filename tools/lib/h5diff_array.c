@@ -2401,14 +2401,14 @@ static hsize_t diff_region(hid_t obj1_id, hid_t obj2_id, hid_t region1_id, hid_t
                     H5Oget_info3(obj2_id, &oi2, H5O_INFO_BASIC);
 
                     /* Convert object tokens into printable output */
-                    H5VLconnector_token_to_str(obj1_id, &oi1.token, &obj1_str);
-                    H5VLconnector_token_to_str(obj2_id, &oi2.token, &obj2_str);
+                    H5VLtoken_to_str(obj1_id, &oi1.token, &obj1_str);
+                    H5VLtoken_to_str(obj2_id, &oi2.token, &obj2_str);
 
                     parallel_print("Referenced dataset      %s            %s\n", obj1_str, obj2_str);
                     parallel_print( "------------------------------------------------------------\n");
 
-                    H5VLfree_token_str(obj1_id, obj1_str);
-                    H5VLfree_token_str(obj2_id, obj2_str);
+                    H5VLtoken_free_str(obj1_id, obj1_str);
+                    H5VLtoken_free_str(obj2_id, obj2_str);
 
                     parallel_print("Region blocks\n");
                     for (i = 0; i < nblocks1; i++) {

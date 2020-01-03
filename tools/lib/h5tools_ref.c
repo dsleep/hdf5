@@ -113,7 +113,7 @@ ref_path_table_cmp(const void *key1, const void *key2)
     int              cmp_value = 0;
 
     if(thefile > 0)
-        H5VLcmp_token(thefile, token1, token2, &cmp_value);
+        H5VLtoken_cmp(thefile, token1, token2, &cmp_value);
     else
         cmp_value = HDmemcmp(token1, token2, sizeof(h5token_t));
 

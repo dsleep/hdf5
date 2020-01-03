@@ -1265,11 +1265,11 @@ print_type(h5tools_str_t *buffer, hid_t type, int ind)
         if (H5Oget_info3(type, &oi, H5O_INFO_BASIC) >= 0) {
             char *type_string = NULL;
 
-            H5VLconnector_token_to_str(type, &oi.token, &type_string);
+            H5VLtoken_to_str(type, &oi.token, &type_string);
 
             h5tools_str_append(buffer,"shared-%lu:%s", oi.fileno, type_string);
 
-            H5VLfree_token_str(type, type_string);
+            H5VLtoken_free_str(type, type_string);
         } /* end if */
         else
             h5tools_str_append(buffer,"shared ");
@@ -2371,14 +2371,14 @@ list_obj(const char *name, const H5O_info2_t *oinfo, const char *first_seen, voi
                 H5Aiterate2(obj, H5_INDEX_NAME, H5_ITER_INC, NULL, list_attr, NULL);
 
             /* Object location & reference count */
-            H5VLconnector_token_to_str(obj, &oinfo->token, &obj_addr_str);
+            H5VLtoken_to_str(obj, &oinfo->token, &obj_addr_str);
 
             h5tools_str_reset(&buffer);
             h5tools_str_append(&buffer, "    %-10s %lu:%s\n", "Location:", oinfo->fileno, obj_addr_str);
             h5tools_str_append(&buffer, "    %-10s %u\n", "Links:", (unsigned)oinfo->rc);
             h5tools_render_element(rawoutstream, info, &ctx, &buffer, &curr_pos, (size_t)info->line_ncols, (hsize_t)0, (hsize_t)0);
 
-            H5VLfree_token_str(obj, obj_addr_str);
+            H5VLtoken_free_str(obj, obj_addr_str);
 
             /* Modification time */
             if (oinfo->mtime > 0) {

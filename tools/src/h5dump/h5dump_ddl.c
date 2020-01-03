@@ -821,9 +821,9 @@ dump_group(hid_t gid, const char *name)
                 dset = H5Dopen2(gid, type_table->objs[u].objname, H5P_DEFAULT);
                 type = H5Dget_type(dset);
 
-                H5VLconnector_token_to_str(dset, &type_table->objs[u].obj_token, &obj_addr_str);
+                H5VLtoken_to_str(dset, &type_table->objs[u].obj_token, &obj_addr_str);
                 HDsprintf(type_name, "#%s", obj_addr_str);
-                H5VLfree_token_str(dset, obj_addr_str);
+                H5VLtoken_free_str(dset, obj_addr_str);
 
                 dump_function_table->dump_named_datatype_function(type, type_name);
                 H5Tclose(type);
@@ -1260,9 +1260,9 @@ dump_fcontents(hid_t fid)
             if (!type_table->objs[u].recorded) {
                 char *obj_addr_str = NULL;
 
-                H5VLconnector_token_to_str(fid, &type_table->objs[u].obj_token, &obj_addr_str);
+                H5VLtoken_to_str(fid, &type_table->objs[u].obj_token, &obj_addr_str);
                 PRINTSTREAM(rawoutstream, " %-10s /#%s\n", "datatype", obj_addr_str);
-                H5VLfree_token_str(fid, obj_addr_str);
+                H5VLtoken_free_str(fid, obj_addr_str);
             }
         }
     }
@@ -1917,9 +1917,9 @@ handle_datatypes(hid_t fid, const char *type, void H5_ATTR_UNUSED * data, int pe
                 char *obj_addr_string = NULL;
 
                 /* unamed datatype */
-                H5VLconnector_token_to_str(fid, &type_table->objs[idx].obj_token, &obj_addr_string);
+                H5VLtoken_to_str(fid, &type_table->objs[idx].obj_token, &obj_addr_string);
                 HDsprintf(name, "/#%s", obj_addr_string);
-                H5VLfree_token_str(fid, obj_addr_string);
+                H5VLtoken_free_str(fid, obj_addr_string);
 
                 if(!HDstrcmp(name, real_name))
                     break;

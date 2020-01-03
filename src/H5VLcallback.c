@@ -7280,7 +7280,7 @@ done:
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5VL_cmp_token
+ * Function:    H5VL_token_cmp
  *
  * Purpose:     Compares two VOL connector object tokens. Sets *cmp_value
  *              to positive if token1 is greater than token2, negative if
@@ -7293,7 +7293,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_cmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value)
+H5VL_token_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value)
 {
     const H5VL_class_t *cls;            /* VOL connector's class struct */
     H5VL_object_t *vol_obj;
@@ -7354,11 +7354,11 @@ H5VL_cmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, i
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_cmp_token() */
+} /* end H5VL_token_cmp() */
 
 
 /*---------------------------------------------------------------------------
- * Function:    H5VLcmp_token
+ * Function:    H5VLtoken_cmp
  *
  * Purpose:     Compares two VOL connector object tokens
  *
@@ -7373,7 +7373,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VLcmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value)
+H5VLtoken_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value)
 {
     herr_t ret_value = SUCCEED;  /* Return value */
 
@@ -7382,16 +7382,16 @@ H5VLcmp_token(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, in
 
     /* Compare the two tokens */
     if(cmp_value)
-        if(H5VL_cmp_token(loc_id, token1, token2, cmp_value) < 0)
+        if(H5VL_token_cmp(loc_id, token1, token2, cmp_value) < 0)
             HGOTO_ERROR(H5E_VOL, H5E_CANTCOMPARE, FAIL, "object token comparison failed")
 
 done:
     FUNC_LEAVE_API(ret_value)
-} /* end H5VLcmp_token() */
+} /* end H5VLtoken_cmp() */
 
 
 /*---------------------------------------------------------------------------
- * Function:    H5VLconnector_token_to_str
+ * Function:    H5Vtoken_to_str
  *
  * Purpose:     Serialize a connector's object token into a string
  *
@@ -7401,7 +7401,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VLconnector_token_to_str(hid_t loc_id, const h5token_t *token, char **token_str)
+H5VLtoken_to_str(hid_t loc_id, const h5token_t *token, char **token_str)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -7447,11 +7447,11 @@ H5VLconnector_token_to_str(hid_t loc_id, const h5token_t *token, char **token_st
 
 done:
     FUNC_LEAVE_API_NOINIT(ret_value)
-} /* end H5VLconnector_token_to_str() */
+} /* end H5VLtoken_to_str() */
 
 
 /*---------------------------------------------------------------------------
- * Function:    H5VLconnector_str_to_token
+ * Function:    H5VLtoken_from_str
  *
  * Purpose:     Deserialize a string into a connector object token
  *
@@ -7461,7 +7461,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VLconnector_str_to_token(hid_t loc_id, const char *token_str, h5token_t *token)
+H5VLtoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -7507,11 +7507,11 @@ H5VLconnector_str_to_token(hid_t loc_id, const char *token_str, h5token_t *token
 
 done:
     FUNC_LEAVE_API_NOINIT(ret_value)
-} /* end H5VLconnector_str_to_token() */
+} /* end H5VLtoken_from_str() */
 
 
 /*-------------------------------------------------------------------------
- * Function:    H5VL_free_token_str
+ * Function:    H5VL_token_free_str
  *
  * Purpose:     Frees a VOL connector object token string
  *
@@ -7521,7 +7521,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_free_token_str(hid_t loc_id, char *token_str)
+H5VL_token_free_str(hid_t loc_id, char *token_str)
 {
     const H5VL_class_t *cls;            /* VOL connector's class struct */
     H5VL_object_t *vol_obj;
@@ -7540,7 +7540,7 @@ H5VL_free_token_str(hid_t loc_id, char *token_str)
     /* Only free object token string, if it's non-NULL */
     if(token_str) {
         /* Allow the connector to free object token string or do it ourselves */
-        if(cls->token_cls.free_token_str) {
+        if(cls->token_cls.free_str) {
             H5VL_loc_params_t loc_params;
             H5I_type_t vol_obj_data_type;
             void *vol_obj_data;
@@ -7557,7 +7557,7 @@ H5VL_free_token_str(hid_t loc_id, char *token_str)
             loc_params.type = H5VL_OBJECT_BY_SELF;
             loc_params.obj_type = vol_obj_data_type;
 
-            if((cls->token_cls.free_token_str)(vol_obj_data, &loc_params, token_str) < 0)
+            if((cls->token_cls.free_str)(vol_obj_data, &loc_params, token_str) < 0)
                 HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "connector object token string free request failed")
         } /* end if */
         else
@@ -7567,11 +7567,11 @@ H5VL_free_token_str(hid_t loc_id, char *token_str)
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_free_token_str() */
+} /* end H5VL_token_free_str() */
 
 
 /*---------------------------------------------------------------------------
- * Function:    H5VLfree_token_str
+ * Function:    H5VLtoken_free_str
  *
  * Purpose:     Frees a VOL connector object token string
  *
@@ -7581,7 +7581,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VLfree_token_str(hid_t loc_id, char *token_str)
+H5VLtoken_free_str(hid_t loc_id, char *token_str)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -7589,12 +7589,12 @@ H5VLfree_token_str(hid_t loc_id, char *token_str)
     H5TRACE2("e", "i*s", loc_id, token_str);
 
     /* Free the object token string */
-    if(H5VL_free_token_str(loc_id, token_str) < 0)
+    if(H5VL_token_free_str(loc_id, token_str) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTRELEASE, FAIL, "unable to release VOL connector object token string")
 
 done:
     FUNC_LEAVE_API_NOINIT(ret_value)
-} /* end H5VLfree_token_str() */
+} /* end H5VLtoken_free_str() */
 
 
 /*-------------------------------------------------------------------------
