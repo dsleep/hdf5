@@ -276,7 +276,7 @@ build_match_list (const char *objname1, trav_info_t *info1, const char *objname2
 
     H5TOOLS_DEBUG("build_match_list start - errstat:%d", opts->err_stat);
     /* init */
-    trav_table_init(&table);
+    trav_table_init(info1->fid, &table);
     if (table == NULL) {
         H5TOOLS_INFO("Cannot create traverse table");
         H5TOOLS_GOTO_DONE_NO_RET();
@@ -314,10 +314,20 @@ build_match_list (const char *objname1, trav_info_t *info1, const char *objname2
                 trav_table_addflags(infile, path1_lp, info1->paths[curr1].type, table);
                 /* if the two point to the same target object,
                  * mark that in table */
-                if (info1->paths[curr1].fileno == info2->paths[curr2].fileno &&
-                        !HDmemcmp(&info1->paths[curr1].obj_token, &info2->paths[curr2].obj_token, sizeof(h5token_t))) {
-                    idx = table->nobjs - 1;
-                    table->objs[idx].is_same_trgobj = 1;
+                if(info1->paths[curr1].fileno == info2->paths[curr2].fileno) {
+                    int token_cmp;
+
+                    if(H5VLtoken_cmp(info1->fid, &info1->paths[curr1].obj_token,
+                            &info2->paths[curr2].obj_token, &token_cmp) < 0) {
+                        H5TOOLS_INFO("Failed to compare object tokens");
+                        opts->err_stat = H5DIFF_ERR;
+                        H5TOOLS_GOTO_DONE_NO_RET();
+                    }
+
+                    if(!token_cmp) {
+                        idx = table->nobjs - 1;
+                        table->objs[idx].is_same_trgobj = 1;
+                    }
                 }
             }
             curr1++;

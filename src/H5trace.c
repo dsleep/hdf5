@@ -1641,6 +1641,8 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                     h5token_t token = HDva_arg(ap, h5token_t);
                     int j;
 
+                    /* TODO: should this be updated? not sure if we have the correct parameters to pass here */
+
                     for (j = 0; j < H5_MAX_TOKEN_SIZE; j++)
                         HDfprintf(out, "%02x", token.__data[j]);
                 } /* end else */

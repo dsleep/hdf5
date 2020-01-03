@@ -41,6 +41,8 @@
 #include "H5MMprivate.h"	/* Memory management			*/
 #include "H5Ppublic.h"		/* Property Lists                       */
 
+#include "H5VLnative_private.h" /* Native VOL connector                     */
+
 
 /****************/
 /* Local Macros */
@@ -310,8 +312,8 @@ H5G_link_to_info(const H5O_loc_t *link_loc, const H5O_link_t *lnk, H5L_info2_t *
         switch(lnk->type) {
             case H5L_TYPE_HARD:
                 /* Serialize the address into a VOL token */
-                HDmemset(&info->u.token, 0, sizeof(h5token_t));
-                HDmemcpy(&info->u.token, &lnk->u.hard.addr, H5F_SIZEOF_ADDR(link_loc->file));
+                if(H5VL__native_addr_to_token(link_loc->file, H5I_FILE, lnk->u.hard.addr, &info->u.token) < 0)
+                    HGOTO_ERROR(H5E_LINK, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
                 break;
 
             case H5L_TYPE_SOFT:

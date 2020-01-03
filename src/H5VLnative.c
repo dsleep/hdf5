@@ -390,8 +390,9 @@ done:
 herr_t
 H5VL__native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token_t *token)
 {
-    size_t addr_len = 0;                   /* Size of haddr_t      */
-    herr_t ret_value = SUCCEED;
+    uint8_t *p;
+    size_t   addr_len = 0;                   /* Size of haddr_t      */
+    herr_t   ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -403,8 +404,12 @@ H5VL__native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token
     if(H5VL__native_get_file_addr_len(obj, obj_type, &addr_len) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from VOL object")
 
+    /* Ensure that token is initialized */
+    HDmemset(token, 0, sizeof(h5token_t));
+
     /* Encode token */
-    HDmemcpy(token, &addr, addr_len);
+    p = (uint8_t *)token;
+    H5F_addr_encode_len(addr_len, &p, addr);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -501,8 +506,9 @@ done:
 herr_t
 H5VL__native_token_to_addr(void *obj, H5I_type_t obj_type, h5token_t token, haddr_t *addr)
 {
-    size_t addr_len = 0;                   /* Size of haddr_t      */
-    herr_t ret_value = SUCCEED;
+    const uint8_t *p;
+    size_t         addr_len = 0;                   /* Size of haddr_t      */
+    herr_t         ret_value = SUCCEED;
 
     FUNC_ENTER_NOAPI(FAIL)
 
@@ -515,7 +521,8 @@ H5VL__native_token_to_addr(void *obj, H5I_type_t obj_type, h5token_t token, hadd
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from VOL object")
 
     /* Decode token */
-    HDmemcpy(addr, &token, addr_len);
+    p = (const uint8_t *)&token;
+    H5F_addr_decode_len(addr_len, &p, addr);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)

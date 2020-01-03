@@ -42,6 +42,8 @@
 #include "H5Lprivate.h"		/* Links                                */
 #include "H5MMprivate.h"	/* Memory wrappers			*/
 
+#include "H5VLnative_private.h" /* Native VOL connector                     */
+
 
 /****************/
 /* Local Macros */
@@ -1227,7 +1229,8 @@ H5G_get_name_by_addr_cb(hid_t gid, const char *path, const H5L_info2_t *linfo,
         haddr_t link_addr;
 
         /* Retrieve hard link address from VOL token */
-        HDmemcpy(&link_addr, &linfo->u.token, H5F_SIZEOF_ADDR(udata->loc->file));
+        if(H5VL__native_token_to_addr(udata->loc->file, H5I_FILE, linfo->u.token, &link_addr) < 0)
+            HGOTO_ERROR(H5E_SYM, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
         if(udata->loc->addr == link_addr) {
             H5G_loc_t   grp_loc;                /* Location of group */

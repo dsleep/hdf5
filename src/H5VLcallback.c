@@ -4713,7 +4713,7 @@ H5VL_link_create(H5VL_link_create_type_t create_type, const H5VL_object_t *vol_o
     const H5VL_loc_params_t *loc_params, hid_t lcpl_id, hid_t lapl_id, hid_t dxpl_id,
     void **req, ...)
 {
-    H5VL_object_t tmp_vol_obj;          /* Temporary object token of */
+    H5VL_object_t tmp_vol_obj;          /* Temporary object */
     va_list arguments;                  /* Argument list passed from the API call */
     hbool_t arg_started = FALSE;        /* Whether the va_list has been started */
     hbool_t vol_wrapper_set = FALSE;    /* Whether the VOL object wrapping context was set up */
@@ -7500,10 +7500,10 @@ H5VLtoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token)
                 HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token string")
         } /* end if */
         else
-            HDmemset(token, 0, sizeof(h5token_t));
+            *token = H5TOKEN_UNDEF;
     } /* end if */
     else
-        HDmemset(token, 0, sizeof(h5token_t));
+        *token = H5TOKEN_UNDEF;
 
 done:
     FUNC_LEAVE_API_NOINIT(ret_value)

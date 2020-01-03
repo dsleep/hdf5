@@ -112,6 +112,7 @@ typedef struct trav_obj_t {
  */
 
 typedef struct trav_table_t {
+    hid_t       fid;
     size_t      size;
     size_t      nobjs;
     trav_obj_t *objs;
@@ -184,7 +185,7 @@ H5TOOLS_DLL void trav_fileinfo_add(trav_info_t *info, hid_t loc_id);
  *-------------------------------------------------------------------------
  */
 
-H5TOOLS_DLL void trav_table_init(trav_table_t **table);
+H5TOOLS_DLL void trav_table_init(hid_t fid, trav_table_t **table);
 
 H5TOOLS_DLL void trav_table_free(trav_table_t *table);
 

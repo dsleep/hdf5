@@ -150,17 +150,21 @@ trav_token_add(trav_addr_t *visited, h5token_t *token, const char *path)
  *-------------------------------------------------------------------------
  */
 H5_ATTR_PURE static const char *
-trav_token_visited(trav_addr_t *visited, h5token_t *token)
+trav_token_visited(hid_t loc_id, trav_addr_t *visited, h5token_t *token)
 {
     size_t u;           /* Local index variable */
+    int token_cmp;
 
     /* Look for address */
-    for(u = 0; u < visited->nused; u++)
+    for(u = 0; u < visited->nused; u++) {
         /* Check for address already in array */
-        if(!HDmemcmp(&visited->objs[u].token, token, sizeof(h5token_t)))
+        if(H5VLtoken_cmp(loc_id, &visited->objs[u].token, token, &token_cmp) < 0)
+            return NULL;
+        if(!token_cmp)
             return(visited->objs[u].path);
+    }
 
-    /* Didn't find address */
+    /* Didn't find object token */
     return(NULL);
 } /* end trav_token_visited() */
 
@@ -212,7 +216,7 @@ traverse_cb(hid_t loc_id, const char *path, const H5L_info2_t *linfo,
          *  already visited, if it isn't there already
          */
         if(oinfo.rc > 1)
-            if(NULL == (already_visited = trav_token_visited(udata->seen, &oinfo.token)))
+            if(NULL == (already_visited = trav_token_visited(loc_id, udata->seen, &oinfo.token)))
                 trav_token_add(udata->seen, &oinfo.token, full_name);
 
         /* Make 'visit object' callback */
@@ -703,10 +707,13 @@ static void
 trav_table_addlink(trav_table_t *table, const h5token_t *obj_token, const char *path)
 {
     size_t i;           /* Local index variable */
+    int token_cmp;
 
     if(table) {
         for(i = 0; i < table->nobjs; i++) {
-            if(!HDmemcmp(&table->objs[i].obj_token, obj_token, sizeof(h5token_t))) {
+            if(H5VLtoken_cmp(table->fid, &table->objs[i].obj_token, obj_token, &token_cmp) < 0)
+                return;
+            if(!token_cmp) {
                 size_t n;
 
                 /* already inserted? */
@@ -724,9 +731,9 @@ trav_table_addlink(trav_table_t *table, const h5token_t *obj_token, const char *
                 table->objs[i].links[n].new_name = (char *)HDstrdup(path);
 
                 return;
-            } /* end for */
+            } /* end if */
         } /* end for */
-    }
+    } /* end if */
 }
 
 
@@ -776,10 +783,11 @@ void trav_table_addflags(unsigned *flags,
  * Return:   void
  *-------------------------------------------------------------------------
  */
-void trav_table_init(trav_table_t **tbl)
+void trav_table_init(hid_t fid, trav_table_t **tbl)
 {
     trav_table_t* table = (trav_table_t*) HDmalloc(sizeof(trav_table_t));
     if(table) {
+        table->fid = fid;
         table->size = 0;
         table->nobjs = 0;
         table->objs = NULL;

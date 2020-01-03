@@ -433,10 +433,11 @@ test_new_move(hid_t fapl)
 static int
 check_new_move(hid_t fapl)
 {
-    hid_t     file;
-    H5O_info2_t    oi_hard1, oi_hard2;
-    char     filename[1024];
-    char     linkval[1024];
+    H5O_info2_t oi_hard1, oi_hard2;
+    hid_t       file;
+    char        filename[1024];
+    char        linkval[1024];
+    int         token_cmp;
 
     TESTING("check new move function");
 
@@ -454,7 +455,9 @@ check_new_move(hid_t fapl)
     /* Check hard links */
     if(H5O_TYPE_GROUP != oi_hard1.type || H5O_TYPE_GROUP != oi_hard2.type)
         FAIL_PUTS_ERROR("    Unexpected object type, should have been a group")
-    if(HDmemcmp(&oi_hard1.token, &oi_hard2.token, sizeof(h5token_t)))
+    if(H5VLtoken_cmp(file, &oi_hard1.token, &oi_hard2.token, &token_cmp) < 0)
+        FAIL_PUTS_ERROR("    H5VLtoken_cmp failed")
+    if(token_cmp)
         FAIL_PUTS_ERROR("    Hard link test failed.  Link seems not to point to the expected file location.")
 
     /* Check soft links */

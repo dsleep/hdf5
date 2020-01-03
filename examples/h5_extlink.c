@@ -493,7 +493,7 @@ static hid_t UD_hard_traverse(const char *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t lapl_id, hid_t dxpl_id)
 {
     h5token_t token;
-    hid_t        ret_value = -1;
+    hid_t ret_value = -1;
 
     /* Sanity check; we have already verified the udata's size in the creation
      * callback.
