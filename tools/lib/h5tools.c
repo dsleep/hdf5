@@ -1822,7 +1822,7 @@ h5tools_is_obj_same(hid_t loc_id1, const char *name1,
     if (oinfo1.fileno == oinfo2.fileno) {
         int token_cmp_val;
 
-        H5VLcmp_token(loc_id1, &oinfo1.token, &oinfo2.token, &token_cmp_val);
+        H5VLtoken_cmp(loc_id1, &oinfo1.token, &oinfo2.token, &token_cmp_val);
 
         if(!token_cmp_val)
             ret_val = TRUE;

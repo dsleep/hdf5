@@ -2098,9 +2098,9 @@ h5tools_print_datatype(FILE *stream, h5tools_str_t *buffer, const h5tool_format_
             if(!obj->recorded) {
                 char *obj_addr_str = NULL;
 
-                H5VLconnector_token_to_str(type, &oinfo.token, &obj_addr_str);
+                H5VLtoken_to_str(type, &oinfo.token, &obj_addr_str);
                 h5tools_str_append(buffer,"\"/#%s\"", obj_addr_str);
-                H5VLfree_token_str(type, obj_addr_str);
+                H5VLtoken_free_str(type, obj_addr_str);
             }
             else
                 h5tools_str_append(buffer, "\"%s\"", obj->objname);

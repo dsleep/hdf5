@@ -591,9 +591,9 @@ xml_name_to_XID(hid_t loc_id, const char *str, char *outstr, int outlen, int gen
                 if (gen) {
                     ref_path_table_gen_fake(str, &obj_token);
 
-                    H5VLconnector_token_to_str(loc_id, &obj_token, &obj_addr_str);
+                    H5VLtoken_to_str(loc_id, &obj_token, &obj_addr_str);
                     HDsprintf(outstr, "xid_%s", obj_addr_str);
-                    H5VLfree_token_str(loc_id, obj_addr_str);
+                    H5VLtoken_free_str(loc_id, obj_addr_str);
 
                     return 0;
                 }
@@ -606,9 +606,9 @@ xml_name_to_XID(hid_t loc_id, const char *str, char *outstr, int outlen, int gen
             if (gen) {
                 ref_path_table_gen_fake(str, &obj_token);
 
-                H5VLconnector_token_to_str(loc_id, &obj_token, &obj_addr_str);
+                H5VLtoken_to_str(loc_id, &obj_token, &obj_addr_str);
                 HDsprintf(outstr, "xid_%s", obj_addr_str);
-                H5VLfree_token_str(loc_id, obj_addr_str);
+                H5VLtoken_free_str(loc_id, obj_addr_str);
 
                 return 0;
             }
@@ -618,11 +618,11 @@ xml_name_to_XID(hid_t loc_id, const char *str, char *outstr, int outlen, int gen
         }
     }
 
-    H5VLconnector_token_to_str(loc_id, &obj_token, &obj_addr_str);
+    H5VLtoken_to_str(loc_id, &obj_token, &obj_addr_str);
     HDsprintf(outstr, "xid_%s", obj_addr_str);
-    H5VLfree_token_str(loc_id, obj_addr_str);
+    H5VLtoken_free_str(loc_id, obj_addr_str);
 
-    return(0);
+    return 0;
 }
 
 static const char      *quote = "&quot;";
@@ -2669,9 +2669,9 @@ xml_dump_group(hid_t gid, const char *name)
                             dset = H5Dopen2(gid, type_table->objs[u].objname, H5P_DEFAULT);
                             type = H5Dget_type(dset);
 
-                            H5VLconnector_token_to_str(dset, &type_table->objs[u].obj_token, &obj_addr_str);
+                            H5VLtoken_to_str(dset, &type_table->objs[u].obj_token, &obj_addr_str);
                             HDsprintf(type_name, "#%s", obj_addr_str);
-                            H5VLfree_token_str(dset, obj_addr_str);
+                            H5VLtoken_free_str(dset, obj_addr_str);
 
                             dump_function_table->dump_named_datatype_function(type, type_name);
                             H5Tclose(type);
@@ -2757,9 +2757,9 @@ xml_dump_group(hid_t gid, const char *name)
                     dset = H5Dopen2(gid, type_table->objs[u].objname, H5P_DEFAULT);
                     type = H5Dget_type(dset);
 
-                    H5VLconnector_token_to_str(dset, &type_table->objs[u].obj_token, &obj_addr_str);
+                    H5VLtoken_to_str(dset, &type_table->objs[u].obj_token, &obj_addr_str);
                     HDsprintf(type_name, "#%s", obj_addr_str);
-                    H5VLfree_token_str(dset, obj_addr_str);
+                    H5VLtoken_free_str(dset, obj_addr_str);
 
                     dump_function_table->dump_named_datatype_function(type, type_name);
                     H5Tclose(type);

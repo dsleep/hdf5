@@ -458,7 +458,7 @@ typedef struct H5VL_token_class_t {
     herr_t (*cmp)(void *obj, const H5VL_loc_params_t *loc_params, const h5token_t *token1, const h5token_t *token2, int *cmp_value); /* Callback to compare two object tokens                 */
     herr_t (*to_str)(void *obj, const H5VL_loc_params_t *loc_params, const h5token_t *token, char **token_str);                      /* Callback to serialize an object token into a string   */
     herr_t (*from_str)(void *obj, const H5VL_loc_params_t *loc_params, const char *token_str, h5token_t *token);                     /* Callback to deserialize a string into an object token */
-    herr_t (*free_token_str)(void *obj, const H5VL_loc_params_t *loc_params, char *token_str);                                       /* Callback to free a serialized object token string     */
+    herr_t (*free_str)(void *obj, const H5VL_loc_params_t *loc_params, char *token_str);                                             /* Callback to free a serialized object token string     */
 } H5VL_token_class_t;
 
 /* Class information for each VOL connector */
@@ -516,13 +516,10 @@ H5_DLL hid_t H5VLget_file_type(void *file_obj, hid_t connector_id,
 H5_DLL hid_t H5VLpeek_connector_id(const char *name);
 
 /* Routines for interacting with VOL connector object tokens */
-H5_DLL herr_t H5VLcmp_token(hid_t loc_id, const h5token_t *token1,
-    const h5token_t *token2, int *cmp_value);
-H5_DLL herr_t H5VLconnector_token_to_str(hid_t loc_id, const h5token_t *token,
-    char **token_str);
-H5_DLL herr_t H5VLconnector_str_to_token(hid_t loc_id, const char *token_str,
-    h5token_t *token);
-H5_DLL herr_t H5VLfree_token_str(hid_t loc_id, char *token_str);
+H5_DLL herr_t H5VLtoken_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value);
+H5_DLL herr_t H5VLtoken_to_str(hid_t loc_id, const h5token_t *token, char **token_str);
+H5_DLL herr_t H5VLtoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token);
+H5_DLL herr_t H5VLtoken_free_str(hid_t loc_id, char *token_str);
 
 #ifdef __cplusplus
 }
