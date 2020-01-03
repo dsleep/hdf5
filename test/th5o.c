@@ -244,12 +244,10 @@ test_h5o_open_by_addr(void)
 {
     hid_t        fid;                        /* HDF5 File ID      */
     hid_t        grp, dset, dtype, dspace;   /* Object identifiers */
-    H5F_t       *f = NULL;
     H5L_info2_t  li;                         /* Buffer for H5Lget_info */
     haddr_t      grp_addr;                   /* Addresses for objects */
     haddr_t      dset_addr;
     haddr_t      dtype_addr;
-    void        *vol_obj_file = NULL;        /* Object token of file_id */
     hsize_t      dims[RANK];
     H5I_type_t   id_type;                    /* Type of IDs returned from H5Oopen */
     H5G_info_t   ginfo;                      /* Group info struct */
@@ -289,24 +287,21 @@ test_h5o_open_by_addr(void)
     ret = H5Sclose(dspace);
     CHECK(ret, FAIL, "H5Sclose");
 
-    /* Need the file struct to address encoding */
-    /* Retrieve VOL object */
-    vol_obj_file = H5VL_vol_object(fid);
-    CHECK(vol_obj_file, NULL, "H5VL_vol_object");
-    /* Retrieve file from VOL object */
-    f = (H5F_t *)H5VL_object_data((const H5VL_object_t *)vol_obj_file);
-    CHECK(f, NULL, "H5VL_object_data");
-
     /* Get address for each object */
     ret = H5Lget_info2(fid, "group", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info2");
-    HDmemcpy(&grp_addr, &li.u.token, H5F_SIZEOF_ADDR(f));
+    ret = H5VLnative_token_to_addr(fid, li.u.token, &grp_addr);
+    CHECK(ret, FAIL, "H5VLnative_token_to_addr");
+
     ret = H5Lget_info2(fid, "group/datatype", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info2");
-    HDmemcpy(&dtype_addr, &li.u.token, H5F_SIZEOF_ADDR(f));
+    ret = H5VLnative_token_to_addr(fid, li.u.token, &dtype_addr);
+    CHECK(ret, FAIL, "H5VLnative_token_to_addr");
+
     ret = H5Lget_info2(fid, "dataset", &li, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Lget_info2");
-    HDmemcpy(&dset_addr, &li.u.token, H5F_SIZEOF_ADDR(f));
+    ret = H5VLnative_token_to_addr(fid, li.u.token, &dset_addr);
+    CHECK(ret, FAIL, "H5VLnative_token_to_addr");
 
     /* Now make sure that H5Oopen_by_addr can open all three types of objects */
     grp = H5Oopen_by_addr(fid, grp_addr);
@@ -487,7 +482,7 @@ test_h5o_open_by_token(void)
     ret = H5Fclose(fid);
     CHECK(ret, FAIL, "H5Fclose");
 
-    /* Also, trying to open an object without a valid location should fail */
+    /* Also, trying to open an object without a valid location (should fail) */
     H5E_BEGIN_TRY{
       dtype = H5Oopen_by_token(fid, li.u.token);
     }H5E_END_TRY

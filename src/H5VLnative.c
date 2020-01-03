@@ -301,6 +301,46 @@ done:
 
 
 /*-------------------------------------------------------------------------
+ * Function:    H5VLnative_addr_to_token
+ *
+ * Purpose:     Converts a native VOL haddr_t address to an abstract VOL token.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token)
+{
+    H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
+    void           *vol_obj         = NULL;         /* VOL Object of loc_id */
+    herr_t          ret_value       = SUCCEED;      /* Return value         */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE3("e", "ia*k", loc_id, addr, token);
+
+    /* Check args */
+    if(NULL == token)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "token pointer can't be NULL")
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve underlying VOL object */
+    if(NULL == (vol_obj = H5VL_object(loc_id)))
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+    /* Convert the haddr_t to an object token */
+    if(H5VL__native_addr_to_token(vol_obj, vol_obj_type, addr, token) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTSERIALIZE, FAIL, "couldn't serialize haddr_t into object token")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5VLnative_addr_to_token() */
+
+
+/*-------------------------------------------------------------------------
  * Function:    H5VL_native_addr_to_token
  *
  * Purpose:     Converts a native VOL haddr_t address to an abstract VOL token.
@@ -369,6 +409,46 @@ H5VL__native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL__native_addr_to_token() */
+
+
+/*-------------------------------------------------------------------------
+ * Function:    H5VLnative_token_to_addr
+ *
+ * Purpose:     Converts an abstract VOL token to a native VOL haddr_t address.
+ *
+ * Return:      SUCCEED/FAIL
+ *
+ *-------------------------------------------------------------------------
+ */
+herr_t
+H5VLnative_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr)
+{
+    H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
+    void           *vol_obj         = NULL;         /* VOL Object of loc_id */
+    herr_t          ret_value       = SUCCEED;      /* Return value         */
+
+    FUNC_ENTER_API(FAIL)
+    H5TRACE3("e", "ik*a", loc_id, token, addr);
+
+    /* Check args */
+    if(NULL == addr)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "addr pointer can't be NULL")
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Retrieve underlying VOL object */
+    if(NULL == (vol_obj = H5VL_object(loc_id)))
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
+    /* Convert the object token to an haddr_t */
+    if(H5VL__native_token_to_addr(vol_obj, vol_obj_type, token, addr) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "couldn't deserialize object token into haddr_t")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5VLnative_token_to_addr() */
 
 
 /*-------------------------------------------------------------------------
