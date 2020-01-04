@@ -35,7 +35,6 @@
 #include "H5Gpkg.h"             /* Groups                 */
 #include "H5Iprivate.h"         /* IDs                      */
 #include "H5Lprivate.h"         /* Links                                */
-
 #include "H5VLnative_private.h" /* Native VOL connector                     */
 
 /* File for external link test.  Created with gen_udlinks.c */
@@ -10130,19 +10129,6 @@ external_symlink(const char *env_h5_drvr, hid_t fapl, hbool_t new_format)
     hid_t       group3 = H5I_INVALID_HID;
     hid_t       group4 = H5I_INVALID_HID;
     hid_t       group5 = H5I_INVALID_HID;
-#if 0
-    char        filename1[NAME_BUF_SIZE],
-                filename2a[NAME_BUF_SIZE],
-                filename2b[NAME_BUF_SIZE],
-                filename3a[NAME_BUF_SIZE],
-                filename3b[NAME_BUF_SIZE],
-                filename4a[NAME_BUF_SIZE],
-                filename4b[NAME_BUF_SIZE],
-                filename5a[NAME_BUF_SIZE],
-                filename5b[NAME_BUF_SIZE],
-                tmpname[NAME_BUF_SIZE],
-                cwdpath[NAME_BUF_SIZE];
-#endif
     char        *filename1 = NULL;
     char        *filename2a = NULL;
     char        *filename2b = NULL;
