@@ -1072,8 +1072,13 @@ H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
         linfo->corder       = linfo2.corder;
         linfo->cset         = linfo2.cset;
         if (H5L_TYPE_HARD == linfo2.type) {
+            void *vol_obj_data;
+
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
             /* IF NATIVE */
-            if(H5VL__native_token_to_addr(vol_obj->data, loc_params.obj_type, linfo2.u.token, &linfo->u.address) < 0)
+            if(H5VL__native_token_to_addr(vol_obj_data, loc_params.obj_type, linfo2.u.token, &linfo->u.address) < 0)
                 HGOTO_ERROR(H5E_LINK, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
             /* IF NOT NATIVE, COPY LOW-ORDER BYTES */
@@ -1152,8 +1157,13 @@ H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
         linfo->corder       = linfo2.corder;
         linfo->cset         = linfo2.cset;
         if (H5L_TYPE_HARD == linfo2.type) {
+            void *vol_obj_data;
+
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
             /* IF NATIVE */
-            if(H5VL__native_token_to_addr(vol_obj->data, loc_params.obj_type, linfo2.u.token, &linfo->u.address) < 0)
+            if(H5VL__native_token_to_addr(vol_obj_data, loc_params.obj_type, linfo2.u.token, &linfo->u.address) < 0)
                 HGOTO_ERROR(H5E_LINK, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
             /* IF NOT NATIVE, COPY LOW-ORDER BYTES */

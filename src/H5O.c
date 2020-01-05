@@ -212,12 +212,17 @@ H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
 
         /* Set the data model fields */
         if(fields & H5O_INFO_BASIC) {
+            void *vol_obj_data;
+
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
             oinfo->fileno = dm_info.fileno;
             oinfo->type = dm_info.type;
             oinfo->rc = dm_info.rc;
 
             /* Deserialize VOL object token into object address */
-            if(H5VL__native_token_to_addr(vol_obj->data, loc_params->obj_type, dm_info.token, &oinfo->addr) < 0)
+            if(H5VL__native_token_to_addr(vol_obj_data, loc_params->obj_type, dm_info.token, &oinfo->addr) < 0)
                 HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
         } /* end if */
         if(fields & H5O_INFO_TIME) {

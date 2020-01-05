@@ -2837,7 +2837,7 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
             obj_pos->fileno = oinfo.fileno;
 
             /* De-serialize object token into an object address */
-            if(H5VL__native_token_to_addr(obj_oloc.file, H5I_FILE, oinfo.token, &(obj_pos->addr)) < 0)
+            if(H5VL__native_token_to_addr(loc->oloc->file, H5I_FILE, oinfo.token, &(obj_pos->addr)) < 0)
                 HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
             /* Add to list of visited objects */
