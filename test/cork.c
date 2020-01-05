@@ -1857,7 +1857,6 @@ test_dset_cork(hbool_t swmr, hbool_t new_format)
     int     **wbuf = NULL;          /* Data buffer for writes (pointers to fake 2D array) */
     int     *wbuf_data = NULL;      /* Data buffer for writes (real data) */
     int     *rbuf_data = NULL;      /* Data buffer for reads (real data) */
-
     hbool_t     corked;             /* Cork status of an object */
     unsigned flags;                 /* File access flags */
 
