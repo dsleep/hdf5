@@ -405,7 +405,7 @@ static herr_t UD_hard_create(const char *link_name, hid_t loc_group,
     const void *udata, size_t udata_size, hid_t lcpl_id)
 {
     h5token_t token;
-    hid_t target_obj = -1;
+    hid_t target_obj = H5I_INVALID_HID;
     herr_t ret_value = 0;
 
     /* Make sure that the address passed in looks valid */
@@ -449,7 +449,7 @@ static herr_t UD_hard_delete(const char *link_name, hid_t loc_group,
     const void *udata, size_t udata_size)
 {
     h5token_t token;
-    hid_t target_obj = -1;
+    hid_t target_obj = H5I_INVALID_HID;
     herr_t ret_value = 0;
 
     /* Sanity check; we have already verified the udata's size in the creation
@@ -493,13 +493,13 @@ static hid_t UD_hard_traverse(const char *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t lapl_id, hid_t dxpl_id)
 {
     h5token_t token;
-    hid_t ret_value = -1;
+    hid_t ret_value = H5I_INVALID_HID;
 
     /* Sanity check; we have already verified the udata's size in the creation
      * callback.
      */
     if(udata_size != sizeof(h5token_t))
-      return -1;
+      return H5I_INVALID_HID;
 
     token = *((h5token_t *) udata);
 
@@ -621,7 +621,7 @@ static hid_t UD_plist_traverse(const char *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t lapl_id, hid_t dxpl_id)
 {
     char *        path;
-    hid_t         ret_value = -1;
+    hid_t         ret_value = H5I_INVALID_HID;
 
     /* If the link property isn't set or can't be found, traversal fails. */
     if(H5Pexist(lapl_id, PLIST_LINK_PROP) < 0)
@@ -638,7 +638,7 @@ static hid_t UD_plist_traverse(const char *link_name, hid_t cur_group,
     return ret_value;
 
 error:
-    return -1;
+    return H5I_INVALID_HID;
 }
 
 
