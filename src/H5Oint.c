@@ -2198,7 +2198,7 @@ H5O_get_info(const H5O_loc_t *loc, H5O_info2_t *oinfo, unsigned fields)
         H5F_GET_FILENO(loc->file, oinfo->fileno);
 
         /* Set the object's address into the token */
-        if(H5VL__native_addr_to_token(loc->file, H5I_FILE, loc->addr, &oinfo->token) < 0)
+        if(H5VL_native_addr_to_token(loc->file, H5I_FILE, loc->addr, &oinfo->token) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
 
         /* Retrieve the type of the object */
@@ -2837,7 +2837,7 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
             obj_pos->fileno = oinfo.fileno;
 
             /* De-serialize object token into an object address */
-            if(H5VL__native_token_to_addr(loc->oloc->file, H5I_FILE, oinfo.token, &(obj_pos->addr)) < 0)
+            if(H5VL_native_token_to_addr(loc->oloc->file, H5I_FILE, oinfo.token, &(obj_pos->addr)) < 0)
                 HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
             /* Add to list of visited objects */

@@ -312,7 +312,7 @@ H5G_link_to_info(const H5O_loc_t *link_loc, const H5O_link_t *lnk, H5L_info2_t *
         switch(lnk->type) {
             case H5L_TYPE_HARD:
                 /* Serialize the address into a VOL token */
-                if(H5VL__native_addr_to_token(link_loc->file, H5I_FILE, lnk->u.hard.addr, &info->u.token) < 0)
+                if(H5VL_native_addr_to_token(link_loc->file, H5I_FILE, lnk->u.hard.addr, &info->u.token) < 0)
                     HGOTO_ERROR(H5E_LINK, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
                 break;
 

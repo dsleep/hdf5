@@ -1877,9 +1877,9 @@ test_copy_named_datatype_attr_self(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     hsize_t dims[2] = {3, 4};           /* Dataspace dimensions */
     H5O_info2_t oinfo, oinfo2;          /* Object info */
     H5G_info_t ginfo;                   /* Group info */
+    hbool_t    same_type;
     char       src_filename[NAME_BUF_SIZE];
     char       dst_filename[NAME_BUF_SIZE];
-    int        token_cmp;
 
     TESTING("H5Ocopy(): named datatype with self-referential attribute");
 
@@ -1957,8 +1957,17 @@ test_copy_named_datatype_attr_self(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     /* verify that the tokens of the datatypes are the same */
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
     if(H5Oget_info3(tid2, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid2, &oinfo.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
-    if(oinfo.fileno != oinfo2.fileno || token_cmp)
+
+    same_type = TRUE;
+    if(oinfo.fileno == oinfo2.fileno) {
+        int token_cmp;
+        if(H5VLtoken_cmp(tid2, &oinfo.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+        if(token_cmp) same_type = FALSE;
+    }
+    else
+        same_type = FALSE;
+
+    if(!same_type)
         FAIL_PUTS_ERROR("destination attribute does not use the same committed datatype")
 
     /* Verify that there are only 2 links int he destination root group */

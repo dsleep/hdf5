@@ -281,6 +281,7 @@ haddr_t fake_xid = HADDR_MAX;
 void
 get_fake_token(h5token_t *token) {
     if(thefile > 0) {
+        /* TODO: potential for this to be called with non-native connector objects */
         if(H5VLnative_addr_to_token(thefile, fake_xid, token) < 0)
             *token = H5TOKEN_UNDEF;
         fake_xid--;

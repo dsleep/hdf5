@@ -331,8 +331,25 @@ H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token)
     if(NULL == (vol_obj = H5VL_object(loc_id)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
 
+#ifndef NDEBUG
+    {
+        H5VL_object_t *vol_obj_container;
+        hbool_t is_native_vol_obj;
+
+        /* Get the location object */
+        if(NULL == (vol_obj_container = (H5VL_object_t *)H5I_object(loc_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+        /* Make sure that the VOL object is a native connector object */
+        if(H5VL_object_is_native(vol_obj_container, &is_native_vol_obj) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+
+        HDassert(is_native_vol_obj && "not a native VOL connector object");
+    }
+#endif
+
     /* Convert the haddr_t to an object token */
-    if(H5VL__native_addr_to_token(vol_obj, vol_obj_type, addr, token) < 0)
+    if(H5VL_native_addr_to_token(vol_obj, vol_obj_type, addr, token) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTSERIALIZE, FAIL, "couldn't serialize haddr_t into object token")
 
 done:
@@ -350,45 +367,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_native_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token)
-{
-    H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
-    void           *vol_obj         = NULL;         /* VOL Object of loc_id */
-    herr_t          ret_value       = SUCCEED;      /* Return value         */
-
-    FUNC_ENTER_NOAPI(FAIL)
-
-    /* Check args */
-    HDassert(token);
-
-    /* Get object type */
-    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
-
-    /* Retrieve underlying VOL object */
-    if(NULL == (vol_obj = H5VL_object(loc_id)))
-        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
-
-    /* Convert the haddr_t to an object token */
-    if(H5VL__native_addr_to_token(vol_obj, vol_obj_type, addr, token) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_CANTSERIALIZE, FAIL, "couldn't serialize haddr_t into object token")
-
-done:
-    FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_native_addr_to_token() */
-
-
-/*-------------------------------------------------------------------------
- * Function:    H5VL__native_addr_to_token
- *
- * Purpose:     Converts a native VOL haddr_t address to an abstract VOL token.
- *
- * Return:      SUCCEED/FAIL
- *
- *-------------------------------------------------------------------------
- */
-herr_t
-H5VL__native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token_t *token)
+H5VL_native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token_t *token)
 {
     uint8_t *p;
     size_t   addr_len = 0;                   /* Size of haddr_t      */
@@ -413,7 +392,7 @@ H5VL__native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL__native_addr_to_token() */
+} /* end H5VL_native_addr_to_token() */
 
 
 /*-------------------------------------------------------------------------
@@ -447,8 +426,25 @@ H5VLnative_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr)
     if(NULL == (vol_obj = H5VL_object(loc_id)))
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
 
+#ifndef NDEBUG
+    {
+        H5VL_object_t *vol_obj_container;
+        hbool_t is_native_vol_obj;
+
+        /* Get the location object */
+        if(NULL == (vol_obj_container = (H5VL_object_t *)H5I_object(loc_id)))
+            HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+        /* Make sure that the VOL object is a native connector object */
+        if(H5VL_object_is_native(vol_obj_container, &is_native_vol_obj) < 0)
+            HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+
+        HDassert(is_native_vol_obj && "not a native VOL connector object");
+    }
+#endif
+
     /* Convert the object token to an haddr_t */
-    if(H5VL__native_token_to_addr(vol_obj, vol_obj_type, token, addr) < 0)
+    if(H5VL_native_token_to_addr(vol_obj, vol_obj_type, token, addr) < 0)
         HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "couldn't deserialize object token into haddr_t")
 
 done:
@@ -466,45 +462,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_native_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr)
-{
-    H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
-    void           *vol_obj         = NULL;         /* VOL Object of loc_id */
-    herr_t          ret_value       = SUCCEED;      /* Return value         */
-
-    FUNC_ENTER_NOAPI(FAIL)
-
-    /* Check args */
-    HDassert(addr);
-
-    /* Get object type */
-    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_BADTYPE, FAIL, "invalid location identifier")
-
-    /* Retrieve underlying VOL object */
-    if(NULL == (vol_obj = H5VL_object(loc_id)))
-        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
-
-    /* Convert the object token to an haddr_t */
-    if(H5VL__native_token_to_addr(vol_obj, vol_obj_type, token, addr) < 0)
-        HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "couldn't deserialize object token into haddr_t")
-
-done:
-    FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL_native_token_to_addr() */
-
-
-/*-------------------------------------------------------------------------
- * Function:    H5VL__native_token_to_addr
- *
- * Purpose:     Converts an abstract VOL token to a native VOL haddr_t address.
- *
- * Return:      SUCCEED/FAIL
- *
- *-------------------------------------------------------------------------
- */
-herr_t
-H5VL__native_token_to_addr(void *obj, H5I_type_t obj_type, h5token_t token, haddr_t *addr)
+H5VL_native_token_to_addr(void *obj, H5I_type_t obj_type, h5token_t token, haddr_t *addr)
 {
     const uint8_t *p;
     size_t         addr_len = 0;                   /* Size of haddr_t      */
@@ -526,7 +484,7 @@ H5VL__native_token_to_addr(void *obj, H5I_type_t obj_type, h5token_t token, hadd
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL__native_token_to_addr() */
+} /* end H5VL_native_token_to_addr() */
 
 
 /*---------------------------------------------------------------------------

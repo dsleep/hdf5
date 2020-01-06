@@ -1229,7 +1229,7 @@ H5G_get_name_by_addr_cb(hid_t gid, const char *path, const H5L_info2_t *linfo,
         haddr_t link_addr;
 
         /* Retrieve hard link address from VOL token */
-        if(H5VL__native_token_to_addr(udata->loc->file, H5I_FILE, linfo->u.token, &link_addr) < 0)
+        if(H5VL_native_token_to_addr(udata->loc->file, H5I_FILE, linfo->u.token, &link_addr) < 0)
             HGOTO_ERROR(H5E_SYM, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
         if(udata->loc->addr == link_addr) {

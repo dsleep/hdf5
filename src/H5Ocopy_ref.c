@@ -186,7 +186,7 @@ H5O__copy_expand_ref_object1(H5O_loc_t *src_oloc, const void *buf_src,
         /* Set up for the object copy for the reference */
         if(H5R__decode_token_obj_compat(src_buf, &buf_size, &tmp_token, token_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTDECODE, FAIL, "unable to decode src object address")
-        if(H5VL__native_token_to_addr(src_oloc->file, H5I_FILE, tmp_token, &src_oloc->addr) < 0)
+        if(H5VL_native_token_to_addr(src_oloc->file, H5I_FILE, tmp_token, &src_oloc->addr) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
         if(!H5F_addr_defined(src_oloc->addr) || src_oloc->addr == 0)
@@ -198,7 +198,7 @@ H5O__copy_expand_ref_object1(H5O_loc_t *src_oloc, const void *buf_src,
             HGOTO_ERROR(H5E_OHDR, H5E_CANTCOPY, FAIL, "unable to copy object")
 
         /* Set the object reference info for the destination file */
-        if(H5VL__native_addr_to_token(dst_oloc->file, H5I_FILE, dst_oloc->addr, &tmp_token) < 0)
+        if(H5VL_native_addr_to_token(dst_oloc->file, H5I_FILE, dst_oloc->addr, &tmp_token) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
         if(H5R__encode_token_obj_compat((const h5token_t *)&tmp_token, token_size, dst_buf, &buf_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTDECODE, FAIL, "unable to encode dst object address")
@@ -372,7 +372,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, H5T_t *dt_src,
         /* Get src object address */
         if(H5R__get_obj_token(ref, &tmp_token, &token_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to get object token")
-        if(H5VL__native_token_to_addr(src_oloc->file, H5I_FILE, tmp_token, &src_oloc->addr) < 0)
+        if(H5VL_native_token_to_addr(src_oloc->file, H5I_FILE, tmp_token, &src_oloc->addr) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
         /* Attempt to copy object from source to destination file */
@@ -380,7 +380,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, H5T_t *dt_src,
             HGOTO_ERROR(H5E_OHDR, H5E_CANTCOPY, FAIL, "unable to copy object")
 
         /* Set dst object address */
-        if(H5VL__native_addr_to_token(dst_oloc->file, H5I_FILE, dst_oloc->addr, &tmp_token) < 0)
+        if(H5VL_native_addr_to_token(dst_oloc->file, H5I_FILE, dst_oloc->addr, &tmp_token) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
         if(H5R__set_obj_token(ref, (const h5token_t *)&tmp_token, token_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "unable to set object token")

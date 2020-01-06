@@ -105,7 +105,7 @@ H5VL__native_token_to_str(void *obj, const H5VL_loc_params_t *loc_params,
     /* Check parameters */
     HDassert(token);
 
-    if(H5VL__native_token_to_addr(obj, loc_params->obj_type, *token, &addr) < 0)
+    if(H5VL_native_token_to_addr(obj, loc_params->obj_type, *token, &addr) < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTDECODE, FAIL, "can't convert object token to address")
 
     if(addr == 0)
@@ -147,7 +147,7 @@ H5VL__native_str_to_token(void *obj, const H5VL_loc_params_t *loc_params,
 
     sscanf(token_str, H5_PRINTF_HADDR_FMT, &addr);
 
-    if(H5VL__native_addr_to_token(obj, loc_params->obj_type, addr, token) < 0)
+    if(H5VL_native_addr_to_token(obj, loc_params->obj_type, addr, token) < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTDECODE, FAIL, "can't convert address to object token")
 
 done:

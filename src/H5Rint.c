@@ -96,9 +96,28 @@
   } while (0)
 static const char *
 H5R__print_token(const h5token_t token) {
-    /* TODO: should be updated for token_to_str routine */
     static char string[64];
-    HDsnprintf(string, 64, "%zu", *(haddr_t *)token);
+
+    /* Print the raw token. */
+    HDsnprintf(string, 64, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+            (unsigned char)token.__data[15],
+            (unsigned char)token.__data[14],
+            (unsigned char)token.__data[13],
+            (unsigned char)token.__data[12],
+            (unsigned char)token.__data[11],
+            (unsigned char)token.__data[10],
+            (unsigned char)token.__data[9],
+            (unsigned char)token.__data[8],
+            (unsigned char)token.__data[7],
+            (unsigned char)token.__data[6],
+            (unsigned char)token.__data[5],
+            (unsigned char)token.__data[4],
+            (unsigned char)token.__data[3],
+            (unsigned char)token.__data[2],
+            (unsigned char)token.__data[1],
+            (unsigned char)token.__data[0]
+            );
+
     return string;
 }
 #else
@@ -1750,7 +1769,7 @@ H5R__decode_token_region_compat(H5F_t *f, const unsigned char *buf,
         H5O_loc_reset(&oloc);
         oloc.file = f;
 
-        if(H5VL__native_token_to_addr(f, H5I_FILE, token, &oloc.addr) < 0)
+        if(H5VL_native_token_to_addr(f, H5I_FILE, token, &oloc.addr) < 0)
             HGOTO_ERROR(H5E_REFERENCE, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
         /* Open and copy the dataset's dataspace */
