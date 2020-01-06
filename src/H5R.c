@@ -466,7 +466,7 @@ done:
  *-------------------------------------------------------------------------
  */
 hid_t
-H5Ropen_object(const H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id)
+H5Ropen_object(H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id)
 {
     hid_t loc_id;                       /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
@@ -539,7 +539,7 @@ done:
  *-------------------------------------------------------------------------
  */
 hid_t
-H5Ropen_region(const H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id)
+H5Ropen_region(H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t oapl_id)
 {
     hid_t loc_id;                           /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;          /* Object token of loc_id */
@@ -633,7 +633,7 @@ done:
  *-------------------------------------------------------------------------
  */
 hid_t
-H5Ropen_attr(const H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t aapl_id)
+H5Ropen_attr(H5R_ref_t *ref_ptr, hid_t rapl_id, hid_t aapl_id)
 {
     hid_t loc_id;                           /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;          /* Object token of loc_id */
@@ -728,7 +728,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5Rget_obj_type3(const H5R_ref_t *ref_ptr, hid_t rapl_id, H5O_type_t *obj_type)
+H5Rget_obj_type3(H5R_ref_t *ref_ptr, hid_t rapl_id, H5O_type_t *obj_type)
 {
     hid_t loc_id;                       /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
@@ -836,7 +836,7 @@ done:
  *-------------------------------------------------------------------------
  */
 ssize_t
-H5Rget_obj_name(const H5R_ref_t *ref_ptr, hid_t rapl_id, char *buf, size_t size)
+H5Rget_obj_name(H5R_ref_t *ref_ptr, hid_t rapl_id, char *buf, size_t size)
 {
     hid_t loc_id;                       /* Reference location ID */
     H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
