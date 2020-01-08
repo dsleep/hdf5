@@ -2146,6 +2146,7 @@ H5Otoken_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2,
     herr_t ret_value = SUCCEED;     /* Return value */
 
     FUNC_ENTER_API(FAIL)
+    H5TRACE4("e", "i*k*k*Is", loc_id, token1, token2, cmp_value);
 
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
@@ -2180,6 +2181,7 @@ H5Otoken_to_str(hid_t loc_id, const h5token_t *token, char **token_str)
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_API(FAIL)
+    H5TRACE3("e", "i*k**s", loc_id, token, token_str);
 
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
@@ -2220,6 +2222,7 @@ H5Otoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token)
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_API(FAIL)
+    H5TRACE3("e", "i*s*k", loc_id, token_str, token);
 
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))

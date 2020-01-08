@@ -7403,6 +7403,7 @@ H5VLtoken_cmp(void *obj, hid_t connector_id, const h5token_t *token1,
     herr_t ret_value = SUCCEED;  /* Return value */
 
     FUNC_ENTER_API_NOINIT
+    H5TRACE5("e", "*xi*k*k*Is", obj, connector_id, token1, token2, cmp_value);
 
     /* Check args and get class pointer */
     if(NULL == obj)
@@ -7520,6 +7521,7 @@ H5VLtoken_to_str(void *obj, H5I_type_t obj_type, hid_t connector_id,
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_API_NOINIT
+    H5TRACE5("e", "*xIti*k**s", obj, obj_type, connector_id, token, token_str);
 
     /* Check args and get class pointer */
     if(NULL == obj)
@@ -7639,6 +7641,7 @@ H5VLtoken_from_str(void *obj, H5I_type_t obj_type, hid_t connector_id,
     herr_t ret_value = SUCCEED;         /* Return value */
 
     FUNC_ENTER_API_NOINIT
+    H5TRACE5("e", "*xIti*s*k", obj, obj_type, connector_id, token_str, token);
 
     /* Check args and get class pointer */
     if(NULL == obj)
