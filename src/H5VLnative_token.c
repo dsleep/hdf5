@@ -65,7 +65,7 @@
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VL__native_token_cmp(void H5_ATTR_UNUSED *obj, const H5VL_loc_params_t H5_ATTR_UNUSED *loc_params,
+H5VL__native_token_cmp(void H5_ATTR_UNUSED *obj,
     const h5token_t *token1, const h5token_t *token2, int *cmp_value)
 {
     herr_t ret_value = SUCCEED;
@@ -93,30 +93,31 @@ H5VL__native_token_cmp(void H5_ATTR_UNUSED *obj, const H5VL_loc_params_t H5_ATTR
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VL__native_token_to_str(void *obj, const H5VL_loc_params_t *loc_params,
-    const h5token_t *token, char **token_str)
+H5VL__native_token_to_str(void *obj, H5I_type_t obj_type, const h5token_t *token,
+    char **token_str)
 {
     haddr_t addr;
-    int addr_ndigits;
+    size_t addr_ndigits;
     herr_t ret_value = SUCCEED;
 
     FUNC_ENTER_PACKAGE
 
     /* Check parameters */
+    HDassert(obj);
     HDassert(token);
 
-    if(H5VL__native_token_to_addr(obj, loc_params->obj_type, *token, &addr) < 0)
+    if(H5VL__native_token_to_addr(obj, obj_type, *token, &addr) < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTDECODE, FAIL, "can't convert object token to address")
 
     if(addr == 0)
         addr_ndigits = 1;
     else
-        addr_ndigits = floor(log10(addr)) + 1;
+        addr_ndigits = (size_t)(HDfloor(HDlog10((double)addr)) + 1);
 
     if(NULL == (*token_str = H5MM_malloc(addr_ndigits + 1)))
         HGOTO_ERROR(H5E_RESOURCE, H5E_CANTALLOC, FAIL, "can't allocate buffer for token string")
 
-    snprintf(*token_str, addr_ndigits + 1, H5_PRINTF_HADDR_FMT, addr);
+    HDsnprintf(*token_str, addr_ndigits + 1, H5_PRINTF_HADDR_FMT, addr);
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -134,7 +135,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VL__native_str_to_token(void *obj, const H5VL_loc_params_t *loc_params,
+H5VL__native_str_to_token(void *obj, H5I_type_t obj_type,
     const char *token_str, h5token_t *token)
 {
     haddr_t addr;
@@ -145,34 +146,12 @@ H5VL__native_str_to_token(void *obj, const H5VL_loc_params_t *loc_params,
     /* Check parameters */
     HDassert(token_str);
 
-    sscanf(token_str, H5_PRINTF_HADDR_FMT, &addr);
+    HDsscanf(token_str, H5_PRINTF_HADDR_FMT, &addr);
 
-    if(H5VL__native_addr_to_token(obj, loc_params->obj_type, addr, token) < 0)
+    if(H5VL__native_addr_to_token(obj, obj_type, addr, token) < 0)
         HGOTO_ERROR(H5E_FILE, H5E_CANTDECODE, FAIL, "can't convert address to object token")
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL__native_str_to_token() */
 
-
-/*-------------------------------------------------------------------------
- * Function:    H5VL__native_free_token_str
- *
- * Purpose:     Frees an object token string
- *
- * Return:      Success:    0
- *              Failure:    (can't fail)
- *
- *-------------------------------------------------------------------------
- */
-herr_t
-H5VL__native_free_token_str(void H5_ATTR_UNUSED *obj, const H5VL_loc_params_t H5_ATTR_UNUSED *loc_params, char *token_str)
-{
-    herr_t ret_value = SUCCEED;
-
-    FUNC_ENTER_PACKAGE_NOERR
-
-    H5MM_xfree(token_str);
-
-    FUNC_LEAVE_NOAPI(ret_value)
-} /* end H5VL__native_free_token_str() */

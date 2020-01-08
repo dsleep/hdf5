@@ -246,6 +246,10 @@ H5_DLL herr_t H5Orefresh(hid_t oid);
 H5_DLL herr_t H5Odisable_mdc_flushes(hid_t object_id);
 H5_DLL herr_t H5Oenable_mdc_flushes(hid_t object_id);
 H5_DLL herr_t H5Oare_mdc_flushes_disabled(hid_t object_id, hbool_t *are_disabled);
+H5_DLL herr_t H5Otoken_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2,
+    int *cmp_value);
+H5_DLL herr_t H5Otoken_to_str(hid_t loc_id, const h5token_t *token, char **token_str);
+H5_DLL herr_t H5Otoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token);
 
 /* Symbols defined for compatibility with previous versions of the HDF5 API.
  *

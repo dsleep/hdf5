@@ -2098,9 +2098,9 @@ h5tools_print_datatype(FILE *stream, h5tools_str_t *buffer, const h5tool_format_
             if(!obj->recorded) {
                 char *obj_addr_str = NULL;
 
-                H5VLtoken_to_str(type, &oinfo.token, &obj_addr_str);
+                H5Otoken_to_str(type, &oinfo.token, &obj_addr_str);
                 h5tools_str_append(buffer,"\"/#%s\"", obj_addr_str);
-                H5VLtoken_free_str(type, obj_addr_str);
+                H5free_memory(obj_addr_str);
             }
             else
                 h5tools_str_append(buffer, "\"%s\"", obj->objname);
@@ -2633,8 +2633,6 @@ h5tools_print_datatype(FILE *stream, h5tools_str_t *buffer, const h5tool_format_
         h5tools_str_append(buffer, "unknown datatype");
         break;
     }
-
-done:
 
 CATCH
     H5TOOLS_ENDDEBUG("exit");
@@ -4057,7 +4055,7 @@ h5tools_dump_data(FILE *stream, const h5tool_format_t *info, h5tools_context_t *
             init_acc_pos(&datactx, total_size);
         datactx.need_prefix = TRUE;
 
-        if (NULL != (ref_buf = (H5R_ref_t *)HDcalloc(MAX(sizeof(unsigned), sizeof(H5R_ref_t)), ndims))) {
+        if (NULL != (ref_buf = (H5R_ref_t *)HDcalloc(MAX(sizeof(unsigned), sizeof(H5R_ref_t)), (size_t)ndims))) {
             if(obj_data) {
                 if(H5Dread(obj_id, H5T_STD_REF, H5S_ALL, H5S_ALL, H5P_DEFAULT, ref_buf) < 0) {
                     HDfree(ref_buf);
@@ -4072,7 +4070,7 @@ h5tools_dump_data(FILE *stream, const h5tool_format_t *info, h5tools_context_t *
                     H5TOOLS_GOTO_DONE_NO_RET();
                 }
             }
-            for(i = 0; i < ndims; i++, datactx.cur_elmt++, elmt_counter++) {
+            for(i = 0; i < (size_t)ndims; i++, datactx.cur_elmt++, elmt_counter++) {
                 H5O_type_t obj_type = -1;   /* Object type */
                 H5R_type_t ref_type;   /* Reference type */
 

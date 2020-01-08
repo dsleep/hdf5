@@ -105,7 +105,7 @@ init_ref_path_cb(const char *obj_name, const H5O_info2_t *oinfo,
  *
  *-------------------------------------------------------------------------
  */
-int
+static int
 ref_path_table_cmp(const void *key1, const void *key2)
 {
     const h5token_t *token1 = (const h5token_t *)key1;
@@ -113,7 +113,7 @@ ref_path_table_cmp(const void *key1, const void *key2)
     int              cmp_value = 0;
 
     if(thefile > 0)
-        H5VLtoken_cmp(thefile, token1, token2, &cmp_value);
+        H5Otoken_cmp(thefile, token1, token2, &cmp_value);
     else
         cmp_value = HDmemcmp(token1, token2, sizeof(h5token_t));
 
@@ -348,6 +348,7 @@ lookup_ref_path(H5R_ref_t refbuf)
         case H5R_DATASET_REGION2:
         case H5R_ATTR:
         case H5R_MAXTYPE:
+        case H5R_BADTYPE:
         default:
             return(NULL);
     }

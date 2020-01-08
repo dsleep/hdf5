@@ -2072,3 +2072,122 @@ done:
     FUNC_LEAVE_API(ret_value)
 } /* H5Oare_mdc_flushes_disabled() */
 
+
+/*---------------------------------------------------------------------------
+ * Function:    H5Otoken_cmp
+ *
+ * Purpose:     Compares two VOL connector object tokens
+ *
+ * Note:        Both object tokens must be from the same VOL connector class
+ *
+ * Return:      Success:    Non-negative, with *cmp_value set to positive if
+ *                          token1 is greater than token2, negative if token2
+ *                          is greater than token1 and zero if token1 and
+ *                          token2 are equal.
+ *              Failure:    Negative
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5Otoken_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2,
+    int *cmp_value)
+{
+    H5VL_object_t *vol_obj;         /* VOL object for ID */
+    herr_t ret_value = SUCCEED;     /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+    if(NULL == cmp_value)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid cmp_value pointer")
+
+    /* Compare the two tokens */
+    if(H5VL_token_cmp(vol_obj, token1, token2, cmp_value) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTCOMPARE, FAIL, "object token comparison failed")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Otoken_cmp() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5Otoken_to_str
+ *
+ * Purpose:     Serialize a connector's object token into a string
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5Otoken_to_str(hid_t loc_id, const h5token_t *token, char **token_str)
+{
+    H5VL_object_t *vol_obj;             /* VOL object for ID */
+    H5I_type_t vol_obj_type;            /* VOL object's type */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+    if(NULL == token)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid token pointer")
+    if(NULL == token_str)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid token string pointer")
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object type")
+
+    /* Serialize the token */
+    if(H5VL_token_to_str(vol_obj, vol_obj_type, token, token_str) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTSERIALIZE, FAIL, "object token serialization failed")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Otoken_to_str() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5Otoken_from_str
+ *
+ * Purpose:     Deserialize a string into a connector object token
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5Otoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token)
+{
+    H5VL_object_t *vol_obj;             /* VOL object for ID */
+    H5I_type_t vol_obj_type;            /* VOL object's type */
+    herr_t ret_value = SUCCEED;         /* Return value */
+
+    FUNC_ENTER_API(FAIL)
+
+    /* Get the location object */
+    if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+    if(NULL == token)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid token pointer")
+    if(NULL == token_str)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, FAIL, "invalid token string pointer")
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object type")
+
+    /* Deserialize the token */
+    if(H5VL_token_from_str(vol_obj, vol_obj_type, token_str, token) < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "object token deserialization failed")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Otoken_from_str() */
+

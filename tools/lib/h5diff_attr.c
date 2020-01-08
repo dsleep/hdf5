@@ -336,7 +336,6 @@ hsize_t diff_attr_data(hid_t attr1_id, hid_t attr2_id, const char *name1, const 
     hsize_t    dims2[H5S_MAX_RANK];    /* dimensions of dataset */
     char       np1[512];
     char       np2[512];
-    unsigned   u;                 /* Local index variable */
     hsize_t    nfound = 0;
     int        j;
     diff_err_t ret_value = opts->err_stat;
