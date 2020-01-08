@@ -698,7 +698,7 @@ search_obj(table_t *table, const h5token_t *obj_token)
     int token_cmp;
 
     for(u = 0; u < table->nobjs; u++) {
-        if(H5VLtoken_cmp(table->fid, &table->objs[u].obj_token, obj_token, &token_cmp) < 0)
+        if(H5Otoken_cmp(table->fid, &table->objs[u].obj_token, obj_token, &token_cmp) < 0)
             return NULL;
         if(!token_cmp)
             return &(table->objs[u]);

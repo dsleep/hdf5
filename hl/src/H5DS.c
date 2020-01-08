@@ -171,7 +171,7 @@ herr_t H5DSattach_scale(hid_t did,
     if(oi1.fileno == oi2.fileno) {
         int token_cmp;
 
-        if(H5VLtoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
+        if(H5Otoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
             return FAIL;
         if(!token_cmp)
             return FAIL;
@@ -341,7 +341,7 @@ herr_t H5DSattach_scale(hid_t did,
             if(oi1.fileno == oi2.fileno) {
                 int token_cmp;
 
-                if(H5VLtoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
+                if(H5Otoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
                     goto out;
                 if(!token_cmp)
                     found_ds = 1;
@@ -632,7 +632,7 @@ herr_t H5DSdetach_scale(hid_t did,
     if(did_oi.fileno == dsid_oi.fileno) {
         int token_cmp;
 
-        if(H5VLtoken_cmp(did, &did_oi.token, &dsid_oi.token, &token_cmp) < 0)
+        if(H5Otoken_cmp(did, &did_oi.token, &dsid_oi.token, &token_cmp) < 0)
             return FAIL;
         if(!token_cmp)
             return FAIL;
@@ -725,7 +725,7 @@ herr_t H5DSdetach_scale(hid_t did,
             if(dsid_oi.fileno == tmp_oi.fileno) {
                 int token_cmp;
 
-                if(H5VLtoken_cmp(did, &dsid_oi.token, &tmp_oi.token, &token_cmp) < 0)
+                if(H5Otoken_cmp(did, &dsid_oi.token, &tmp_oi.token, &token_cmp) < 0)
                     goto out;
                 if(!token_cmp) {
                     /* If there are more than one reference in the VL element
@@ -840,7 +840,7 @@ herr_t H5DSdetach_scale(hid_t did,
             if(did_oi.fileno == tmp_oi.fileno) {
                 int token_cmp;
 
-                if(H5VLtoken_cmp(did, &did_oi.token, &tmp_oi.token, &token_cmp) < 0)
+                if(H5Otoken_cmp(did, &did_oi.token, &tmp_oi.token, &token_cmp) < 0)
                     goto out;
                 if(!token_cmp) {
                     /* copy the last one to replace the one which is found */
@@ -1013,7 +1013,7 @@ htri_t H5DSis_attached(hid_t did,
     if(oi1.fileno == oi2.fileno) {
         int token_cmp;
 
-        if(H5VLtoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
+        if(H5Otoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
             return FAIL;
         if(!token_cmp)
             return FAIL;
@@ -1100,7 +1100,7 @@ htri_t H5DSis_attached(hid_t did,
             if(oi1.fileno == oi2.fileno) {
                 int token_cmp;
 
-                if(H5VLtoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
+                if(H5Otoken_cmp(did, &oi1.token, &oi2.token, &token_cmp) < 0)
                     goto out;
                 if(!token_cmp)
                     found_ds = 1;
@@ -1196,7 +1196,7 @@ htri_t H5DSis_attached(hid_t did,
                 if(oi3.fileno == oi4.fileno) {
                     int token_cmp;
 
-                    if(H5VLtoken_cmp(did, &oi3.token, &oi4.token, &token_cmp) < 0)
+                    if(H5Otoken_cmp(did, &oi3.token, &oi4.token, &token_cmp) < 0)
                         goto out;
                     if(!token_cmp && (idx == dsbuf[i].dim_idx))
                         found_dset=1;

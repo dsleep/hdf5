@@ -636,7 +636,7 @@ cklinks(hid_t fapl, hbool_t new_format)
         HDprintf("    %d: Unexpected object type should have been a dataset\n", __LINE__);
         TEST_ERROR
     } /* end if */
-    if(H5VLtoken_cmp(file, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) FAIL_STACK_ERROR
+    if(H5Otoken_cmp(file, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) FAIL_STACK_ERROR
     if(token_cmp) {
         H5_FAILED();
         HDputs("    Hard link test failed. Link seems not to point to the ");
@@ -672,7 +672,7 @@ cklinks(hid_t fapl, hbool_t new_format)
         HDprintf("    %d: Unexpected object type should have been a dataset\n", __LINE__);
         TEST_ERROR
     } /* end if */
-    if(H5VLtoken_cmp(file, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) FAIL_STACK_ERROR
+    if(H5Otoken_cmp(file, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) FAIL_STACK_ERROR
     if(token_cmp) {
         H5_FAILED();
         HDputs("    Soft link test failed. Link seems not to point to the ");
@@ -793,8 +793,8 @@ ck_new_links(hid_t fapl, hbool_t new_format)
         TEST_ERROR
     }
 
-    if(H5VLtoken_cmp(file, &oi_dset.token, &oi_hard1.token, &token_cmp1) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(file, &oi_dset.token, &oi_hard2.token, &token_cmp2) < 0) TEST_ERROR
+    if(H5Otoken_cmp(file, &oi_dset.token, &oi_hard1.token, &token_cmp1) < 0) TEST_ERROR
+    if(H5Otoken_cmp(file, &oi_dset.token, &oi_hard2.token, &token_cmp2) < 0) TEST_ERROR
     if(token_cmp1 || token_cmp2) {
         H5_FAILED();
         HDputs("    Hard link test failed.  Link seems not to point to the ");
@@ -14886,7 +14886,7 @@ link_info_by_idx_old(hid_t fapl)
             /* Verify link information (in increasing order) */
             if(hard_link) {
                 if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else {
@@ -14902,7 +14902,7 @@ link_info_by_idx_old(hid_t fapl)
             /* Verify link information (in native order - native is increasing) */
             if(hard_link) {
                 if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, H5_ITER_NATIVE, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else {
@@ -14924,7 +14924,7 @@ link_info_by_idx_old(hid_t fapl)
             /* Verify link information (in decreasing order) */
             if(hard_link) {
                 if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, H5_ITER_DEC, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else {
@@ -15384,11 +15384,11 @@ delete_by_idx_old(hid_t fapl)
             HDmemset(&linfo, 0, sizeof(linfo));
             if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)0, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
             if(order == H5_ITER_INC) {
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[u + 1], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[u + 1], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else {
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end else */
 
@@ -15446,11 +15446,11 @@ delete_by_idx_old(hid_t fapl)
             HDmemset(&linfo, 0, sizeof(linfo));
             if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)u, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
             if(order == H5_ITER_INC) {
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[(u * 2) + 1], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[(u * 2) + 1], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else {
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end else */
 
@@ -15475,11 +15475,11 @@ delete_by_idx_old(hid_t fapl)
             HDmemset(&linfo, 0, sizeof(linfo));
             if(H5Lget_info_by_idx2(group_id, ".", H5_INDEX_NAME, order, (hsize_t)0, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
             if(order == H5_ITER_INC) {
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[(u * 2) + 3], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[(u * 2) + 3], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else {
-                if(H5VLtoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &linfo.u.token, &objtoken[dec_u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end else */
 
@@ -15563,7 +15563,7 @@ link_iterate_cb(hid_t group_id, const char *link_name, const H5L_info2_t *info,
             return H5_ITER_ERROR;
         if(info->cset != my_info.cset)
             return H5_ITER_ERROR;
-        if(H5VLtoken_cmp(group_id, &info->u.token, &my_info.u.token, &token_cmp) < 0)
+        if(H5Otoken_cmp(group_id, &info->u.token, &my_info.u.token, &token_cmp) < 0)
             return H5_ITER_ERROR;
         if(token_cmp)
             return H5_ITER_ERROR;
@@ -16014,7 +16014,7 @@ link_iterate_old_cb(hid_t group_id, const char *link_name, const H5L_info2_t *in
             return H5_ITER_ERROR;
         if(info->cset != my_info.cset)
             return H5_ITER_ERROR;
-        if(H5VLtoken_cmp(group_id, &info->u.token, &my_info.u.token, &token_cmp) < 0)
+        if(H5Otoken_cmp(group_id, &info->u.token, &my_info.u.token, &token_cmp) < 0)
             return H5_ITER_ERROR;
         if(token_cmp)
             return H5_ITER_ERROR;
@@ -16385,13 +16385,13 @@ open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
 
             /* Check that the object is the correct one */
             if(order == H5_ITER_INC) {
-                if(H5VLtoken_cmp(obj_id, &oi.token, &objno[u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(obj_id, &oi.token, &objno[u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else if(order == H5_ITER_DEC) {
                 unsigned dec_u = max_links - (u + 1);       /* Decreasing mapped index */
 
-                if(H5VLtoken_cmp(obj_id, &oi.token, &objno[dec_u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(obj_id, &oi.token, &objno[dec_u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
             } /* end if */
             else {
@@ -16422,9 +16422,9 @@ open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
     if(H5Oget_info3(obj_id, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
 
     /* Check that the object is the root of the mounted file and not in the previous file */
-    if(H5VLtoken_cmp(obj_id, &oi.token, &mnt_root_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(obj_id, &oi.token, &mnt_root_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
-    if(H5VLtoken_cmp(obj_id, &oi.token, &objno[mnt_idx], &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(obj_id, &oi.token, &objno[mnt_idx], &token_cmp) < 0) TEST_ERROR
     if(!token_cmp) TEST_ERROR
 
     /* Close object */
@@ -16917,7 +16917,7 @@ object_info_check(hid_t main_group_id, hid_t soft_group_id, H5_index_t idx_type,
             if(H5Oget_info_by_name3(group_id, objname, &oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS, H5P_DEFAULT) < 0) TEST_ERROR
 
             /* Check that the object is the correct one */
-            if(H5VLtoken_cmp(group_id, &oinfo.token, &objno[u], &token_cmp) < 0) TEST_ERROR
+            if(H5Otoken_cmp(group_id, &oinfo.token, &objno[u], &token_cmp) < 0) TEST_ERROR
             if(token_cmp) TEST_ERROR
             if(oinfo.num_attrs != u) TEST_ERROR
 
@@ -16926,14 +16926,14 @@ object_info_check(hid_t main_group_id, hid_t soft_group_id, H5_index_t idx_type,
 
             /* Check that the object is the correct one */
             if(order == H5_ITER_INC) {
-                if(H5VLtoken_cmp(group_id, &oinfo.token, &objno[u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &oinfo.token, &objno[u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
                 if(oinfo.num_attrs != u) TEST_ERROR
             } /* end if */
             else if(order == H5_ITER_DEC) {
                 unsigned dec_u = max_links - (u + 1);       /* Decreasing mapped index */
 
-                if(H5VLtoken_cmp(group_id, &oinfo.token, &objno[dec_u], &token_cmp) < 0) TEST_ERROR
+                if(H5Otoken_cmp(group_id, &oinfo.token, &objno[dec_u], &token_cmp) < 0) TEST_ERROR
                 if(token_cmp) TEST_ERROR
                 if(oinfo.num_attrs != dec_u) TEST_ERROR
             } /* end if */

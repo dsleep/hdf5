@@ -92,7 +92,7 @@ main(void)
     if(H5Oget_info_by_name3(file, "dset", &oi1, H5O_INFO_BASIC|H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR;
     if((dset = H5Dopen2(file, "dset", H5P_DEFAULT)) < 0) TEST_ERROR;
     if(H5Oget_info3(dset, &oi2, H5O_INFO_BASIC|H5O_INFO_TIME) < 0) TEST_ERROR;
-    if(H5VLtoken_cmp(file, &oi1.token, &oi2.token, &token_cmp) < 0)TEST_ERROR;
+    if(H5Otoken_cmp(file, &oi1.token, &oi2.token, &token_cmp) < 0)TEST_ERROR;
     if(H5Dclose(dset) < 0) TEST_ERROR;
     if(H5Fclose(file) < 0) TEST_ERROR;
 

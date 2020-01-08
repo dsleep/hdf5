@@ -803,7 +803,7 @@ MapIdToName(hid_t refobj_id, trav_table_t *travt)
             if(H5Oget_info3(refobj_id, &ref_oinfo, H5O_INFO_BASIC) < 0)
                 goto out;
 
-            if(H5VLtoken_cmp(refobj_id, &ref_oinfo.token, &travt->objs[u].obj_token, &token_cmp) < 0)
+            if(H5Otoken_cmp(refobj_id, &ref_oinfo.token, &travt->objs[u].obj_token, &token_cmp) < 0)
                 goto out;
             if(!token_cmp) {
                 ret = travt->objs[u].name;

@@ -246,7 +246,7 @@ token_lookup(hid_t loc_id, H5O_info2_t *oi)
     if(oi->rc < 2) return FALSE; /*only one link possible*/
 
     for(n = 0; n < idtab_g.nobjs; n++) {
-        if(H5VLtoken_cmp(loc_id, &idtab_g.obj[n], &oi->token, &token_cmp) < 0)
+        if(H5Otoken_cmp(loc_id, &idtab_g.obj[n], &oi->token, &token_cmp) < 0)
             return FALSE;
         if(!token_cmp)
             return TRUE;
@@ -1064,7 +1064,7 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
 
                     if(H5Oget_info3(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info3(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    if(H5VLtoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+                    if(H5Otoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
                     if(!token_cmp) {
                         if(H5Oclose(obj1_id) < 0) TEST_ERROR
                         if(H5Oclose(obj2_id) < 0) TEST_ERROR
@@ -1127,7 +1127,7 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
 
                     if(H5Oget_info3(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info3(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    if(H5VLtoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+                    if(H5Otoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
                     if(!token_cmp) {
                         if(H5Oclose(obj1_id) < 0) TEST_ERROR
                         if(H5Oclose(obj2_id) < 0) TEST_ERROR
@@ -1961,7 +1961,7 @@ test_copy_named_datatype_attr_self(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     same_type = TRUE;
     if(oinfo.fileno == oinfo2.fileno) {
         int token_cmp;
-        if(H5VLtoken_cmp(tid2, &oinfo.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+        if(H5Otoken_cmp(tid2, &oinfo.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
         if(token_cmp) same_type = FALSE;
     }
     else
@@ -10374,7 +10374,7 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10382,7 +10382,7 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     /* Open SRC2 committed dtype, check token */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_TOP2 "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -10390,7 +10390,7 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10432,7 +10432,7 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10613,7 +10613,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10621,7 +10621,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     /* Open group 1 committed dtype, check token */
     if((tid = H5Topen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -10629,7 +10629,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10638,7 +10638,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
      * different from group 1 source committed dtype */
     if((tid = H5Topen2(fid, NAME_GROUP_TOP2 "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(!token_cmp) TEST_ERROR
     HDmemcpy(&exp_token, &oinfo.token, sizeof(exp_token));
     if(H5Tclose(tid) < 0) TEST_ERROR
@@ -10647,7 +10647,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10655,7 +10655,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     /* Open group 2 committed dtype, check token */
     if((tid = H5Topen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP2 "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -10663,7 +10663,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10700,7 +10700,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP4 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10710,7 +10710,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(!token_cmp) TEST_ERROR
     HDmemcpy(&exp_token, &oinfo.token, sizeof(exp_token));
     if(H5Tclose(tid) < 0) TEST_ERROR
@@ -10720,7 +10720,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP4 "/" NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10896,7 +10896,7 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10935,7 +10935,7 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10950,7 +10950,7 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11136,7 +11136,7 @@ test_copy_committed_dt_merge_attr(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11409,7 +11409,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, SRC_ROOT_GROUP NAME_GROUP_TOP "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11418,7 +11418,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, SRC_ROOT_GROUP NAME_GROUP_TOP "/" SRC_NDT_DSET3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11431,7 +11431,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     /* get token of committed datatype at /g0 */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_TOP "/" GROUP_NDT_SHORT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -11446,7 +11446,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11455,7 +11455,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP "/" SRC_NDT_DSET3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11471,7 +11471,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((aid = H5Aopen_by_name(fid_dst, NAME_GROUP_UNCOPIED, DST_ATTR_ANON_SHORT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Aget_type(aid)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Aclose(aid) < 0) TEST_ERROR
@@ -11480,7 +11480,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((aid = H5Aopen_by_name(fid_dst, NAME_GROUP_UNCOPIED, DST_ATTR_ANON_INT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Aget_type(aid)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Aclose(aid) < 0) TEST_ERROR
@@ -11496,7 +11496,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11505,7 +11505,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -11716,7 +11716,7 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     /* get token of committed datatype: /dst_ndt_double */
     if((tid = H5Topen2(fid_dst, "/" DST_NDT_DOUBLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -11729,7 +11729,7 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     /* get token of committed datatype: /dst_ndt_float */
     if((tid = H5Topen2(fid_dst, "/" DST_NDT_FLOAT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -11742,7 +11742,7 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     /* get token of committed datatype: /dst_ndt_int */
     if((tid = H5Topen2(fid_dst, "/" DST_NDT_INT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -11756,7 +11756,7 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     if((aid = H5Aopen_by_name(fid_dst, "/" SRC_ROOT_GROUP "/" SRC_NDT_DOUBLE, DST_ATTR, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Aget_type(aid)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Aclose(aid) < 0) TEST_ERROR
@@ -11895,7 +11895,7 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/uncopied/src_ndt_int" */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_INT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -11929,7 +11929,7 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/src_ndt_int" */
     if((tid = H5Topen2(fid_dst, SRC_NDT_INT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -11968,7 +11968,7 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/src_ndt_int2" */
     if((tid = H5Topen2(fid_dst, SRC_NDT_INT2, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -12003,7 +12003,7 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/uncopied/src_ndt_int2" */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_INT2, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -12162,7 +12162,7 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -12200,7 +12200,7 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, SRC_NDT_DSET, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -12243,7 +12243,7 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -12282,7 +12282,7 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -12951,7 +12951,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -13000,7 +13000,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -13040,7 +13040,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -13055,7 +13055,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -13102,7 +13102,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -13117,7 +13117,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(H5Otoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
     if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR

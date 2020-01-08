@@ -158,7 +158,7 @@ trav_token_visited(hid_t loc_id, trav_addr_t *visited, h5token_t *token)
     /* Look for address */
     for(u = 0; u < visited->nused; u++) {
         /* Check for address already in array */
-        if(H5VLtoken_cmp(loc_id, &visited->objs[u].token, token, &token_cmp) < 0)
+        if(H5Otoken_cmp(loc_id, &visited->objs[u].token, token, &token_cmp) < 0)
             return NULL;
         if(!token_cmp)
             return(visited->objs[u].path);
@@ -711,7 +711,7 @@ trav_table_addlink(trav_table_t *table, const h5token_t *obj_token, const char *
 
     if(table) {
         for(i = 0; i < table->nobjs; i++) {
-            if(H5VLtoken_cmp(table->fid, &table->objs[i].obj_token, obj_token, &token_cmp) < 0)
+            if(H5Otoken_cmp(table->fid, &table->objs[i].obj_token, obj_token, &token_cmp) < 0)
                 return;
             if(!token_cmp) {
                 size_t n;

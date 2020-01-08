@@ -143,7 +143,7 @@ token_lookup(hid_t loc_id, H5O_info2_t *oinfo)
         return FALSE; /*only one link possible*/
 
     for(n = 0; n < idtab_g.nobjs; n++) {
-        if(H5VLtoken_cmp(loc_id, &(idtab_g.obj[n]), &oinfo->token, &token_cmp) < 0)
+        if(H5Otoken_cmp(loc_id, &(idtab_g.obj[n]), &oinfo->token, &token_cmp) < 0)
             return FALSE;
         if(0 == token_cmp)
             return TRUE;
@@ -838,7 +838,7 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
 
                     if(H5Oget_info3(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info3(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    if(H5VLtoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+                    if(H5Otoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
                     if(0 == token_cmp) {
                         if(H5Oclose(obj1_id) < 0) TEST_ERROR
                         if(H5Oclose(obj2_id) < 0) TEST_ERROR

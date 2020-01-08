@@ -1018,7 +1018,7 @@ herr_t refresh_verification(const char * obj_pathname)
 
     /* Verify that before doing a refresh, getting the object info returns stale
        information. (i.e., unchanged from above, despite new info on disk). */
-    if(H5VLtoken_cmp(oid, &flushed_oinfo.token, &refreshed_oinfo.token, &token_cmp) < 0) PROCESS_ERROR;
+    if(H5Otoken_cmp(oid, &flushed_oinfo.token, &refreshed_oinfo.token, &token_cmp) < 0) PROCESS_ERROR;
     if(token_cmp) PROCESS_ERROR;
     if(flushed_oinfo.type               != refreshed_oinfo.type) PROCESS_ERROR;
     if(flushed_oinfo.num_attrs          != refreshed_oinfo.num_attrs) PROCESS_ERROR;
@@ -1055,7 +1055,7 @@ herr_t refresh_verification(const char * obj_pathname)
         /* Get object info. This should now accurately reflect the refreshed object on disk. */
         if((status = H5Oget_info3(oid, &refreshed_oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS)) < 0) PROCESS_ERROR;
         if((status = H5Oget_native_info(oid, &refreshed_ninfo, H5O_INFO_HDR)) < 0) PROCESS_ERROR;
-        if(H5VLtoken_cmp(oid, &flushed_oinfo.token, &refreshed_oinfo.token, &token_cmp) < 0) PROCESS_ERROR;
+        if(H5Otoken_cmp(oid, &flushed_oinfo.token, &refreshed_oinfo.token, &token_cmp) < 0) PROCESS_ERROR;
 
         /* Confirm following (first 4) attributes are the same: */
         /* Confirm following (last 4) attributes are different */

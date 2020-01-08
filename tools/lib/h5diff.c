@@ -317,7 +317,7 @@ build_match_list (const char *objname1, trav_info_t *info1, const char *objname2
                 if(info1->paths[curr1].fileno == info2->paths[curr2].fileno) {
                     int token_cmp;
 
-                    if(H5VLtoken_cmp(info1->fid, &info1->paths[curr1].obj_token,
+                    if(H5Otoken_cmp(info1->fid, &info1->paths[curr1].obj_token,
                             &info2->paths[curr2].obj_token, &token_cmp) < 0) {
                         H5TOOLS_INFO("Failed to compare object tokens");
                         opts->err_stat = H5DIFF_ERR;

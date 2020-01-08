@@ -232,14 +232,14 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
         H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "H5Oget_info failed");
 
     if (*named_dt_head_p) {
-        if (H5VLtoken_cmp(type_in, &dt->obj_token, &oinfo.token, &token_cmp) < 0)
+        if (H5Otoken_cmp(type_in, &dt->obj_token, &oinfo.token, &token_cmp) < 0)
             H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to compare object tokens");
 
         /* Stack already exists, search for the datatype */
         while (dt && token_cmp) {
             dt = dt->next;
 
-            if (H5VLtoken_cmp(type_in, &dt->obj_token, &oinfo.token, &token_cmp) < 0)
+            if (H5Otoken_cmp(type_in, &dt->obj_token, &oinfo.token, &token_cmp) < 0)
                 H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to compare object tokens");
         }
 
@@ -262,7 +262,7 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
                 dt->id_out = -1;
 
                 /* Check if this type is the one requested */
-                if (H5VLtoken_cmp(type_in, &oinfo.token, &dt->obj_token, &token_cmp) < 0)
+                if (H5Otoken_cmp(type_in, &oinfo.token, &dt->obj_token, &token_cmp) < 0)
                     H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to compare object tokens");
                 if (!token_cmp)
                     dt_ret = dt;

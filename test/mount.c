@@ -441,7 +441,7 @@ test_hide(hid_t fapl)
     if(oi1.fileno == oi2.fileno) {
         int token_cmp;
 
-        if(H5VLtoken_cmp(file1, &oi1.token, &oi2.token, &token_cmp) < 0)
+        if(H5Otoken_cmp(file1, &oi1.token, &oi2.token, &token_cmp) < 0)
             FAIL_STACK_ERROR
         if(token_cmp)
             same_obj = FALSE;
@@ -526,7 +526,7 @@ test_assoc(hid_t fapl)
     if(oi1.fileno == oi2.fileno) {
         int token_cmp;
 
-        if(H5VLtoken_cmp(file1, &oi1.token, &oi2.token, &token_cmp) < 0)
+        if(H5Otoken_cmp(file1, &oi1.token, &oi2.token, &token_cmp) < 0)
             FAIL_STACK_ERROR
         if(token_cmp)
             same_obj = FALSE;

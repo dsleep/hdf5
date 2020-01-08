@@ -571,9 +571,9 @@ vrfy_ns_grp_c(hid_t fid, const char *group_name, unsigned nlinks) {
                 failure_mssg = "vrfy_ns_grp_c: H5Oget_info() failed.";
             }
             else {
-                if(H5VLtoken_cmp(fid, &root_oinfo.token, &lnk_info.u.token, &token_cmp) < 0) {
+                if(H5Otoken_cmp(fid, &root_oinfo.token, &lnk_info.u.token, &token_cmp) < 0) {
                     pass = FALSE;
-                    failure_mssg = "vrfy_ns_grp_c: H5VLtoken_cmp() failed.";
+                    failure_mssg = "vrfy_ns_grp_c: H5Otoken_cmp() failed.";
                 }
 
                 if (token_cmp) {
@@ -987,9 +987,9 @@ vrfy_ns_grp_d(hid_t fid, const char *group_name, unsigned nlinks) {
                 failure_mssg = "vrfy_ns_grp_d: H5Oget_info() failed.";
             }
             else {
-                if(H5VLtoken_cmp(fid, &root_oinfo.token, &lnk_info.u.token, &token_cmp) < 0) {
+                if(H5Otoken_cmp(fid, &root_oinfo.token, &lnk_info.u.token, &token_cmp) < 0) {
                     pass = FALSE;
-                    failure_mssg = "vrfy_ns_grp_d: H5VLtoken_cmp() failed.";
+                    failure_mssg = "vrfy_ns_grp_d: H5Otoken_cmp() failed.";
                 }
 
                 if (token_cmp) {
@@ -1592,9 +1592,9 @@ vrfy_os_grp_n(hid_t fid, const char *group_name, int proc_num,
                 failure_mssg = "vrfy_os_grp_n: H5Oget_info() failed.";
             }
             else {
-                if(H5VLtoken_cmp(fid, &root_oinfo.token, &lnk_info.u.token, &token_cmp) < 0) {
+                if(H5Otoken_cmp(fid, &root_oinfo.token, &lnk_info.u.token, &token_cmp) < 0) {
                     pass = FALSE;
-                    failure_mssg = "vrfy_os_grp_n: H5VLtoken_cmp() failed.";
+                    failure_mssg = "vrfy_os_grp_n: H5Otoken_cmp() failed.";
                 }
 
                 if (token_cmp) {
