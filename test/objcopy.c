@@ -238,15 +238,19 @@ token_insert(H5O_info2_t *oi)
  *-------------------------------------------------------------------------
  */
 static H5_ATTR_PURE hbool_t
-token_lookup(H5O_info2_t *oi)
+token_lookup(hid_t loc_id, H5O_info2_t *oi)
 {
-    size_t  n;
+    size_t n;
+    int token_cmp;
 
     if(oi->rc < 2) return FALSE; /*only one link possible*/
 
-    for(n = 0; n < idtab_g.nobjs; n++)
-        if(!HDmemcmp(&idtab_g.obj[n], &oi->token, sizeof(oi->token)))
+    for(n = 0; n < idtab_g.nobjs; n++) {
+        if(H5VLtoken_cmp(loc_id, &idtab_g.obj[n], &oi->token, &token_cmp) < 0)
+            return FALSE;
+        if(!token_cmp)
             return TRUE;
+    }
 
     return FALSE;
 } /* end token_lookup() */
@@ -1056,10 +1060,12 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
                 /* break the infinite loop when the ref_object points to itself */
                 if(obj_owner > 0) {
                     H5O_info2_t oinfo1, oinfo2;
+                    int token_cmp;
 
                     if(H5Oget_info3(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info3(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    if(!HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(oinfo2.token))) {
+                    if(H5VLtoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+                    if(!token_cmp) {
                         if(H5Oclose(obj1_id) < 0) TEST_ERROR
                         if(H5Oclose(obj2_id) < 0) TEST_ERROR
                         return TRUE;
@@ -1117,10 +1123,12 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
                 /* break the infinite loop when the ref_object points to itself */
                 if(obj_owner > 0) {
                     H5O_info2_t oinfo1, oinfo2;
+                    int token_cmp;
 
                     if(H5Oget_info3(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info3(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    if(!HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(oinfo2.token))) {
+                    if(H5VLtoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+                    if(!token_cmp) {
                         if(H5Oclose(obj1_id) < 0) TEST_ERROR
                         if(H5Oclose(obj2_id) < 0) TEST_ERROR
                         return TRUE;
@@ -1440,7 +1448,7 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
                  }
 
                 /* Check for object already having been compared */
-                if(token_lookup(&oinfo))
+                if(token_lookup(gid, &oinfo))
                     continue;
                 else
                     token_insert(&oinfo);
@@ -1869,8 +1877,9 @@ test_copy_named_datatype_attr_self(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     hsize_t dims[2] = {3, 4};           /* Dataspace dimensions */
     H5O_info2_t oinfo, oinfo2;          /* Object info */
     H5G_info_t ginfo;                   /* Group info */
-    char                src_filename[NAME_BUF_SIZE];
-    char                dst_filename[NAME_BUF_SIZE];
+    hbool_t    same_type;
+    char       src_filename[NAME_BUF_SIZE];
+    char       dst_filename[NAME_BUF_SIZE];
 
     TESTING("H5Ocopy(): named datatype with self-referential attribute");
 
@@ -1948,7 +1957,17 @@ test_copy_named_datatype_attr_self(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     /* verify that the tokens of the datatypes are the same */
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
     if(H5Oget_info3(tid2, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(oinfo.fileno != oinfo2.fileno || HDmemcmp(&oinfo.token, &oinfo2.token, sizeof(oinfo2.token)))
+
+    same_type = TRUE;
+    if(oinfo.fileno == oinfo2.fileno) {
+        int token_cmp;
+        if(H5VLtoken_cmp(tid2, &oinfo.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+        if(token_cmp) same_type = FALSE;
+    }
+    else
+        same_type = FALSE;
+
+    if(!same_type)
         FAIL_PUTS_ERROR("destination attribute does not use the same committed datatype")
 
     /* Verify that there are only 2 links int he destination root group */
@@ -10236,6 +10255,7 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     char src1_filename[NAME_BUF_SIZE];
     char src2_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
+    int token_cmp;
 
     if(reopen) {
         TESTING("H5Ocopy(): merging committed datatypes with reopen")
@@ -10354,21 +10374,24 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
     /* Open SRC2 committed dtype, check token */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_TOP2 "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* Open SRC2 dset dtype, check token */
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10409,7 +10432,8 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10472,6 +10496,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     H5O_info2_t oinfo;                          /* Object info */
     h5token_t exp_token;                        /* Expected object token */
     char filename[NAME_BUF_SIZE];
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): merging committed datatypes to the source file with reopen")
@@ -10588,21 +10613,24 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
     /* Open group 1 committed dtype, check token */
     if((tid = H5Topen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* Open group 1 dset dtype, check token */
     if((did = H5Dopen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10610,7 +10638,8 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
      * different from group 1 source committed dtype */
     if((tid = H5Topen2(fid, NAME_GROUP_TOP2 "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(!HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(!token_cmp) TEST_ERROR
     HDmemcpy(&exp_token, &oinfo.token, sizeof(exp_token));
     if(H5Tclose(tid) < 0) TEST_ERROR
 
@@ -10618,21 +10647,24 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
     /* Open group 2 committed dtype, check token */
     if((tid = H5Topen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP2 "/" NAME_DATATYPE_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* Open group 2 dset dtype, check token */
     if((did = H5Dopen2(fid, NAME_GROUP_TOP3 "/" NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10668,7 +10700,8 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP4 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10677,7 +10710,8 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP2 "/" NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(!HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(!token_cmp) TEST_ERROR
     HDmemcpy(&exp_token, &oinfo.token, sizeof(exp_token));
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
@@ -10686,7 +10720,8 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     if((did = H5Dopen2(fid, NAME_GROUP_TOP4 "/" NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10746,6 +10781,7 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     h5token_t exp_token;                        /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): merging committed datatypes with suggestions and reopen")
@@ -10860,7 +10896,8 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10898,7 +10935,8 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10912,7 +10950,8 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -10977,6 +11016,7 @@ test_copy_committed_dt_merge_attr(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     h5token_t exp_token;                        /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): merging committed datatypes with attributes and reopen")
@@ -11096,7 +11136,8 @@ test_copy_committed_dt_merge_attr(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -11208,6 +11249,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     H5O_info2_t oinfo;                       /* Object info */
     char src_filename[NAME_BUF_SIZE];        /* Source file name */
     char dst_filename[NAME_BUF_SIZE];        /* Destination file name */
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): hier. of committed datatypes and merging with reopen")
@@ -11367,7 +11409,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, SRC_ROOT_GROUP NAME_GROUP_TOP "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_short, sizeof(exp_token_short))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -11375,7 +11418,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, SRC_ROOT_GROUP NAME_GROUP_TOP "/" SRC_NDT_DSET3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_int, sizeof(exp_token_int))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -11387,7 +11431,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     /* get token of committed datatype at /g0 */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_TOP "/" GROUP_NDT_SHORT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_short, sizeof(exp_token_short))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* verify the datatype of first dataset is not committed */
@@ -11401,7 +11446,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_short, sizeof(exp_token_short))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -11409,7 +11455,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_TOP "/" SRC_NDT_DSET3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_int, sizeof(exp_token_int))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -11424,7 +11471,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((aid = H5Aopen_by_name(fid_dst, NAME_GROUP_UNCOPIED, DST_ATTR_ANON_SHORT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Aget_type(aid)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_short, sizeof(exp_token_short))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Aclose(aid) < 0) TEST_ERROR
 
@@ -11432,7 +11480,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((aid = H5Aopen_by_name(fid_dst, NAME_GROUP_UNCOPIED, DST_ATTR_ANON_INT, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Aget_type(aid)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_int, sizeof(exp_token_int))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Aclose(aid) < 0) TEST_ERROR
 
@@ -11447,7 +11496,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_short, sizeof(exp_token_short))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_short, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -11455,7 +11505,8 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token_int, sizeof(exp_token_int))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token_int, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -11532,6 +11583,7 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     h5token_t exp_token;                        /* Expected object tokenes */
     char src_filename[NAME_BUF_SIZE];        /* Source file name */
     char dst_filename[NAME_BUF_SIZE];        /* Destination file name */
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): merging various committed datatypes with reopen")
@@ -11664,7 +11716,8 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     /* get token of committed datatype: /dst_ndt_double */
     if((tid = H5Topen2(fid_dst, "/" DST_NDT_DOUBLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* get token of committed datatype: /src_root/src_ndt_float */
@@ -11676,7 +11729,8 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     /* get token of committed datatype: /dst_ndt_float */
     if((tid = H5Topen2(fid_dst, "/" DST_NDT_FLOAT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* get token of committed datatype: /src_root/src_ndt_int */
@@ -11688,7 +11742,8 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     /* get token of committed datatype: /dst_ndt_int */
     if((tid = H5Topen2(fid_dst, "/" DST_NDT_INT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* get token of committed datatype: /src_root/src_ndt_short */
@@ -11701,7 +11756,8 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     if((aid = H5Aopen_by_name(fid_dst, "/" SRC_ROOT_GROUP "/" SRC_NDT_DOUBLE, DST_ATTR, H5P_DEFAULT, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Aget_type(aid)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Aclose(aid) < 0) TEST_ERROR
 
@@ -11758,6 +11814,7 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     h5token_t exp_token;                        /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): merging committed datatypes with suggestions and reopen")
@@ -11838,7 +11895,8 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/uncopied/src_ndt_int" */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_INT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* close the DST file */
@@ -11871,7 +11929,8 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/src_ndt_int" */
     if((tid = H5Topen2(fid_dst, SRC_NDT_INT, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* close the DST file */
@@ -11909,7 +11968,8 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/src_ndt_int2" */
     if((tid = H5Topen2(fid_dst, SRC_NDT_INT2, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* close the DST file */
@@ -11943,7 +12003,8 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     /* check token of "/uncopied/src_ndt_int2" */
     if((tid = H5Topen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_INT2, H5P_DEFAULT)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
 
     /* close the DST file */
@@ -11998,6 +12059,7 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     h5token_t exp_token;                        /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): merging committed datatypes of datasets with suggestions and reopen")
@@ -12100,7 +12162,8 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -12137,7 +12200,8 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, SRC_NDT_DSET, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -12179,7 +12243,8 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -12217,7 +12282,8 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_GROUP_UNCOPIED "/" SRC_NDT_DSET2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -12767,6 +12833,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
     mcdt_search_cb_ud cb_udata;                 /* User data for callback */
+    int token_cmp;
 
     if(reopen)
         TESTING("H5Ocopy(): H5Pset_mcdt_search_cb and reopen")
@@ -12884,7 +12951,8 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -12932,7 +13000,8 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE2, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -12971,7 +13040,8 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(!HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -12985,7 +13055,8 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(!HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -13031,7 +13102,8 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(!HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 
@@ -13045,7 +13117,8 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     if((did = H5Dopen2(fid_dst, NAME_DATASET_SIMPLE3, H5P_DEFAULT)) < 0) TEST_ERROR
     if((tid = H5Dget_type(did)) < 0) TEST_ERROR
     if(H5Oget_info3(tid, &oinfo, H5O_INFO_BASIC) < 0) TEST_ERROR
-    if(!HDmemcmp(&oinfo.token, &exp_token, sizeof(exp_token))) TEST_ERROR
+    if(H5VLtoken_cmp(tid, &oinfo.token, &exp_token, &token_cmp) < 0) TEST_ERROR
+    if(!token_cmp) TEST_ERROR
     if(H5Tclose(tid) < 0) TEST_ERROR
     if(H5Dclose(did) < 0) TEST_ERROR
 

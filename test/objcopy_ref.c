@@ -134,16 +134,20 @@ token_insert(H5O_info2_t *oinfo)
  *-------------------------------------------------------------------------
  */
 static H5_ATTR_PURE hbool_t
-token_lookup(H5O_info2_t *oinfo)
+token_lookup(hid_t loc_id, H5O_info2_t *oinfo)
 {
-    size_t  n;
+    size_t n;
+    int token_cmp;
 
     if(oinfo->rc < 2)
         return FALSE; /*only one link possible*/
 
-    for(n = 0; n < idtab_g.nobjs; n++)
-        if(0 == HDmemcmp(&(idtab_g.obj[n]), &oinfo->token, sizeof(oinfo->token)))
+    for(n = 0; n < idtab_g.nobjs; n++) {
+        if(H5VLtoken_cmp(loc_id, &(idtab_g.obj[n]), &oinfo->token, &token_cmp) < 0)
+            return FALSE;
+        if(0 == token_cmp)
             return TRUE;
+    }
 
     return FALSE;
 } /* end token_lookup() */
@@ -830,10 +834,12 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
                 /* break the infinite loop when the ref_object points to itself */
                 if(obj_owner > 0) {
                     H5O_info2_t oinfo1, oinfo2;
+                    int token_cmp;
 
                     if(H5Oget_info3(obj_owner, &oinfo1, H5O_INFO_BASIC) < 0) TEST_ERROR
                     if(H5Oget_info3(obj1_id, &oinfo2, H5O_INFO_BASIC) < 0) TEST_ERROR
-                    if(0 == HDmemcmp(&oinfo1.token, &oinfo2.token, sizeof(oinfo1.token))) {
+                    if(H5VLtoken_cmp(obj1_id, &oinfo1.token, &oinfo2.token, &token_cmp) < 0) TEST_ERROR
+                    if(0 == token_cmp) {
                         if(H5Oclose(obj1_id) < 0) TEST_ERROR
                         if(H5Oclose(obj2_id) < 0) TEST_ERROR
                         return TRUE;
@@ -1158,7 +1164,7 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
                  }
 
                 /* Check for object already having been compared */
-                if(token_lookup(&oinfo))
+                if(token_lookup(gid, &oinfo))
                     continue;
                 else
                     token_insert(&oinfo);

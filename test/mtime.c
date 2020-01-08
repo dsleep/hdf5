@@ -63,6 +63,7 @@ main(void)
     H5O_info2_t    oi1, oi2;
     signed char    buf1[32], buf2[32];
     char    filename[1024];
+    int token_cmp;
 
     h5_reset();
     fapl = h5_fileaccess();
@@ -91,11 +92,12 @@ main(void)
     if(H5Oget_info_by_name3(file, "dset", &oi1, H5O_INFO_BASIC|H5O_INFO_TIME, H5P_DEFAULT) < 0) TEST_ERROR;
     if((dset = H5Dopen2(file, "dset", H5P_DEFAULT)) < 0) TEST_ERROR;
     if(H5Oget_info3(dset, &oi2, H5O_INFO_BASIC|H5O_INFO_TIME) < 0) TEST_ERROR;
+    if(H5VLtoken_cmp(file, &oi1.token, &oi2.token, &token_cmp) < 0)TEST_ERROR;
     if(H5Dclose(dset) < 0) TEST_ERROR;
     if(H5Fclose(file) < 0) TEST_ERROR;
 
-    /* Compare addresses & times from the two ways of calling H5Oget_info() */
-    if(HDmemcmp(&oi1.token, &oi2.token, sizeof(h5token_t)) || oi1.ctime != oi2.ctime) {
+    /* Compare object tokens & times from the two ways of calling H5Oget_info() */
+    if(token_cmp || oi1.ctime != oi2.ctime) {
         H5_FAILED();
         HDputs("    Calling H5Oget_info() with the dataset ID returned");
         HDputs("    different values than calling it with a file and dataset");

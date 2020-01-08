@@ -422,10 +422,7 @@ HDfprintf(FILE *stream, const char *fmt, ...)
                     {
                         h5token_t token = HDva_arg(ap, h5token_t);
 
-                        /* Print the raw token.
-                         * May want to update this if we add a "token to string"
-                         * callback in the VOL.
-                         */
+                        /* Print the raw token. */
                         n = fprintf(stream, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X", 
                                 (unsigned char)token.__data[15],
                                 (unsigned char)token.__data[14],

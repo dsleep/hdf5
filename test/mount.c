@@ -402,6 +402,7 @@ test_hide(hid_t fapl)
     hid_t	file1 = -1, file2 = -1, grp = -1;
     H5O_info2_t	oi1, oi2;
     char	filename1[1024], filename2[1024];
+    hbool_t same_obj;
 
     TESTING("name hiding under mount point");
     h5_fixname(FILENAME[0], fapl, filename1, sizeof(filename1));
@@ -435,7 +436,20 @@ test_hide(hid_t fapl)
      */
     if(H5Oget_info_by_name3(file1, "/file1", &oi2, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR
-    if(oi1.fileno != oi2.fileno || HDmemcmp(&oi1.token, &oi2.token, sizeof(oi2.token))) {
+
+    same_obj = TRUE;
+    if(oi1.fileno == oi2.fileno) {
+        int token_cmp;
+
+        if(H5VLtoken_cmp(file1, &oi1.token, &oi2.token, &token_cmp) < 0)
+            FAIL_STACK_ERROR
+        if(token_cmp)
+            same_obj = FALSE;
+    }
+    else
+        same_obj = FALSE;
+
+    if(!same_obj) {
         H5_FAILED();
         HDputs("    Hard link failed for hidden object.");
         TEST_ERROR
@@ -482,6 +496,7 @@ test_assoc(hid_t fapl)
     hid_t	file1 = -1, file2 = -1;
     H5O_info2_t	oi1, oi2;
     char	filename1[1024], filename2[1024];
+    hbool_t same_obj;
 
     TESTING("mount point open");
     h5_fixname(FILENAME[0], fapl, filename1, sizeof filename1);
@@ -507,8 +522,20 @@ test_assoc(hid_t fapl)
     if(H5Oget_info_by_name3(file1, "/mnt1", &oi2, H5O_INFO_BASIC, H5P_DEFAULT) < 0)
         FAIL_STACK_ERROR
 
-    if(oi1.fileno != oi2.fileno || HDmemcmp(&oi1.token, &oi2.token, sizeof(oi2.token))) {
-	H5_FAILED();
+    same_obj = TRUE;
+    if(oi1.fileno == oi2.fileno) {
+        int token_cmp;
+
+        if(H5VLtoken_cmp(file1, &oi1.token, &oi2.token, &token_cmp) < 0)
+            FAIL_STACK_ERROR
+        if(token_cmp)
+            same_obj = FALSE;
+    }
+    else
+        same_obj = FALSE;
+
+    if(!same_obj) {
+        H5_FAILED();
         HDputs("    Association failed.");
         TEST_ERROR
     } /* end if */

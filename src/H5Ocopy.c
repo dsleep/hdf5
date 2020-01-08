@@ -197,9 +197,9 @@ herr_t
 H5Ocopy(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id,
         const char *dst_name, hid_t ocpypl_id, hid_t lcpl_id)
 {
-    H5VL_object_t    *vol_obj1 = NULL;        /* object token of src_id */
+    H5VL_object_t    *vol_obj1 = NULL;        /* object of src_id */
     H5VL_loc_params_t loc_params1;
-    H5VL_object_t    *vol_obj2 = NULL;        /* object token of dst_id */
+    H5VL_object_t    *vol_obj2 = NULL;        /* object of dst_id */
     H5VL_loc_params_t loc_params2;
     herr_t      ret_value = SUCCEED;    /* Return value */
 

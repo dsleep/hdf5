@@ -43,6 +43,8 @@
 #include "H5Opkg.h"             /* Object headers                           */
 #include "H5VLprivate.h"        /* Virtual Object Layer                     */
 
+#include "H5VLnative_private.h" /* Native VOL connector                     */
+
 
 /****************/
 /* Local Macros */
@@ -2196,8 +2198,8 @@ H5O_get_info(const H5O_loc_t *loc, H5O_info2_t *oinfo, unsigned fields)
         H5F_GET_FILENO(loc->file, oinfo->fileno);
 
         /* Set the object's address into the token */
-        HDmemset(&oinfo->token, 0, sizeof(h5token_t));
-        HDmemcpy(&oinfo->token, &loc->addr, sizeof(loc->addr));
+        if(H5VL_native_addr_to_token(loc->file, H5I_FILE, loc->addr, &oinfo->token) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
 
         /* Retrieve the type of the object */
         oinfo->type = obj_class->type;
@@ -2833,7 +2835,10 @@ H5O__visit(H5G_loc_t *loc, const char *obj_name, H5_index_t idx_type,
 
             /* Construct unique "position" for this object */
             obj_pos->fileno = oinfo.fileno;
-            HDmemcpy(&(obj_pos->addr), &oinfo.token, H5F_SIZEOF_ADDR(loc->oloc->file));
+
+            /* De-serialize object token into an object address */
+            if(H5VL_native_token_to_addr(loc->oloc->file, H5I_FILE, oinfo.token, &(obj_pos->addr)) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
             /* Add to list of visited objects */
             if(H5SL_insert(udata.visited, obj_pos, obj_pos) < 0)
@@ -3109,6 +3114,7 @@ H5O_reset_info2(H5O_info2_t *oinfo)
     /* Reset the passed-in info struct */
     HDmemset(oinfo, 0, sizeof(H5O_info2_t));
     oinfo->type = H5O_TYPE_UNKNOWN;
+    oinfo->token = H5TOKEN_UNDEF;
 
     FUNC_LEAVE_NOAPI(SUCCEED);
 } /* end H5O_reset_info2() */
