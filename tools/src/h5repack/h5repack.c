@@ -225,15 +225,24 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
     named_dt_t  *dt = *named_dt_head_p; /* Stack pointer */
     named_dt_t  *dt_ret = NULL;         /* Datatype to return */
     H5O_info2_t  oinfo;                 /* Object info of input dtype */
+    int          token_cmp;
     hid_t        ret_value = H5I_INVALID_HID;
 
     if (H5Oget_info3(type_in, &oinfo, H5O_INFO_BASIC) < 0)
         H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "H5Oget_info failed");
 
     if (*named_dt_head_p) {
+        if (H5VLtoken_cmp(type_in, &dt->obj_token, &oinfo.token, &token_cmp) < 0)
+            H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to compare object tokens");
+
         /* Stack already exists, search for the datatype */
-        while (dt && HDmemcmp(&dt->obj_token, &oinfo.token, sizeof(h5token_t)))
+        while (dt && token_cmp) {
             dt = dt->next;
+
+            if (H5VLtoken_cmp(type_in, &dt->obj_token, &oinfo.token, &token_cmp) < 0)
+                H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to compare object tokens");
+        }
+
         dt_ret = dt;
     }
     else {
@@ -253,9 +262,10 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
                 dt->id_out = -1;
 
                 /* Check if this type is the one requested */
-                if (!HDmemcmp(&oinfo.token, &dt->obj_token, sizeof(h5token_t))) {
+                if (H5VLtoken_cmp(type_in, &oinfo.token, &dt->obj_token, &token_cmp) < 0)
+                    H5TOOLS_GOTO_ERROR(H5I_INVALID_HID, "failed to compare object tokens");
+                if (!token_cmp)
                     dt_ret = dt;
-                }
             } /* end if named datatype */
         } /* end for each object in traversal table */
     } /* end else (create the stack) */
@@ -752,7 +762,7 @@ check_objects(const char* fname, pack_opt_t *options)
     /* Initialize indexing options */
     h5trav_set_index(sort_by, sort_order);
     /* init table */
-    trav_table_init(&travt);
+    trav_table_init(fid, &travt);
 
     /* get the list of objects in the file */
     if (h5trav_gettable(fid, travt) < 0)

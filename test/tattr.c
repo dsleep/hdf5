@@ -10885,8 +10885,8 @@ test_attr_bug8(hid_t fcpl, hid_t fapl)
     /* Get root group address */
     ret = H5Oget_info3(fid, &oinfo, H5O_INFO_BASIC);
     CHECK(ret, FAIL, "H5Oget_info");
-    ret = H5VL_native_token_to_addr(fid, oinfo.token, &root_addr);
-    CHECK(ret, FAIL, "H5VL_native_token_to_addr");
+    ret = H5VLnative_token_to_addr(fid, oinfo.token, &root_addr);
+    CHECK(ret, FAIL, "H5VLnative_token_to_addr");
 
     /*
      * Create link to root group
@@ -10911,8 +10911,8 @@ test_attr_bug8(hid_t fcpl, hid_t fapl)
     CHECK(oid, FAIL, "H5Oopen");
     ret = H5Oget_info3(oid, &oinfo, H5O_INFO_BASIC);
     CHECK(ret, FAIL, "H5Oget_info");
-    ret = H5VL_native_token_to_addr(fid, oinfo.token, &link_addr);
-    CHECK(ret, FAIL, "H5VL_native_token_to_addr");
+    ret = H5VLnative_token_to_addr(fid, oinfo.token, &link_addr);
+    CHECK(ret, FAIL, "H5VLnative_token_to_addr");
     if(link_addr != root_addr)
         TestErrPrintf("incorrect link target address: addr: %llu, expected: %llu\n", (long long unsigned)link_addr, (long long unsigned)root_addr);
 
@@ -10958,8 +10958,8 @@ test_attr_bug8(hid_t fcpl, hid_t fapl)
     CHECK(oid, FAIL, "H5Oopen");
     ret = H5Oget_info3(oid, &oinfo, H5O_INFO_BASIC);
     CHECK(ret, FAIL, "H5Oget_info");
-    ret = H5VL_native_token_to_addr(fid, oinfo.token, &link_addr);
-    CHECK(ret, FAIL, "H5VL_native_token_to_addr");
+    ret = H5VLnative_token_to_addr(fid, oinfo.token, &link_addr);
+    CHECK(ret, FAIL, "H5VLnative_token_to_addr");
     if(link_addr != root_addr)
         TestErrPrintf("incorrect link target address: addr: %llu, expected: %llu\n", (long long unsigned)link_addr, (long long unsigned)root_addr);
     ret = H5Aget_info_by_name(gid, ".", ATTR1_NAME, &ainfo, H5P_DEFAULT);

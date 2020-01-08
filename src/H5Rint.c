@@ -35,6 +35,8 @@
 #include "H5Sprivate.h"         /* Dataspaces                               */
 #include "H5Tprivate.h"         /* Datatypes                                */
 
+#include "H5VLnative_private.h" /* Native VOL connector                     */
+
 /****************/
 /* Local Macros */
 /****************/
@@ -95,7 +97,27 @@
 static const char *
 H5R__print_token(const h5token_t token) {
     static char string[64];
-    HDsnprintf(string, 64, "%zu", *(haddr_t *)token);
+
+    /* Print the raw token. */
+    HDsnprintf(string, 64, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+            (unsigned char)token.__data[15],
+            (unsigned char)token.__data[14],
+            (unsigned char)token.__data[13],
+            (unsigned char)token.__data[12],
+            (unsigned char)token.__data[11],
+            (unsigned char)token.__data[10],
+            (unsigned char)token.__data[9],
+            (unsigned char)token.__data[8],
+            (unsigned char)token.__data[7],
+            (unsigned char)token.__data[6],
+            (unsigned char)token.__data[5],
+            (unsigned char)token.__data[4],
+            (unsigned char)token.__data[3],
+            (unsigned char)token.__data[2],
+            (unsigned char)token.__data[1],
+            (unsigned char)token.__data[0]
+            );
+
     return string;
 }
 #else
@@ -258,11 +280,11 @@ H5R__create_object(const h5token_t *obj_token, size_t token_size,
     HDassert(ref);
 
     /* Create new reference */
-    H5MM_memcpy(&ref->ref.obj.token, obj_token, token_size);
     ref->ref.obj.filename = NULL;
     ref->loc_id = H5I_INVALID_HID;
     ref->type = (uint8_t)H5R_OBJECT2;
-    ref->token_size = (uint8_t)token_size;
+    if(H5R__set_obj_token(ref, obj_token, token_size) < 0)
+        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTSET, FAIL, "unable to set object token")
 
     /* Cache encoding size (assume no external reference) */
     if(H5R__encode(NULL, ref, NULL, &encode_size, 0) < 0)
@@ -300,14 +322,14 @@ H5R__create_region(const h5token_t *obj_token, size_t token_size,
     HDassert(ref);
 
     /* Create new reference */
-    H5MM_memcpy(&ref->ref.obj.token, obj_token, token_size);
     ref->ref.obj.filename = NULL;
     if(NULL == (ref->ref.reg.space = H5S_copy(space, FALSE, TRUE)))
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTCOPY, FAIL, "unable to copy dataspace")
 
     ref->loc_id = H5I_INVALID_HID;
     ref->type = (uint8_t)H5R_DATASET_REGION2;
-    ref->token_size = (uint8_t)token_size;
+    if(H5R__set_obj_token(ref, obj_token, token_size) < 0)
+        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTSET, FAIL, "unable to set object token")
 
     /* Cache encoding size (assume no external reference) */
     if(H5R__encode(NULL, ref, NULL, &encode_size, 0) < 0)
@@ -355,14 +377,14 @@ H5R__create_attr(const h5token_t *obj_token, size_t token_size,
         HGOTO_ERROR(H5E_REFERENCE, H5E_ARGS, FAIL, "attribute name too long (%d > %d)", (int)HDstrlen(attr_name), H5R_MAX_STRING_LEN)
 
     /* Create new reference */
-    H5MM_memcpy(&ref->ref.obj.token, obj_token, token_size);
     ref->ref.obj.filename = NULL;
     if(NULL == (ref->ref.attr.name = HDstrdup(attr_name)))
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTCOPY, FAIL, "Cannot copy attribute name")
 
     ref->loc_id = H5I_INVALID_HID;
     ref->type = (uint8_t)H5R_ATTR;
-    ref->token_size = (uint8_t)token_size;
+    if(H5R__set_obj_token(ref, obj_token, token_size) < 0)
+        HGOTO_ERROR(H5E_REFERENCE, H5E_CANTSET, FAIL, "unable to set object token")
 
     /* Cache encoding size (assume no external reference) */
     if(H5R__encode(NULL, ref, NULL, &encode_size, 0) < 0)
@@ -673,7 +695,7 @@ H5R__copy(const H5R_ref_priv_t *src_ref, H5R_ref_priv_t *dst_ref)
 
     HDassert((src_ref != NULL) && (dst_ref != NULL));
 
-    H5MM_memcpy(&dst_ref->ref.obj.token, &src_ref->ref.obj.token, src_ref->token_size);
+    H5MM_memcpy(&dst_ref->ref.obj.token, &src_ref->ref.obj.token, sizeof(h5token_t));
     dst_ref->encode_size = src_ref->encode_size;
     dst_ref->type = src_ref->type;
     dst_ref->token_size = src_ref->token_size;
@@ -743,7 +765,7 @@ H5R__get_obj_token(const H5R_ref_priv_t *ref, h5token_t *obj_token,
     if(obj_token) {
         if(0 == ref->token_size)
             HGOTO_ERROR(H5E_REFERENCE, H5E_CANTCOPY, FAIL, "NULL token size")
-        H5MM_memcpy(obj_token, &ref->ref.obj.token, ref->token_size);
+        H5MM_memcpy(obj_token, &ref->ref.obj.token, sizeof(h5token_t));
     }
     if(token_size)
         *token_size = ref->token_size;
@@ -775,7 +797,7 @@ H5R__set_obj_token(H5R_ref_priv_t *ref, const h5token_t *obj_token,
     HDassert(token_size);
     HDassert(token_size <= H5_MAX_TOKEN_SIZE);
 
-    H5MM_memcpy(&ref->ref.obj.token, obj_token, ref->token_size);
+    H5MM_memcpy(&ref->ref.obj.token, obj_token, sizeof(h5token_t));
     ref->token_size = (uint8_t)token_size;
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1149,6 +1171,9 @@ H5R__decode_obj_token(const unsigned char *buf, size_t *nbytes,
     *token_size = *p++;
     if(*token_size > sizeof(h5token_t))
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTDECODE, FAIL, "Invalid token size (%u)", *token_size)
+
+    /* Make sure that token is initialized */
+    HDmemset(obj_token, 0, sizeof(h5token_t));
 
     /* Decode token */
     H5MM_memcpy(obj_token, p, *token_size);
@@ -1739,12 +1764,13 @@ H5R__decode_token_region_compat(H5F_t *f, const unsigned char *buf,
     if(space_ptr) {
         H5O_loc_t oloc; /* Object location */
         H5S_t *space = NULL;
-        const uint8_t *q = (const uint8_t *)&token;
 
         /* Initialize the object location */
         H5O_loc_reset(&oloc);
         oloc.file = f;
-        H5F_addr_decode(f, &q, &oloc.addr);
+
+        if(H5VL_native_token_to_addr(f, H5I_FILE, token, &oloc.addr) < 0)
+            HGOTO_ERROR(H5E_REFERENCE, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
 
         /* Open and copy the dataset's dataspace */
         if(NULL == (space = H5S_read(&oloc)))
@@ -1757,7 +1783,7 @@ H5R__decode_token_region_compat(H5F_t *f, const unsigned char *buf,
         *space_ptr = space;
     }
     if(obj_token)
-        H5MM_memcpy(obj_token, &token, token_size);
+        H5MM_memcpy(obj_token, &token, sizeof(h5token_t));
 
 done:
     H5MM_free(data);

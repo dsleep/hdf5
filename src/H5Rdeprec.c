@@ -97,7 +97,7 @@
 H5G_obj_t
 H5Rget_obj_type1(hid_t id, H5R_type_t ref_type, const void *ref)
 {
-    H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
+    H5VL_object_t *vol_obj = NULL;      /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     h5token_t obj_token = {0};          /* Object token */
@@ -156,7 +156,7 @@ done:
 hid_t
 H5Rdereference1(hid_t obj_id, H5R_type_t ref_type, const void *ref)
 {
-    H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
+    H5VL_object_t *vol_obj = NULL;      /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     h5token_t obj_token = {0};          /* Object token */
@@ -222,7 +222,7 @@ herr_t
 H5Rcreate(void *ref, hid_t loc_id, const char *name, H5R_type_t ref_type,
     hid_t space_id)
 {
-    H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
+    H5VL_object_t *vol_obj = NULL;      /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     h5token_t obj_token = {0};          /* Object token */
@@ -338,7 +338,7 @@ herr_t
 H5Rget_obj_type2(hid_t id, H5R_type_t ref_type, const void *ref,
     H5O_type_t *obj_type)
 {
-    H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
+    H5VL_object_t *vol_obj = NULL;      /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     h5token_t obj_token = {0};          /* Object token */
@@ -394,7 +394,7 @@ hid_t
 H5Rdereference2(hid_t obj_id, hid_t oapl_id, H5R_type_t ref_type,
     const void *ref)
 {
-    H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
+    H5VL_object_t *vol_obj = NULL;      /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     h5token_t obj_token = {0};          /* Object token */
@@ -462,7 +462,7 @@ done:
 hid_t
 H5Rget_region(hid_t id, H5R_type_t ref_type, const void *ref)
 {
-    H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
+    H5VL_object_t *vol_obj = NULL;      /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     void *vol_obj_file = NULL;          /* VOL file */
     H5VL_file_cont_info_t cont_info = {H5VL_CONTAINER_INFO_VERSION, 0, 0, 0};
@@ -548,7 +548,7 @@ ssize_t
 H5Rget_name(hid_t id, H5R_type_t ref_type, const void *ref, char *name,
     size_t size)
 {
-    H5VL_object_t *vol_obj = NULL;      /* Object token of loc_id */
+    H5VL_object_t *vol_obj = NULL;      /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     h5token_t obj_token = {0};          /* Object token */

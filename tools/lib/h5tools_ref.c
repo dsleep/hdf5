@@ -17,6 +17,7 @@
 #include "h5tools.h"
 #include "h5tools_utils.h"
 #include "h5trav.h"
+#include "H5VLnative_private.h"
 
 
 /*
@@ -271,7 +272,7 @@ int get_next_xid(void) {
 
 /*
  *  This counter is used to create fake object ID's
- *  The idea is to set it to the largest possible offest, which
+ *  The idea is to set it to the largest possible offset, which
  *  minimizes the chance of collision with a real object id.
  *
  */
@@ -279,9 +280,14 @@ haddr_t fake_xid = HADDR_MAX;
 
 void
 get_fake_token(h5token_t *token) {
-    HDmemset(token, 0, sizeof(h5token_t));
-    HDmemcpy(token, &fake_xid, sizeof(haddr_t));
-    fake_xid--;
+    if(thefile > 0) {
+        /* TODO: potential for this to be called with non-native connector objects */
+        if(H5VLnative_addr_to_token(thefile, fake_xid, token) < 0)
+            *token = H5TOKEN_UNDEF;
+        fake_xid--;
+    }
+    else
+        *token = H5TOKEN_UNDEF;
 }
 
 /*

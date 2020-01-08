@@ -288,17 +288,8 @@ H5L__iterate2_shim(hid_t group_id, const char *name, const H5L_info2_t *linfo2, 
         linfo.corder       = linfo2->corder;
         linfo.cset         = linfo2->cset;
         if (H5L_TYPE_HARD == linfo2->type) {
-            size_t addr_len = 0;
-
-            /* IF NATIVE */
-            /* Get the size of an haddr_t in this file */
-            if (H5VL_native_get_file_addr_len(group_id, &addr_len) < 0)
-                HGOTO_ERROR(H5E_FILE, H5E_CANTGET, H5_ITER_ERROR, "can't get address size from file")
-
-            /* Convert from VOL token to address */
-            HDmemcpy(&linfo.u.address, &linfo2->u.token, addr_len);
-
-            /* IF NOT NATIVE, COPY LOW-ORDER BYTES */
+            if(H5VLnative_token_to_addr(group_id, linfo2->u.token, &linfo.u.address) < 0)
+                HGOTO_ERROR(H5E_LINK, H5E_CANTUNSERIALIZE, H5_ITER_ERROR, "can't deserialize object token into address")
         }
         else
             linfo.u.val_size = linfo2->u.val_size;
@@ -333,11 +324,11 @@ herr_t
 H5Lmove(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id,
     const char *dst_name, hid_t lcpl_id, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj1            = NULL;         /* Object token of src_id */
+    H5VL_object_t      *vol_obj1            = NULL;         /* Object of src_id */
     H5VL_loc_params_t   loc_params1;
-    H5VL_object_t      *vol_obj2            = NULL;         /* Object token of dst_id */
+    H5VL_object_t      *vol_obj2            = NULL;         /* Object of dst_id */
     H5VL_loc_params_t   loc_params2;
-    H5VL_object_t       tmp_vol_obj;                    /* Temporary object token */
+    H5VL_object_t       tmp_vol_obj;                    /* Temporary object */
     herr_t              ret_value       = SUCCEED;      /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -423,11 +414,11 @@ herr_t
 H5Lcopy(hid_t src_loc_id, const char *src_name, hid_t dst_loc_id,
     const char *dst_name, hid_t lcpl_id, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj1            = NULL;         /* Object token of src_id */
+    H5VL_object_t      *vol_obj1            = NULL;         /* Object of src_id */
     H5VL_loc_params_t   loc_params1;
-    H5VL_object_t      *vol_obj2            = NULL;         /* Object token of dst_id */
+    H5VL_object_t      *vol_obj2            = NULL;         /* Object of dst_id */
     H5VL_loc_params_t   loc_params2;
-    H5VL_object_t       tmp_vol_obj;                    /* Temporary object token */
+    H5VL_object_t       tmp_vol_obj;                    /* Temporary object */
     herr_t              ret_value       = SUCCEED;      /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -517,7 +508,7 @@ herr_t
 H5Lcreate_soft(const char *link_target, hid_t link_loc_id, const char *link_name,
     hid_t lcpl_id, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj         = NULL;         /* object token of loc_id */
+    H5VL_object_t      *vol_obj         = NULL;         /* object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t              ret_value   = SUCCEED;      /* Return value */
 
@@ -588,9 +579,9 @@ herr_t
 H5Lcreate_hard(hid_t cur_loc_id, const char *cur_name,
     hid_t new_loc_id, const char *new_name, hid_t lcpl_id, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj1 = NULL;        /* Object token of cur_loc_id */
-    H5VL_object_t      *vol_obj2 = NULL;        /* Object token of new_loc_id */
-    H5VL_object_t       tmp_vol_obj;            /* Temporary object token of */
+    H5VL_object_t      *vol_obj1 = NULL;        /* Object of cur_loc_id */
+    H5VL_object_t      *vol_obj2 = NULL;        /* Object of new_loc_id */
+    H5VL_object_t       tmp_vol_obj;            /* Temporary object */
     H5VL_loc_params_t   loc_params1;
     H5VL_loc_params_t   loc_params2;
     herr_t              ret_value = SUCCEED;    /* Return value */
@@ -690,7 +681,7 @@ herr_t
 H5Lcreate_ud(hid_t link_loc_id, const char *link_name, H5L_type_t link_type,
     const void *udata, size_t udata_size, hid_t lcpl_id, hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj = NULL;   /* Object token of loc_id */
+    H5VL_object_t    *vol_obj = NULL;   /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -755,7 +746,7 @@ done:
 herr_t
 H5Ldelete(hid_t loc_id, const char *name, hid_t lapl_id)
 {
-    H5VL_object_t  *vol_obj         = NULL;         /* Object token of loc_id */
+    H5VL_object_t  *vol_obj         = NULL;         /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -812,7 +803,7 @@ herr_t
 H5Ldelete_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, hsize_t n, hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t    *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -875,7 +866,7 @@ herr_t
 H5Lget_val(hid_t loc_id, const char *name, void *buf/*out*/, size_t size,
     hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t    *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -931,7 +922,7 @@ H5Lget_val_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, hsize_t n, void *buf/*out*/, size_t size,
     hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t    *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -987,7 +978,7 @@ done:
 htri_t
 H5Lexists(hid_t loc_id, const char *name, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t      *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t   loc_params;
     htri_t      ret_value = FAIL;           /* Return value */
 
@@ -1042,9 +1033,10 @@ herr_t
 H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
     hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj = NULL;         /* object token of loc_id */
+    H5VL_object_t      *vol_obj = NULL;         /* object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5L_info2_t         linfo2;                 /* New-style link info */
+    hbool_t             is_native_vol_obj;
     herr_t              ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1067,6 +1059,12 @@ H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
 
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_LINK, H5E_BADVALUE, FAIL, "H5Lget_info1 is only meant to be used with the native VOL connector")
+
     /* Get the link information */
     if(H5VL_link_get(vol_obj, &loc_params, H5VL_LINK_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &linfo2) < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "unable to get link info")
@@ -1078,17 +1076,13 @@ H5Lget_info1(hid_t loc_id, const char *name, H5L_info1_t *linfo /*out*/,
         linfo->corder       = linfo2.corder;
         linfo->cset         = linfo2.cset;
         if (H5L_TYPE_HARD == linfo2.type) {
-            size_t addr_len = 0;
+            void *vol_obj_data;
 
-            /* IF NATIVE */
-            /* Get the size of an haddr_t in this file */
-            if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
-                HGOTO_ERROR(H5E_ARGS, H5E_CANTGET, FAIL, "unable to get the file's address size")
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
 
-            /* Convert from VOL token to address */
-            HDmemcpy(&linfo->u.address, &linfo2.u.token, addr_len);
-
-            /* IF NOT NATIVE, COPY LOW-ORDER BYTES */
+            if(H5VL_native_token_to_addr(vol_obj_data, loc_params.obj_type, linfo2.u.token, &linfo->u.address) < 0)
+                HGOTO_ERROR(H5E_LINK, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
         }
         else
             linfo->u.val_size = linfo2.u.val_size;
@@ -1120,9 +1114,10 @@ H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
     H5L_info1_t *linfo /*out*/, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj = NULL;         /* object token of loc_id */
+    H5VL_object_t      *vol_obj = NULL;         /* object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5L_info2_t         linfo2;                 /* New-style link info */
+    hbool_t             is_native_vol_obj;
     herr_t              ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1153,6 +1148,12 @@ H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
 
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_LINK, H5E_BADVALUE, FAIL, "H5Lget_info_by_idx1 is only meant to be used with the native VOL connector")
+
     /* Get the link information */
     if(H5VL_link_get(vol_obj, &loc_params, H5VL_LINK_GET_INFO, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, &linfo2) < 0)
         HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "unable to get link info")
@@ -1164,17 +1165,13 @@ H5Lget_info_by_idx1(hid_t loc_id, const char *group_name,
         linfo->corder       = linfo2.corder;
         linfo->cset         = linfo2.cset;
         if (H5L_TYPE_HARD == linfo2.type) {
-            size_t addr_len = 0;
+            void *vol_obj_data;
 
-            /* IF NATIVE */
-            /* Get the size of an haddr_t in this file */
-            if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
-                HGOTO_ERROR(H5E_ARGS, H5E_CANTGET, FAIL, "unable to get the file's address size")
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
 
-            /* Convert from VOL token to address */
-            HDmemcpy(&linfo->u.address, &linfo2.u.token, addr_len);
-
-            /* IF NOT NATIVE, COPY LOW-ORDER BYTES */
+            if(H5VL_native_token_to_addr(vol_obj_data, loc_params.obj_type, linfo2.u.token, &linfo->u.address) < 0)
+                HGOTO_ERROR(H5E_LINK, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
         }
         else
             linfo->u.val_size = linfo2.u.val_size;
@@ -1202,7 +1199,7 @@ herr_t
 H5Lget_info2(hid_t loc_id, const char *name, H5L_info2_t *linfo /*out*/,
     hid_t lapl_id)
 {
-    H5VL_object_t       *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t       *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t              ret_value = SUCCEED;    /* Return value */
 
@@ -1254,7 +1251,7 @@ H5Lget_info_by_idx2(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
     H5L_info2_t *linfo /*out*/, hid_t lapl_id)
 {
-    H5VL_object_t       *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t       *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t              ret_value = SUCCEED;         /* Return value */
 
@@ -1449,7 +1446,7 @@ H5Lget_name_by_idx(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n,
     char *name /*out*/, size_t size, hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t    *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t loc_params;
     ssize_t ret_value = -1;          /* Return value */
 
@@ -1515,10 +1512,11 @@ herr_t
 H5Literate1(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     hsize_t *idx_p, H5L_iterate1_t op, void *op_data)
 {
-    H5VL_object_t       *vol_obj        = NULL;     /* Object token of loc_id */
+    H5VL_object_t       *vol_obj        = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5I_type_t          id_type;                /* Type of ID */
     H5L_shim_data_t     shim_data;
+    hbool_t             is_native_vol_obj;
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1538,6 +1536,12 @@ H5Literate1(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     /* Get the location object */
     if (NULL == (vol_obj = (H5VL_object_t *)H5I_object(group_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_LINK, H5E_BADVALUE, FAIL, "H5Literate1 is only meant to be used with the native VOL connector")
 
     /* Set location struct fields */
     loc_params.type = H5VL_OBJECT_BY_SELF;
@@ -1586,9 +1590,10 @@ H5Literate_by_name1(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx_p,
     H5L_iterate1_t op, void *op_data, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj         = NULL;     /* Object token of loc_id */
+    H5VL_object_t      *vol_obj         = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5L_shim_data_t     shim_data;
+    hbool_t             is_native_vol_obj;
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1614,6 +1619,12 @@ H5Literate_by_name1(hid_t loc_id, const char *group_name,
     /* Get the location object */
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_LINK, H5E_BADVALUE, FAIL, "H5Literate_by_name1 is only meant to be used with the native VOL connector")
 
     /* Set location struct fields */
     loc_params.type                         = H5VL_OBJECT_BY_NAME;
@@ -1657,7 +1668,7 @@ herr_t
 H5Literate2(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     hsize_t *idx_p, H5L_iterate2_t op, void *op_data)
 {
-    H5VL_object_t       *vol_obj        = NULL;     /* Object token of loc_id */
+    H5VL_object_t       *vol_obj        = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5I_type_t          id_type;                /* Type of ID */
     herr_t              ret_value;              /* Return value */
@@ -1721,7 +1732,7 @@ H5Literate_by_name2(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx_p,
     H5L_iterate2_t op, void *op_data, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj         = NULL;     /* Object token of loc_id */
+    H5VL_object_t      *vol_obj         = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t              ret_value;              /* Return value */
 
@@ -1799,10 +1810,11 @@ herr_t
 H5Lvisit1(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     H5L_iterate1_t op, void *op_data)
 {
-    H5VL_object_t      *vol_obj         = NULL;     /* Object token of loc_id */
+    H5VL_object_t      *vol_obj         = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5I_type_t          id_type;                /* Type of ID */
     H5L_shim_data_t     shim_data;
+    hbool_t             is_native_vol_obj;
     herr_t              ret_value;              /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1826,6 +1838,12 @@ H5Lvisit1(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     /* Get the location object */
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(group_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_LINK, H5E_BADVALUE, FAIL, "H5Lvisit1 is only meant to be used with the native VOL connector")
 
     /* Set up shim */
     shim_data.real_op = op;
@@ -1875,9 +1893,10 @@ herr_t
 H5Lvisit_by_name1(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, H5L_iterate1_t op, void *op_data, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj = NULL;         /* Object token of loc_id */
+    H5VL_object_t      *vol_obj = NULL;         /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5L_shim_data_t     shim_data;
+    hbool_t             is_native_vol_obj;
     herr_t              ret_value;          /* Return value */
 
     FUNC_ENTER_API(FAIL)
@@ -1903,6 +1922,12 @@ H5Lvisit_by_name1(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     /* get the location object */
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_LINK, H5E_CANTGET, FAIL, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_LINK, H5E_BADVALUE, FAIL, "H5Lvisit_by_name1 is only meant to be used with the native VOL connector")
 
     /* Set location struct fields */
     loc_params.type                         = H5VL_OBJECT_BY_NAME;
@@ -1956,7 +1981,7 @@ herr_t
 H5Lvisit2(hid_t group_id, H5_index_t idx_type, H5_iter_order_t order,
     H5L_iterate2_t op, void *op_data)
 {
-    H5VL_object_t      *vol_obj         = NULL;     /* Object token of loc_id */
+    H5VL_object_t      *vol_obj         = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5I_type_t          id_type;                /* Type of ID */
     herr_t              ret_value;              /* Return value */
@@ -2025,7 +2050,7 @@ herr_t
 H5Lvisit_by_name2(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, H5L_iterate2_t op, void *op_data, hid_t lapl_id)
 {
-    H5VL_object_t      *vol_obj = NULL;         /* Object token of loc_id */
+    H5VL_object_t      *vol_obj = NULL;         /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t              ret_value;          /* Return value */
 

@@ -142,12 +142,12 @@ typedef struct H5O_info2_t {
     unsigned long   fileno;     /* File number that object is located in */
     h5token_t       token;      /* Token representing the object        */
     H5O_type_t 	    type;       /* Basic object type (group, dataset, etc.) */
-    unsigned 	    rc;         /* Reference count of object            */
-    time_t	    atime;	/* Access time			        */
-    time_t	    mtime;	/* Modification time		        */
-    time_t	    ctime;	/* Change time			        */
-    time_t	    btime;	/* Birth time			        */
-    hsize_t 	    num_attrs;  /* # of attributes attached to object   */
+    unsigned        rc;         /* Reference count of object            */
+    time_t          atime;      /* Access time                          */
+    time_t          mtime;      /* Modification time                    */
+    time_t          ctime;      /* Change time                          */
+    time_t          btime;      /* Birth time                           */
+    hsize_t         num_attrs;  /* # of attributes attached to object   */
 } H5O_info2_t;
 
 /* Native file format information struct for objects */

@@ -98,7 +98,7 @@ H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
     H5O_info1_t oinfo;                  /* Deprecated object info struct */
     unsigned dm_fields;                 /* Fields for data model query */
     unsigned nat_fields;                /* Fields for native query */
-    H5VL_object_t *vol_obj;             /* Object token of obj_id */
+    H5VL_object_t *vol_obj;             /* Object of obj_id */
     H5VL_loc_params_t loc_params;       /* Location parameters for VOL callback */
     herr_t ret_value = H5_ITER_CONT;    /* Return value */
 
@@ -120,7 +120,10 @@ H5O__iterate1_adapter(hid_t obj_id, const char *name, const H5O_info2_t *oinfo2,
             oinfo.fileno    = oinfo2->fileno;
             oinfo.type      = oinfo2->type;
             oinfo.rc        = oinfo2->rc;
-            HDmemcpy(&oinfo.addr, &oinfo2->token, sizeof(oinfo.addr));
+
+            /* Deserialize VOL object token into object address */
+            if(H5VLnative_token_to_addr(obj_id, oinfo2->token, &oinfo.addr) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
         }
         if(shim_data->fields & H5O_INFO_TIME) {
             oinfo.atime     = oinfo2->atime;
@@ -209,10 +212,18 @@ H5O__get_info_old(H5VL_object_t *vol_obj, H5VL_loc_params_t *loc_params,
 
         /* Set the data model fields */
         if(fields & H5O_INFO_BASIC) {
+            void *vol_obj_data;
+
+            if(NULL == (vol_obj_data = H5VL_object_data(vol_obj)))
+                HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "can't get underlying VOL object")
+
             oinfo->fileno = dm_info.fileno;
             oinfo->type = dm_info.type;
             oinfo->rc = dm_info.rc;
-            HDmemcpy(&oinfo->addr, &dm_info.token, sizeof(oinfo->addr));
+
+            /* Deserialize VOL object token into object address */
+            if(H5VL_native_token_to_addr(vol_obj_data, loc_params->obj_type, dm_info.token, &oinfo->addr) < 0)
+                HGOTO_ERROR(H5E_OHDR, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token into address")
         } /* end if */
         if(fields & H5O_INFO_TIME) {
             oinfo->atime = dm_info.atime;
@@ -273,7 +284,7 @@ done:
 hid_t
 H5Oopen(hid_t loc_id, const char *name, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5I_type_t      opened_type;
     void           *opened_obj  = NULL;
     H5VL_loc_params_t loc_params;
@@ -342,7 +353,7 @@ hid_t
 H5Oopen_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, hsize_t n, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5I_type_t opened_type;
     void *opened_obj = NULL;
     H5VL_loc_params_t loc_params;
@@ -425,14 +436,13 @@ done:
 hid_t
 H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5I_type_t opened_type;             /* Opened object type */
     void *opened_obj = NULL;            /* Opened object */
     H5VL_loc_params_t loc_params;       /* Location parameters */
     h5token_t obj_token = {0};          /* Object token */
-    size_t addr_len = 0;                /* Size of haddr_t in this file */
-    uint8_t *p = NULL;
+    hbool_t is_native_vol_obj;
     hid_t ret_value = H5I_INVALID_HID;  /* Return value */
 
     FUNC_ENTER_API(H5I_INVALID_HID)
@@ -446,13 +456,16 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     if((vol_obj_type = H5I_get_type(loc_id)) < 0)
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
 
-    /* Get the size of an haddr_t in this file */
-    if(H5VL_native_get_file_addr_len(loc_id, &addr_len) < 0)
-        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "unable to get the file's address size")
-
-    /* This is a native specific routine that requires serialization of the token */
-    p = (uint8_t *)&obj_token;
-    H5F_addr_encode_len(addr_len, &p, addr);
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "can't determine if VOL object is native connector object")
+    if(is_native_vol_obj) {
+        /* This is a native-specific routine that requires serialization of the token */
+        if(H5VLnative_addr_to_token(loc_id, addr, &obj_token) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, H5I_INVALID_HID, "can't serialize address into object token")
+    } /* end if */
+    else
+        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, H5I_INVALID_HID, "H5Oopen_by_addr is only meant to be used with the native VOL connector")
 
     loc_params.type = H5VL_OBJECT_BY_TOKEN;
     loc_params.loc_data.loc_by_token.token = &obj_token;
@@ -487,7 +500,7 @@ done:
 hid_t
 H5Oopen_by_token(hid_t loc_id, h5token_t token)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
     H5I_type_t opened_type;             /* Opened object type */
     void *opened_obj = NULL;            /* Opened object */
@@ -551,9 +564,9 @@ herr_t
 H5Olink(hid_t obj_id, hid_t new_loc_id, const char *new_name, hid_t lcpl_id,
     hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj1 = NULL;        /* object token of obj_id */
-    H5VL_object_t    *vol_obj2 = NULL;        /* object token of new_loc_id */
-    H5VL_object_t     tmp_vol_obj;            /* Temporary object token of */
+    H5VL_object_t    *vol_obj1 = NULL;        /* object of obj_id */
+    H5VL_object_t    *vol_obj2 = NULL;        /* object of new_loc_id */
+    H5VL_object_t     tmp_vol_obj;            /* Temporary object */
     H5VL_loc_params_t loc_params1;
     H5VL_loc_params_t loc_params2;
     herr_t         ret_value = SUCCEED;       /* Return value */
@@ -643,7 +656,7 @@ done:
 herr_t
 H5Oincr_refcount(hid_t object_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;
 
@@ -693,7 +706,7 @@ done:
 herr_t
 H5Odecr_refcount(hid_t object_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;	/* Return value */
 
@@ -736,7 +749,7 @@ done:
 htri_t
 H5Oexists_by_name(hid_t loc_id, const char *name, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     htri_t      ret_value = FAIL;       /* Return value */
 
@@ -789,9 +802,10 @@ done:
 herr_t
 H5Oget_info2(hid_t loc_id, H5O_info1_t *oinfo, unsigned fields)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
-    H5VL_loc_params_t   loc_params;
-    herr_t      ret_value = SUCCEED;    /* Return value */
+    H5VL_object_t     *vol_obj;             /* Object of loc_id */
+    H5VL_loc_params_t  loc_params;
+    hbool_t            is_native_vol_obj;
+    herr_t             ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE3("e", "i*xIu", loc_id, oinfo, fields);
@@ -809,6 +823,12 @@ H5Oget_info2(hid_t loc_id, H5O_info1_t *oinfo, unsigned fields)
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, H5I_INVALID_HID, "H5Oget_info2 is only meant to be used with the native VOL connector")
 
     /* Retrieve deprecated info struct */
     if(H5O__get_info_old(vol_obj, &loc_params, oinfo, fields) < 0)
@@ -837,9 +857,10 @@ herr_t
 H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info1_t *oinfo,
     unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
-    H5VL_loc_params_t loc_params;
-    herr_t      ret_value = SUCCEED;    /* Return value */
+    H5VL_object_t     *vol_obj;             /* Object of loc_id */
+    H5VL_loc_params_t  loc_params;
+    hbool_t            is_native_vol_obj;
+    herr_t             ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE5("e", "i*s*xIui", loc_id, name, oinfo, fields, lapl_id);
@@ -867,6 +888,12 @@ H5Oget_info_by_name2(hid_t loc_id, const char *name, H5O_info1_t *oinfo,
     /* Get the location object */
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
+
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, H5I_INVALID_HID, "H5Oget_info_by_name2 is only meant to be used with the native VOL connector")
 
     /* Retrieve deprecated info struct */
     if(H5O__get_info_old(vol_obj, &loc_params, oinfo, fields) < 0)
@@ -897,9 +924,10 @@ herr_t
 H5Oget_info_by_idx2(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, hsize_t n, H5O_info1_t *oinfo, unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
-    H5VL_loc_params_t loc_params;
-    herr_t      ret_value = SUCCEED;    /* Return value */
+    H5VL_object_t     *vol_obj;             /* Object of loc_id */
+    H5VL_loc_params_t  loc_params;
+    hbool_t            is_native_vol_obj;
+    herr_t             ret_value = SUCCEED;    /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE8("e", "i*sIiIoh*xIui", loc_id, group_name, idx_type, order, n, oinfo,
@@ -933,6 +961,12 @@ H5Oget_info_by_idx2(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
 
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, H5I_INVALID_HID, "H5Oget_info_by_idx2 is only meant to be used with the native VOL connector")
+
     /* Retrieve deprecated info struct */
     if(H5O__get_info_old(vol_obj, &loc_params, oinfo, fields) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't get deprecated info for object")
@@ -957,7 +991,7 @@ done:
 herr_t
 H5Oget_info3(hid_t loc_id, H5O_info2_t *oinfo, unsigned fields)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1003,7 +1037,7 @@ herr_t
 H5Oget_info_by_name3(hid_t loc_id, const char *name,
     H5O_info2_t *oinfo, unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1061,7 +1095,7 @@ herr_t
 H5Oget_info_by_idx3(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, hsize_t n, H5O_info2_t *oinfo, unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1121,7 +1155,7 @@ done:
 herr_t
 H5Oget_native_info(hid_t loc_id, H5O_native_info_t *oinfo, unsigned fields)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1167,7 +1201,7 @@ herr_t
 H5Oget_native_info_by_name(hid_t loc_id, const char *name, H5O_native_info_t *oinfo,
     unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1225,7 +1259,7 @@ herr_t
 H5Oget_native_info_by_idx(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, hsize_t n, H5O_native_info_t *oinfo, unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1290,7 +1324,7 @@ done:
 herr_t
 H5Oset_comment(hid_t obj_id, const char *comment)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1339,7 +1373,7 @@ herr_t
 H5Oset_comment_by_name(hid_t loc_id, const char *name, const char *comment,
     hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -1392,9 +1426,9 @@ done:
 ssize_t
 H5Oget_comment(hid_t obj_id, char *comment, size_t bufsize)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
-    ssize_t     ret_value = -1;              /* Return value */
+    ssize_t     ret_value = -1;         /* Return value */
 
     FUNC_ENTER_API((-1))
     H5TRACE3("Zs", "i*sz", obj_id, comment, bufsize);
@@ -1436,9 +1470,9 @@ ssize_t
 H5Oget_comment_by_name(hid_t loc_id, const char *name, char *comment, size_t bufsize,
     hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t loc_params;
-    ssize_t     ret_value = -1;              /* Return value */
+    ssize_t     ret_value = -1;         /* Return value */
 
     FUNC_ENTER_API((-1))
     H5TRACE5("Zs", "i*s*szi", loc_id, name, comment, bufsize, lapl_id);
@@ -1509,10 +1543,11 @@ herr_t
 H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     H5O_iterate1_t op, void *op_data, unsigned fields)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
-    H5VL_loc_params_t   loc_params;
-    H5O_visit1_adapter_t shim_data;             /* Adapter for passing app callback & user data */
-    herr_t              ret_value;              /* Return value */
+    H5VL_object_t       *vol_obj;             /* Object of loc_id */
+    H5VL_loc_params_t    loc_params;
+    H5O_visit1_adapter_t shim_data;     /* Adapter for passing app callback & user data */
+    hbool_t              is_native_vol_obj;
+    herr_t               ret_value;      /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE6("e", "iIiIox*xIu", obj_id, idx_type, order, op, op_data, fields);
@@ -1531,6 +1566,12 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     if(NULL == (vol_obj = H5VL_vol_object(obj_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
 
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, H5I_INVALID_HID, "H5Ovisit2 is only meant to be used with the native VOL connector")
+
     /* Set location parameters */
     loc_params.type         = H5VL_OBJECT_BY_SELF;
     loc_params.obj_type     = H5I_get_type(obj_id);
@@ -1541,7 +1582,8 @@ H5Ovisit2(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     shim_data.real_op_data = op_data;
 
     /* Visit the objects */
-    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, H5O__iterate1_adapter, (void *)&shim_data, fields)) < 0)
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT,
+            H5_REQUEST_NULL, (int)idx_type, (int)order, H5O__iterate1_adapter, (void *)&shim_data, fields)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
 
 done:
@@ -1588,10 +1630,11 @@ herr_t
 H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     H5_iter_order_t order, H5O_iterate1_t op, void *op_data, unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
-    H5VL_loc_params_t   loc_params;
-    H5O_visit1_adapter_t shim_data;             /* Adapter for passing app callback & user data */
-    herr_t              ret_value;              /* Return value */
+    H5VL_object_t       *vol_obj;             /* Object of loc_id */
+    H5VL_loc_params_t    loc_params;
+    H5O_visit1_adapter_t shim_data;     /* Adapter for passing app callback & user data */
+    hbool_t              is_native_vol_obj;
+    herr_t               ret_value;      /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE8("e", "i*sIiIox*xIui", loc_id, obj_name, idx_type, order, op, op_data,
@@ -1619,6 +1662,12 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     if(NULL == (vol_obj = H5VL_vol_object(loc_id)))
         HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, FAIL, "invalid location identifier")
 
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "can't determine if VOL object is native connector object")
+    if(!is_native_vol_obj)
+        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, H5I_INVALID_HID, "H5Ovisit_by_name2 is only meant to be used with the native VOL connector")
+
     /* Set location parameters */
     loc_params.type                         = H5VL_OBJECT_BY_NAME;
     loc_params.loc_data.loc_by_name.name    = obj_name;
@@ -1631,7 +1680,8 @@ H5Ovisit_by_name2(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     shim_data.real_op_data = op_data;
 
     /* Visit the objects */
-    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL, (int)idx_type, (int)order, H5O__iterate1_adapter, (void *)&shim_data, fields)) < 0)
+    if((ret_value = H5VL_object_specific(vol_obj, &loc_params, H5VL_OBJECT_VISIT, H5P_DATASET_XFER_DEFAULT,
+            H5_REQUEST_NULL, (int)idx_type, (int)order, H5O__iterate1_adapter, (void *)&shim_data, fields)) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_BADITER, FAIL, "object iteration failed")
 
 done:
@@ -1678,9 +1728,9 @@ herr_t
 H5Ovisit3(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     H5O_iterate2_t op, void *op_data, unsigned fields)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
-    herr_t              ret_value;              /* Return value */
+    herr_t              ret_value;      /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE6("e", "iIiIox*xIu", obj_id, idx_type, order, op, op_data, fields);
@@ -1751,9 +1801,9 @@ herr_t
 H5Ovisit_by_name3(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     H5_iter_order_t order, H5O_iterate2_t op, void *op_data, unsigned fields, hid_t lapl_id)
 {
-    H5VL_object_t *vol_obj;             /* Object token of loc_id */
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
-    herr_t              ret_value;              /* Return value */
+    herr_t              ret_value;      /* Return value */
 
     FUNC_ENTER_API(FAIL)
     H5TRACE8("e", "i*sIiIox*xIui", loc_id, obj_name, idx_type, order, op, op_data,
@@ -1898,7 +1948,7 @@ done:
 herr_t
 H5Odisable_mdc_flushes(hid_t object_id)
 {
-    H5VL_object_t       *vol_obj;               /* Object token of loc_id */
+    H5VL_object_t       *vol_obj;               /* Object of loc_id */
     H5VL_loc_params_t   loc_params;             /* Location parameters */
     herr_t              ret_value = SUCCEED;    /* Return value */
 
@@ -1967,7 +2017,7 @@ done:
 herr_t
 H5Oenable_mdc_flushes(hid_t object_id)
 {
-    H5VL_object_t       *vol_obj;               /* Object token of loc_id */
+    H5VL_object_t       *vol_obj;               /* Object of loc_id */
     H5VL_loc_params_t   loc_params;             /* Location parameters */
     herr_t              ret_value = SUCCEED;    /* Return value */
 
@@ -2041,7 +2091,7 @@ done:
 herr_t
 H5Oare_mdc_flushes_disabled(hid_t object_id, hbool_t *are_disabled)
 {
-    H5VL_object_t       *vol_obj;               /* Object token of loc_id */
+    H5VL_object_t       *vol_obj;               /* Object of loc_id */
     H5VL_loc_params_t   loc_params;             /* Location parameters */
     herr_t              ret_value = SUCCEED;    /* Return value */
 

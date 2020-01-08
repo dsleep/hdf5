@@ -90,7 +90,7 @@
 herr_t
 H5Oget_info1(hid_t loc_id, H5O_info1_t *oinfo)
 {
-    H5VL_object_t      *vol_obj         = NULL;         /* Object token of loc_id */
+    H5VL_object_t      *vol_obj         = NULL;         /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -131,7 +131,7 @@ done:
 herr_t
 H5Oget_info_by_name1(hid_t loc_id, const char *name, H5O_info1_t *oinfo, hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t    *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -187,7 +187,7 @@ herr_t
 H5Oget_info_by_idx1(hid_t loc_id, const char *group_name, H5_index_t idx_type,
     H5_iter_order_t order, hsize_t n, H5O_info1_t *oinfo, hid_t lapl_id)
 {
-    H5VL_object_t    *vol_obj = NULL;        /* object token of loc_id */
+    H5VL_object_t    *vol_obj = NULL;        /* object of loc_id */
     H5VL_loc_params_t loc_params;
     herr_t      ret_value = SUCCEED;    /* Return value */
 
@@ -266,7 +266,7 @@ herr_t
 H5Ovisit1(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order,
     H5O_iterate1_t op, void *op_data)
 {
-    H5VL_object_t      *vol_obj     = NULL;     /* Object token of loc_id */
+    H5VL_object_t      *vol_obj     = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5O_visit1_adapter_t shim_data;             /* Adapter for passing app callback & user data */
     herr_t              ret_value;              /* Return value */
@@ -340,7 +340,7 @@ herr_t
 H5Ovisit_by_name1(hid_t loc_id, const char *obj_name, H5_index_t idx_type,
     H5_iter_order_t order, H5O_iterate1_t op, void *op_data, hid_t lapl_id)
 {
-    H5VL_object_t       *vol_obj    = NULL;     /* Object token of loc_id */
+    H5VL_object_t       *vol_obj    = NULL;     /* Object of loc_id */
     H5VL_loc_params_t   loc_params;
     H5O_visit1_adapter_t shim_data;             /* Adapter for passing app callback & user data */
     herr_t              ret_value;              /* Return value */

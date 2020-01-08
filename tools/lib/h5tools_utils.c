@@ -53,7 +53,7 @@ unsigned outBuffOffset;
 FILE*    overflow_file = NULL;
 
 /* local functions */
-static void init_table(table_t **tbl);
+static void init_table(hid_t fid, table_t **tbl);
 #ifdef H5DUMP_DEBUG
 static void dump_table(hid_t fid, char* tablename, table_t *table);
 #endif  /* H5DUMP_DEBUG */
@@ -599,10 +599,11 @@ print_version(const char *progname)
  *-------------------------------------------------------------------------
  */
 static void
-init_table(table_t **tbl)
+init_table(hid_t fid, table_t **tbl)
 {
     table_t *table = (table_t *)HDmalloc(sizeof(table_t));
 
+    table->fid = fid;
     table->size = 20;
     table->nobjs = 0;
     table->objs = (obj_t *)HDmalloc(table->size * sizeof(obj_t));
@@ -694,10 +695,14 @@ H5_ATTR_PURE obj_t *
 search_obj(table_t *table, const h5token_t *obj_token)
 {
     unsigned u;
+    int token_cmp;
 
-    for(u = 0; u < table->nobjs; u++)
-        if(!HDmemcmp(&table->objs[u].obj_token, obj_token, sizeof(h5token_t)))
+    for(u = 0; u < table->nobjs; u++) {
+        if(H5VLtoken_cmp(table->fid, &table->objs[u].obj_token, obj_token, &token_cmp) < 0)
+            return NULL;
+        if(!token_cmp)
             return &(table->objs[u]);
+    }
 
     return NULL;
 }
@@ -797,9 +802,9 @@ init_objs(hid_t fid, find_objs_t *info, table_t **group_table,
     herr_t ret_value = SUCCEED;
 
     /* Initialize the tables */
-    init_table(group_table);
-    init_table(dset_table);
-    init_table(type_table);
+    init_table(fid, group_table);
+    init_table(fid, dset_table);
+    init_table(fid, type_table);
 
     /* Init the find_objs_t */
     info->fid = fid;

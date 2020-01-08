@@ -103,6 +103,7 @@ typedef struct obj_t {
 
 /*struct for the tables that the find_objs function uses*/
 typedef struct table_t {
+    hid_t fid;
     size_t size;
     size_t nobjs;
     obj_t *objs;
