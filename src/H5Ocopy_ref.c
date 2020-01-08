@@ -175,7 +175,7 @@ H5O__copy_expand_ref_object1(H5O_loc_t *src_oloc, const void *buf_src,
     for(i = 0; i < ref_count; i++) {
         const unsigned char *src_buf = (const unsigned char *)&src_ref[i];
         unsigned char *dst_buf = (unsigned char *)&dst_ref[i];
-        h5token_t tmp_token = { 0 };
+        H5O_token_t tmp_token = { 0 };
 
         /* If data is not initialized, copy zeros and skip */
         if(0 == HDmemcmp(src_buf, zeros, buf_size)) {
@@ -200,7 +200,7 @@ H5O__copy_expand_ref_object1(H5O_loc_t *src_oloc, const void *buf_src,
         /* Set the object reference info for the destination file */
         if(H5VL_native_addr_to_token(dst_oloc->file, H5I_FILE, dst_oloc->addr, &tmp_token) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
-        if(H5R__encode_token_obj_compat((const h5token_t *)&tmp_token, token_size, dst_buf, &buf_size) < 0)
+        if(H5R__encode_token_obj_compat((const H5O_token_t *)&tmp_token, token_size, dst_buf, &buf_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTDECODE, FAIL, "unable to encode dst object address")
     } /* end for */
 
@@ -367,7 +367,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, H5T_t *dt_src,
     for(i = 0; i < ref_count; i++) {
         H5R_ref_t *ref_ptr  = (H5R_ref_t *)conv_buf;
         H5R_ref_priv_t *ref = (H5R_ref_priv_t *)&ref_ptr[i];
-        h5token_t tmp_token = { 0 };
+        H5O_token_t tmp_token = { 0 };
 
         /* Get src object address */
         if(H5R__get_obj_token(ref, &tmp_token, &token_size) < 0)
@@ -382,7 +382,7 @@ H5O__copy_expand_ref_object2(H5O_loc_t *src_oloc, hid_t tid_src, H5T_t *dt_src,
         /* Set dst object address */
         if(H5VL_native_addr_to_token(dst_oloc->file, H5I_FILE, dst_oloc->addr, &tmp_token) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, FAIL, "can't serialize address into object token")
-        if(H5R__set_obj_token(ref, (const h5token_t *)&tmp_token, token_size) < 0)
+        if(H5R__set_obj_token(ref, (const H5O_token_t *)&tmp_token, token_size) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "unable to set object token")
         if(H5R__set_loc_id(ref, dst_loc_id, TRUE) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "unable to set destination loc id")

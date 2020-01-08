@@ -577,7 +577,7 @@ done:
 int
 xml_name_to_XID(hid_t loc_id, const char *str, char *outstr, int outlen, int gen)
 {
-    h5token_t obj_token;
+    H5O_token_t obj_token;
     char *obj_addr_str = NULL;
     int lookup_ret;
 

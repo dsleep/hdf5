@@ -90,7 +90,7 @@ static hbool_t H5_ntzset = FALSE;
  *
  *    The conversion 't' refers to an htri_t type.
  *
- *    The conversion 'k' refers to an h5token_t type.
+ *    The conversion 'k' refers to an H5O_token_t type.
  *
  * Return:  Success:  Number of characters printed
  *
@@ -420,7 +420,7 @@ HDfprintf(FILE *stream, const char *fmt, ...)
 
                 case 'k':
                     {
-                        h5token_t token = HDva_arg(ap, h5token_t);
+                        H5O_token_t token = HDva_arg(ap, H5O_token_t);
 
                         /* Print the raw token. */
                         n = fprintf(stream, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X", 

@@ -123,8 +123,8 @@ extern "C" {
 #endif
 
 /* Token <--> address converters */
-H5_DLL herr_t H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token);
-H5_DLL herr_t H5VLnative_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr);
+H5_DLL herr_t H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, H5O_token_t *token);
+H5_DLL herr_t H5VLnative_token_to_addr(hid_t loc_id, H5O_token_t token, haddr_t *addr);
 
 /* Not really public but must be included here */
 H5_DLL hid_t H5VL_native_register(void);

@@ -258,7 +258,7 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
                 *named_dt_head_p = dt;
 
                 /* Update the address and id */
-                HDmemcpy(&dt->obj_token, &travt->objs[i].obj_token, sizeof(h5token_t));
+                HDmemcpy(&dt->obj_token, &travt->objs[i].obj_token, sizeof(H5O_token_t));
                 dt->id_out = -1;
 
                 /* Check if this type is the one requested */
@@ -281,7 +281,7 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
         *named_dt_head_p = dt_ret;
 
         /* Update the address and id */
-        HDmemcpy(&dt_ret->obj_token, &oinfo.token, sizeof(h5token_t));
+        HDmemcpy(&dt_ret->obj_token, &oinfo.token, sizeof(H5O_token_t));
         dt_ret->id_out = -1;
     } /* end if requested datatype not found */
 

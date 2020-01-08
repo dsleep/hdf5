@@ -11192,16 +11192,16 @@ static herr_t
 UD_hard_create(const char H5_ATTR_UNUSED * link_name, hid_t loc_group, const void *udata,
     size_t udata_size, hid_t H5_ATTR_UNUSED lcpl_id)
 {
-    h5token_t token;
+    H5O_token_t token;
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
-    if(udata_size != sizeof(h5token_t)) {
+    if(udata_size != sizeof(H5O_token_t)) {
         ret_value = -1;
         goto done;
     } /* end if */
 
-    token = *(h5token_t *)udata;
+    token = *(H5O_token_t *)udata;
 
     /* Open the object this link points to */
     target_obj = H5Oopen_by_token(loc_group, token);
@@ -11266,13 +11266,13 @@ UD_hard_traverse(const char H5_ATTR_UNUSED *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t H5_ATTR_UNUSED lapl_id,
     hid_t H5_ATTR_UNUSED dxpl_id)
 {
-    h5token_t token;
+    H5O_token_t token;
     hid_t ret_value = -1;
 
-    if(udata_size != sizeof(h5token_t))
+    if(udata_size != sizeof(H5O_token_t))
         return FAIL;
 
-    token = *(h5token_t *)udata;
+    token = *(H5O_token_t *)udata;
 
     /* If this fails, our return value will be negative. */
     ret_value = H5Oopen_by_token(cur_group, token);
@@ -11285,16 +11285,16 @@ static herr_t
 UD_hard_delete(const char H5_ATTR_UNUSED * link_name, hid_t file, const void *udata,
     size_t udata_size)
 {
-    h5token_t token;
+    H5O_token_t token;
     hid_t target_obj = -1;
     herr_t ret_value = 0;
 
-    if(udata_size != sizeof(h5token_t)) {
+    if(udata_size != sizeof(H5O_token_t)) {
         ret_value = -1;
         goto done;
     } /* end if */
 
-    token = *(h5token_t *)udata;
+    token = *(H5O_token_t *)udata;
 
     /* Open the object this link points to */
     target_obj = H5Oopen_by_token(file, token);
@@ -11397,7 +11397,7 @@ ud_hard_links(hid_t fapl)
 
     /* Create a user-defined "hard link" to the group using the address we got
      * from H5Lget_info2 */
-    if(H5Lcreate_ud(fid, "ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token), sizeof(h5token_t), H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Lcreate_ud(fid, "ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token), sizeof(H5O_token_t), H5P_DEFAULT, H5P_DEFAULT) < 0) TEST_ERROR
 
     /* Close and re-open file to ensure that data is written to disk */
     if(H5Fclose(fid) < 0) TEST_ERROR
@@ -11539,7 +11539,7 @@ ud_link_reregister(hid_t fapl)
     if(H5Gclose(gid) < 0) TEST_ERROR
 
     if(H5Lcreate_ud(fid, "ud_link", (H5L_type_t)UD_HARD_TYPE, &(li.u.token),
-            sizeof(h5token_t), H5P_DEFAULT, H5P_DEFAULT) < 0)
+            sizeof(H5O_token_t), H5P_DEFAULT, H5P_DEFAULT) < 0)
         TEST_ERROR
 
     /* Create a group named REREG_TARGET_NAME in the same group as the ud link */
@@ -11560,7 +11560,7 @@ ud_link_reregister(hid_t fapl)
     /* Verify that we can't create any new links of this type */
     H5E_BEGIN_TRY {
         if(H5Lcreate_ud(fid, "ud_link2", (H5L_type_t)UD_HARD_TYPE, &(li.u.token),
-                sizeof(h5token_t), H5P_DEFAULT, H5P_DEFAULT) >= 0)
+                sizeof(H5O_token_t), H5P_DEFAULT, H5P_DEFAULT) >= 0)
             TEST_ERROR
     } H5E_END_TRY
 
@@ -14815,7 +14815,7 @@ link_info_by_idx_old(hid_t fapl)
     char         objname[NAME_BUF_SIZE]; /* Object name */
     char         valname[NAME_BUF_SIZE]; /* Link value name */
     char         filename[NAME_BUF_SIZE];/* File name */
-    h5token_t    objtoken[CORDER_NLINKS];/* Tokens (Addresses) of the objects created */
+    H5O_token_t  objtoken[CORDER_NLINKS];/* Tokens (Addresses) of the objects created */
     void        *vol_obj_file = NULL;    /* Object of file_id */
     char         tmpname[NAME_BUF_SIZE]; /* Temporary link name */
     char         tmpval[NAME_BUF_SIZE];  /* Temporary link value */
@@ -14859,7 +14859,7 @@ link_info_by_idx_old(hid_t fapl)
                 /* Retrieve group's object token */
                 if(H5Oget_info3(group_id2, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
 
-                HDmemcpy(&objtoken[u], &oi.token, sizeof(h5token_t));
+                HDmemcpy(&objtoken[u], &oi.token, sizeof(H5O_token_t));
 
                 /* Close group */
                 if(H5Gclose(group_id2) < 0) TEST_ERROR
@@ -15307,7 +15307,7 @@ delete_by_idx_old(hid_t fapl)
     void        *vol_obj_file = NULL;    /* Object of file_id */
     char         objname[NAME_BUF_SIZE]; /* Object name */
     char         filename[NAME_BUF_SIZE];/* File name */
-    h5token_t    objtoken[CORDER_NLINKS];/* Tokens (Addresses) of the objects created */
+    H5O_token_t  objtoken[CORDER_NLINKS];/* Tokens (Addresses) of the objects created */
     char         tmpname[NAME_BUF_SIZE]; /* Temporary link name */
     unsigned     u;                      /* Local index variable */
     int          token_cmp;
@@ -15355,7 +15355,7 @@ delete_by_idx_old(hid_t fapl)
             /* Retrieve group's object token */
             if(H5Oget_info3(group_id2, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
 
-            HDmemcpy(&objtoken[u], &oi.token, sizeof(h5token_t));
+            HDmemcpy(&objtoken[u], &oi.token, sizeof(H5O_token_t));
 
             /* Close group */
             if(H5Gclose(group_id2) < 0) TEST_ERROR
@@ -15429,7 +15429,7 @@ delete_by_idx_old(hid_t fapl)
             /* Retrieve group's object token */
             if(H5Oget_info3(group_id2, &oi, H5O_INFO_BASIC) < 0) TEST_ERROR
 
-            HDmemcpy(&objtoken[u], &oi.token, sizeof(h5token_t));
+            HDmemcpy(&objtoken[u], &oi.token, sizeof(H5O_token_t));
 
             /* Close group */
             if(H5Gclose(group_id2) < 0) TEST_ERROR
@@ -16356,12 +16356,12 @@ error:
  */
 static int
 open_by_idx_check(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file_id,
-    H5_index_t idx_type, H5_iter_order_t order, unsigned max_links, h5token_t *objno)
+    H5_index_t idx_type, H5_iter_order_t order, unsigned max_links, H5O_token_t *objno)
 {
     char        mntname[NAME_BUF_SIZE]; /* Link value */
     hid_t       group_id = -1;  /* ID of group to test */
     H5O_info2_t oi;             /* Buffer for querying object's info */
-    h5token_t   mnt_root_token; /* Token (address) of root group in file to mount */
+    H5O_token_t mnt_root_token; /* Token (address) of root group in file to mount */
     hid_t       obj_id;         /* ID of object opened */
     unsigned    mnt_idx;        /* Index to mount group on */
     unsigned    u, v;           /* Local index variables */
@@ -16468,7 +16468,7 @@ open_by_idx(hid_t fapl)
     char        filename[NAME_BUF_SIZE];/* File name */
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */
-    h5token_t   *objno = NULL;          /* Tokens (addresses) of the objects created */
+    H5O_token_t   *objno = NULL;        /* Tokens (addresses) of the objects created */
     unsigned    u;                      /* Local index variable */
     hid_t       ret;                    /* Generic return value */
 
@@ -16479,7 +16479,7 @@ open_by_idx(hid_t fapl)
     if(H5Pget_link_phase_change(gcpl_id, &max_compact, &min_dense) < 0) TEST_ERROR
 
     /* Allocate object token array */
-    if(NULL == (objno = (h5token_t *)HDmalloc(sizeof(h5token_t) * (max_compact * 2)))) TEST_ERROR
+    if(NULL == (objno = (H5O_token_t *)HDmalloc(sizeof(H5O_token_t) * (max_compact * 2)))) TEST_ERROR
 
     /* Create file to mount */
     h5_fixname(FILENAME[1], fapl, filename, sizeof filename);
@@ -16892,7 +16892,7 @@ error:
  */
 static int
 object_info_check(hid_t main_group_id, hid_t soft_group_id, H5_index_t idx_type,
-    H5_iter_order_t order, unsigned max_links, h5token_t *objno)
+    H5_iter_order_t order, unsigned max_links, H5O_token_t *objno)
 {
     char        objname[NAME_BUF_SIZE]; /* Object name */
     hid_t       group_id = -1;  /* ID of group to test */
@@ -16980,7 +16980,7 @@ object_info(hid_t fapl)
     char        objname[NAME_BUF_SIZE]; /* Object name */
     char        valname[2 * NAME_BUF_SIZE]; /* Link value */
     char        attrname[NAME_BUF_SIZE]; /* Attribute name */
-    h5token_t   *objno = NULL;          /* Tokens (addresses) of the objects created */
+    H5O_token_t *objno = NULL;          /* Tokens (addresses) of the objects created */
     herr_t      ret;                    /* Generic return value */
     unsigned    u, v;                   /* Local index variables */
 
@@ -16991,7 +16991,7 @@ object_info(hid_t fapl)
     if(H5Pget_link_phase_change(gcpl_id, &max_compact, &min_dense) < 0) TEST_ERROR
 
     /* Allocate object token array */
-    if(NULL == (objno = (h5token_t *)HDmalloc(sizeof(h5token_t) * (max_compact * 2)))) TEST_ERROR
+    if(NULL == (objno = (H5O_token_t *)HDmalloc(sizeof(H5O_token_t) * (max_compact * 2)))) TEST_ERROR
 
     /* Create dataspace for attributes */
     if((space_id = H5Screate(H5S_SCALAR)) < 0) TEST_ERROR

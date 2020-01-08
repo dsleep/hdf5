@@ -21,7 +21,7 @@
  *-------------------------------------------------------------------------
  */
 typedef struct trav_addr_path_t {
-    h5token_t token;
+    H5O_token_t token;
     char *path;
 } trav_addr_path_t;
 
@@ -68,7 +68,7 @@ static void trav_table_add(trav_table_t *table,
                         const H5O_info2_t *oinfo);
 
 static void trav_table_addlink(trav_table_t *table,
-                        const h5token_t *obj_token,
+                        const H5O_token_t *obj_token,
                         const char *path);
 
 /*-------------------------------------------------------------------------
@@ -124,7 +124,7 @@ h5trav_set_verbose(int print_verbose)
  *-------------------------------------------------------------------------
  */
 static void
-trav_token_add(trav_addr_t *visited, h5token_t *token, const char *path)
+trav_token_add(trav_addr_t *visited, H5O_token_t *token, const char *path)
 {
     size_t idx;         /* Index of address to use */
 
@@ -136,7 +136,7 @@ trav_token_add(trav_addr_t *visited, h5token_t *token, const char *path)
 
     /* Append it */
     idx = visited->nused++;
-    HDmemcpy(&visited->objs[idx].token, token, sizeof(h5token_t));
+    HDmemcpy(&visited->objs[idx].token, token, sizeof(H5O_token_t));
     visited->objs[idx].path = HDstrdup(path);
 } /* end trav_token_add() */
 
@@ -150,7 +150,7 @@ trav_token_add(trav_addr_t *visited, h5token_t *token, const char *path)
  *-------------------------------------------------------------------------
  */
 H5_ATTR_PURE static const char *
-trav_token_visited(hid_t loc_id, trav_addr_t *visited, h5token_t *token)
+trav_token_visited(hid_t loc_id, trav_addr_t *visited, H5O_token_t *token)
 {
     size_t u;           /* Local index variable */
     int token_cmp;
@@ -344,7 +344,7 @@ trav_info_add(trav_info_t *info, const char *path, h5trav_type_t obj_type)
         info->paths[idx].fileno = 0;
 
         /* Set token to 'undefined' values */
-        info->paths[idx].obj_token = H5TOKEN_UNDEF;
+        info->paths[idx].obj_token = H5O_TOKEN_UNDEF;
     }
 } /* end trav_info_add() */
 
@@ -368,7 +368,7 @@ trav_fileinfo_add(trav_info_t *info, hid_t loc_id)
     else
         H5Oget_info3(loc_id, &oinfo, H5O_INFO_BASIC);
 
-    HDmemcpy(&info->paths[idx].obj_token, &oinfo.token, sizeof(h5token_t));
+    HDmemcpy(&info->paths[idx].obj_token, &oinfo.token, sizeof(H5O_token_t));
     info->paths[idx].fileno = oinfo.fileno;
 } /* end trav_fileinfo_add() */
 
@@ -396,7 +396,7 @@ trav_info_visit_obj(const char *path, const H5O_info2_t *oinfo,
     /* set object addr and fileno. These are for checking same object */
     info_p = (trav_info_t *) udata;
     idx = info_p->nused - 1;
-    HDmemcpy(&info_p->paths[idx].obj_token, &oinfo->token, sizeof(h5token_t));
+    HDmemcpy(&info_p->paths[idx].obj_token, &oinfo->token, sizeof(H5O_token_t));
     info_p->paths[idx].fileno = oinfo->fileno;
 
     return(0);
@@ -681,10 +681,10 @@ trav_table_add(trav_table_t *table, const char *path, const H5O_info2_t *oinfo)
 
         new_obj = table->nobjs++;
         if(oinfo)
-            HDmemcpy(&table->objs[new_obj].obj_token, &oinfo->token, sizeof(h5token_t));
+            HDmemcpy(&table->objs[new_obj].obj_token, &oinfo->token, sizeof(H5O_token_t));
         else
             /* Set token to 'undefined' values */
-            table->objs[new_obj].obj_token = H5TOKEN_UNDEF;
+            table->objs[new_obj].obj_token = H5O_TOKEN_UNDEF;
         table->objs[new_obj].flags[0] = table->objs[new_obj].flags[1] = 0;
         table->objs[new_obj].is_same_trgobj = 0;
         table->objs[new_obj].name = (char *)HDstrdup(path);
@@ -704,7 +704,7 @@ trav_table_add(trav_table_t *table, const char *path, const H5O_info2_t *oinfo)
  *-------------------------------------------------------------------------
  */
 static void
-trav_table_addlink(trav_table_t *table, const h5token_t *obj_token, const char *path)
+trav_table_addlink(trav_table_t *table, const H5O_token_t *obj_token, const char *path)
 {
     size_t i;           /* Local index variable */
     int token_cmp;
@@ -761,7 +761,7 @@ void trav_table_addflags(unsigned *flags,
         new_obj = table->nobjs++;
 
         /* Set token to 'undefined' values */
-        table->objs[new_obj].obj_token = H5TOKEN_UNDEF;
+        table->objs[new_obj].obj_token = H5O_TOKEN_UNDEF;
 
         table->objs[new_obj].flags[0] = flags[0];
         table->objs[new_obj].flags[1] = flags[1];

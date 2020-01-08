@@ -256,7 +256,7 @@ typedef struct H5VL_loc_by_idx {
 } H5VL_loc_by_idx_t;
 
 typedef struct H5VL_loc_by_token {
-    h5token_t *token;
+    H5O_token_t *token;
 } H5VL_loc_by_token_t;
 
 /* Structure to hold parameters for object locations.
@@ -455,9 +455,9 @@ typedef struct H5VL_blob_class_t {
 
 /* Object token routines */
 typedef struct H5VL_token_class_t {
-    herr_t (*cmp)(void *obj, const h5token_t *token1, const h5token_t *token2, int *cmp_value);
-    herr_t (*to_str)(void *obj, H5I_type_t obj_type, const h5token_t *token, char **token_str);
-    herr_t (*from_str)(void *obj, H5I_type_t obj_type, const char *token_str, h5token_t *token);
+    herr_t (*cmp)(void *obj, const H5O_token_t *token1, const H5O_token_t *token2, int *cmp_value);
+    herr_t (*to_str)(void *obj, H5I_type_t obj_type, const H5O_token_t *token, char **token_str);
+    herr_t (*from_str)(void *obj, H5I_type_t obj_type, const char *token_str, H5O_token_t *token);
 } H5VL_token_class_t;
 
 /* Class information for each VOL connector */

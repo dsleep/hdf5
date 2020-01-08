@@ -231,24 +231,6 @@ H5_GCC_DIAG_ON(long-long)
 #endif
 #define HADDR_MAX		(HADDR_UNDEF-1)
 
-/* Tokens are unique and permanent identifiers that are
- * used to reference HDF5 objects in a container. */
-
-/* The maximum size allowed for tokens */
-#define H5_MAX_TOKEN_SIZE       (16)    /* Allows for 128-bit tokens */
-
-/* Type for tokens */
-typedef struct h5token_t {
-    uint8_t __data[H5_MAX_TOKEN_SIZE];
-} h5token_t;
-
-/* The canonical 'undefined' token value */
-H5_DLLVAR const h5token_t H5TOKEN_UNDEF_g;
-#define H5TOKEN_UNDEF H5TOKEN_UNDEF_g
-
-/* Check if the token is the 'undefined' token */
-#define H5_IS_TOKEN_UNDEF(token)    (!HDmemcmp(&token, &H5TOKEN_UNDEF_g, sizeof(h5token_t)))
-
 /* uint32_t type is used for creation order field for messages.  It may be
  * defined in Posix.1g, otherwise it is defined here.
  */
@@ -345,6 +327,18 @@ typedef struct H5_ih_info_t {
     hsize_t     index_size;     /* btree and/or list */
     hsize_t     heap_size;
 } H5_ih_info_t;
+
+/* Tokens are unique and permanent identifiers that are
+ * used to reference HDF5 objects in a container. */
+
+/* The maximum size allowed for tokens */
+#define H5O_MAX_TOKEN_SIZE      (16)    /* Allows for 128-bit tokens */
+
+/* Type for object tokens */
+/* (Hoisted here, since it's used by both the H5Lpublic.h and H5Opublic.h headers) */
+typedef struct H5O_token_t {
+    uint8_t __data[H5O_MAX_TOKEN_SIZE];
+} H5O_token_t;
 
 /* Functions in H5.c */
 H5_DLL herr_t H5open(void);

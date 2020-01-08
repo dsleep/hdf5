@@ -27,6 +27,7 @@
 /* Public headers needed by this file */
 #include "H5public.h"		/* Generic Functions			*/
 #include "H5Ipublic.h"		/* IDs			  		*/
+#include "H5Opublic.h"		/* Object Headers			*/
 #include "H5Tpublic.h"		/* Datatypes				*/
 
 /*****************/
@@ -85,7 +86,7 @@ typedef struct {
 } H5L_info1_t;
 
 /* Information struct for link (for H5Lget_info2/H5Lget_info_by_idx2)
- * h5token_t version used in VOL layer and future public API calls
+ * H5O_token_t version used in VOL layer and future public API calls
  */
 typedef struct {
     H5L_type_t          type;           /* Type of link                   */
@@ -93,7 +94,7 @@ typedef struct {
     int64_t             corder;         /* Creation order                 */
     H5T_cset_t          cset;           /* Character set of link name     */
     union {
-        h5token_t       token;          /* VOL token of location hard link points to */
+        H5O_token_t     token;          /* Token of location that hard link points to */
         size_t          val_size;       /* Size of a soft link or UD link value */
     } u;
 } H5L_info2_t;
@@ -160,7 +161,7 @@ typedef herr_t (*H5L_iterate1_t)(hid_t group, const char *name, const H5L_info1_
     void *op_data);
 
 /* Prototype for H5Literate2/H5Literate_by_name2() operator
- * h5token_t version used in VOL layer and future public API calls
+ * H5O_token_t version used in VOL layer and future public API calls
  */
 typedef herr_t (*H5L_iterate2_t)(hid_t group, const char *name, const H5L_info2_t *info,
     void *op_data);

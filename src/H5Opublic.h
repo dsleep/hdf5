@@ -84,6 +84,10 @@
 #define H5O_INFO_META_SIZE      0x0010u         /* Fill in the meta_size field */
 #define H5O_INFO_ALL            (H5O_INFO_BASIC | H5O_INFO_TIME | H5O_INFO_NUM_ATTRS | H5O_INFO_HDR | H5O_INFO_META_SIZE)
 
+/* Convenience macro to check if the token is the 'undefined' token value */
+#define H5O_IS_TOKEN_UNDEF(token)    (!HDmemcmp(&(token), &(H5O_TOKEN_UNDEF), sizeof(H5O_token_t)))
+
+
 /*******************/
 /* Public Typedefs */
 /*******************/
@@ -140,7 +144,7 @@ typedef struct H5O_info1_t {
 /* (For H5Oget_info / H5Oget_info_by_name / H5Oget_info_by_idx version 3) */
 typedef struct H5O_info2_t {
     unsigned long   fileno;     /* File number that object is located in */
-    h5token_t       token;      /* Token representing the object        */
+    H5O_token_t     token;      /* Token representing the object        */
     H5O_type_t 	    type;       /* Basic object type (group, dataset, etc.) */
     unsigned        rc;         /* Reference count of object            */
     time_t          atime;      /* Access time                          */
@@ -196,7 +200,7 @@ extern "C" {
 
 H5_DLL hid_t H5Oopen(hid_t loc_id, const char *name, hid_t lapl_id);
 H5_DLL hid_t H5Oopen_by_addr(hid_t loc_id, haddr_t addr);
-H5_DLL hid_t H5Oopen_by_token(hid_t loc_id, h5token_t token);
+H5_DLL hid_t H5Oopen_by_token(hid_t loc_id, H5O_token_t token);
 H5_DLL hid_t H5Oopen_by_idx(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id);
 H5_DLL htri_t H5Oexists_by_name(hid_t loc_id, const char *name, hid_t lapl_id);
@@ -246,10 +250,14 @@ H5_DLL herr_t H5Orefresh(hid_t oid);
 H5_DLL herr_t H5Odisable_mdc_flushes(hid_t object_id);
 H5_DLL herr_t H5Oenable_mdc_flushes(hid_t object_id);
 H5_DLL herr_t H5Oare_mdc_flushes_disabled(hid_t object_id, hbool_t *are_disabled);
-H5_DLL herr_t H5Otoken_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2,
+H5_DLL herr_t H5Otoken_cmp(hid_t loc_id, const H5O_token_t *token1, const H5O_token_t *token2,
     int *cmp_value);
-H5_DLL herr_t H5Otoken_to_str(hid_t loc_id, const h5token_t *token, char **token_str);
-H5_DLL herr_t H5Otoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token);
+H5_DLL herr_t H5Otoken_to_str(hid_t loc_id, const H5O_token_t *token, char **token_str);
+H5_DLL herr_t H5Otoken_from_str(hid_t loc_id, const char *token_str, H5O_token_t *token);
+
+/* The canonical 'undefined' token value */
+#define H5O_TOKEN_UNDEF (H5OPEN H5O_TOKEN_UNDEF_g)
+H5_DLLVAR const H5O_token_t H5O_TOKEN_UNDEF_g;
 
 /* Symbols defined for compatibility with previous versions of the HDF5 API.
  *

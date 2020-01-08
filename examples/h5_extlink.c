@@ -367,7 +367,7 @@ static void hard_link_example(void)
      * as its udata.
      */
     H5Lcreate_ud(file_id, UD_HARD_LINK_NAME, (H5L_type_t)UD_HARD_CLASS, &(li.u.token),
-                 sizeof(h5token_t), H5P_DEFAULT, H5P_DEFAULT);
+                 sizeof(H5O_token_t), H5P_DEFAULT, H5P_DEFAULT);
 
     /* The UD hard link has now incremented the group's reference count
      * like a normal hard link would.  This means that we can unlink the
@@ -404,18 +404,18 @@ static void hard_link_example(void)
 static herr_t UD_hard_create(const char *link_name, hid_t loc_group,
     const void *udata, size_t udata_size, hid_t lcpl_id)
 {
-    h5token_t token;
+    H5O_token_t token;
     hid_t target_obj = H5I_INVALID_HID;
     herr_t ret_value = 0;
 
     /* Make sure that the address passed in looks valid */
-    if(udata_size != sizeof(h5token_t))
+    if(udata_size != sizeof(H5O_token_t))
     {
       ret_value = -1;
       goto done;
     }
 
-    token = *((h5token_t *) udata);
+    token = *((H5O_token_t *) udata);
 
     /* Open the object this link points to so that we can increment
      * its reference count. This also ensures that the token passed
@@ -448,20 +448,20 @@ done:
 static herr_t UD_hard_delete(const char *link_name, hid_t loc_group,
     const void *udata, size_t udata_size)
 {
-    h5token_t token;
+    H5O_token_t token;
     hid_t target_obj = H5I_INVALID_HID;
     herr_t ret_value = 0;
 
     /* Sanity check; we have already verified the udata's size in the creation
      * callback.
      */
-    if(udata_size != sizeof(h5token_t))
+    if(udata_size != sizeof(H5O_token_t))
     {
       ret_value = -1;
       goto done;
     }
 
-    token = *((h5token_t *) udata);
+    token = *((H5O_token_t *) udata);
 
     /* Open the object this link points to */
     target_obj = H5Oopen_by_token(loc_group, token);
@@ -492,16 +492,16 @@ done:
 static hid_t UD_hard_traverse(const char *link_name, hid_t cur_group,
     const void *udata, size_t udata_size, hid_t lapl_id, hid_t dxpl_id)
 {
-    h5token_t token;
+    H5O_token_t token;
     hid_t ret_value = H5I_INVALID_HID;
 
     /* Sanity check; we have already verified the udata's size in the creation
      * callback.
      */
-    if(udata_size != sizeof(h5token_t))
+    if(udata_size != sizeof(H5O_token_t))
       return H5I_INVALID_HID;
 
-    token = *((h5token_t *) udata);
+    token = *((H5O_token_t *) udata);
 
     /* Open the object by token. If H5Oopen_by_token fails, ret_value will
      * be negative to indicate that the traversal function failed.

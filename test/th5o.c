@@ -473,9 +473,9 @@ test_h5o_open_by_token(void)
     CHECK(ret, FAIL, "H5Dclose");
 
     /* Try giving some bogus values to H5O_open_by_token */
-    /* Try opening an object using H5TOKEN_UNDEF (should fail) */
+    /* Try opening an object using H5O_TOKEN_UNDEF (should fail) */
     H5E_BEGIN_TRY{
-      dtype = H5Oopen_by_token(fid, H5TOKEN_UNDEF);
+      dtype = H5Oopen_by_token(fid, H5O_TOKEN_UNDEF);
     }H5E_END_TRY
     VERIFY(dtype, FAIL, "H5Oopen_by_token");
 

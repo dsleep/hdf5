@@ -131,7 +131,7 @@ typedef struct {
 
 
 typedef struct named_dt_t {
-    h5token_t           obj_token;  /* Object token for the named dtype in the in file */
+    H5O_token_t         obj_token;  /* Object token for the named dtype in the in file */
     hid_t               id_out;     /* Open identifier for the dtype in the out file */
     struct named_dt_t   *next;      /* Next dtype */
 } named_dt_t;

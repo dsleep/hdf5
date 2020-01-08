@@ -85,13 +85,6 @@ char                    H5_lib_vers_info_g[] = H5_VERS_INFO;
 static hbool_t          H5_dont_atexit_g = FALSE;
 H5_debug_t              H5_debug_g; /* debugging info */
 
-/* The canonical 'undefined' token */
-const h5token_t H5TOKEN_UNDEF_g = {{
-        255, 255, 255, 255,
-        255, 255, 255, 255,
-        255, 255, 255, 255,
-        255, 255, 255, 255}};
-
 
 /*******************/
 /* Local Variables */

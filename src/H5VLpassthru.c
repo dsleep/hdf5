@@ -189,9 +189,9 @@ static herr_t H5VL_pass_through_blob_specific(void *obj, void *blob_id, H5VL_blo
 static herr_t H5VL_pass_through_blob_optional(void *obj, void *blob_id, H5VL_blob_optional_t opt_type, va_list arguments);
 
 /* Token callbacks */
-static herr_t H5VL_pass_through_token_cmp(void *obj, const h5token_t *token1, const h5token_t *token2, int *cmp_value);
-static herr_t H5VL_pass_through_token_to_str(void *obj, H5I_type_t obj_type, const h5token_t *token, char **token_str);
-static herr_t H5VL_pass_through_token_from_str(void *obj, H5I_type_t obj_type, const char *token_str, h5token_t *token);
+static herr_t H5VL_pass_through_token_cmp(void *obj, const H5O_token_t *token1, const H5O_token_t *token2, int *cmp_value);
+static herr_t H5VL_pass_through_token_to_str(void *obj, H5I_type_t obj_type, const H5O_token_t *token, char **token_str);
+static herr_t H5VL_pass_through_token_from_str(void *obj, H5I_type_t obj_type, const char *token_str, H5O_token_t *token);
 
 /* Generic optional callback */
 static herr_t H5VL_pass_through_optional(void *obj, int op_type, hid_t dxpl_id, void **req, va_list arguments);
@@ -3050,8 +3050,8 @@ H5VL_pass_through_blob_optional(void *obj, void *blob_id,
  *---------------------------------------------------------------------------
  */
 static herr_t
-H5VL_pass_through_token_cmp(void *obj, const h5token_t *token1,
-    const h5token_t *token2, int *cmp_value)
+H5VL_pass_through_token_cmp(void *obj, const H5O_token_t *token1,
+    const H5O_token_t *token2, int *cmp_value)
 {
     H5VL_pass_through_t *o = (H5VL_pass_through_t *)obj;
     herr_t ret_value;
@@ -3084,7 +3084,7 @@ H5VL_pass_through_token_cmp(void *obj, const h5token_t *token1,
  */
 static herr_t
 H5VL_pass_through_token_to_str(void *obj, H5I_type_t obj_type,
-    const h5token_t *token, char **token_str)
+    const H5O_token_t *token, char **token_str)
 {
     H5VL_pass_through_t *o = (H5VL_pass_through_t *)obj;
     herr_t ret_value;
@@ -3116,7 +3116,7 @@ H5VL_pass_through_token_to_str(void *obj, H5I_type_t obj_type,
  */
 static herr_t
 H5VL_pass_through_token_from_str(void *obj, H5I_type_t obj_type,
-    const char *token_str, h5token_t *token)
+    const char *token_str, H5O_token_t *token)
 {
     H5VL_pass_through_t *o = (H5VL_pass_through_t *)obj;
     herr_t ret_value;

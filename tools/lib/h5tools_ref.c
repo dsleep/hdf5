@@ -35,14 +35,14 @@
  */
 
 typedef struct {
-    h5token_t obj_token; /* Object token */
+    H5O_token_t obj_token; /* Object token */
     char *path;          /* Object path */
 } ref_path_node_t;
 
 static H5SL_t *ref_path_table = NULL;   /* the "table" (implemented with a skip list) */
 static hid_t thefile = (-1);
 
-static int ref_path_table_put(const char *, const h5token_t *token);
+static int ref_path_table_put(const char *, const H5O_token_t *token);
 
 /*-------------------------------------------------------------------------
  * Function:    free_ref_path_info
@@ -97,7 +97,7 @@ init_ref_path_cb(const char *obj_name, const H5O_info2_t *oinfo,
  * Function:    ref_path_table_cmp
  *
  * Purpose:     Skip list key comparison function which compares two
- *              h5token_t objects.
+ *              H5O_token_t objects.
  *
  * Return:      Negative (if token2 is greater than token1)
  *              0 (if tokens are equal)
@@ -109,14 +109,14 @@ init_ref_path_cb(const char *obj_name, const H5O_info2_t *oinfo,
 static int
 ref_path_table_cmp(const void *key1, const void *key2)
 {
-    const h5token_t *token1 = (const h5token_t *)key1;
-    const h5token_t *token2 = (const h5token_t *)key2;
+    const H5O_token_t *token1 = (const H5O_token_t *)key1;
+    const H5O_token_t *token2 = (const H5O_token_t *)key2;
     int              cmp_value = 0;
 
     if(thefile > 0)
         H5Otoken_cmp(thefile, token1, token2, &cmp_value);
     else
-        cmp_value = HDmemcmp(token1, token2, sizeof(h5token_t));
+        cmp_value = HDmemcmp(token1, token2, sizeof(H5O_token_t));
 
     return cmp_value;
 }
@@ -194,7 +194,7 @@ term_ref_path_table(void)
  *-------------------------------------------------------------------------
  */
 int
-ref_path_table_lookup(const char *thepath, h5token_t *token)
+ref_path_table_lookup(const char *thepath, H5O_token_t *token)
 {
     H5O_info2_t oi;
 
@@ -219,7 +219,7 @@ ref_path_table_lookup(const char *thepath, h5token_t *token)
         return -1;
 
     /* Return object token through parameter */
-    HDmemcpy(token, &oi.token, sizeof(h5token_t));
+    HDmemcpy(token, &oi.token, sizeof(H5O_token_t));
 
     return 0;
 }
@@ -244,7 +244,7 @@ ref_path_table_lookup(const char *thepath, h5token_t *token)
  *-------------------------------------------------------------------------
  */
 static int
-ref_path_table_put(const char *path, const h5token_t *token)
+ref_path_table_put(const char *path, const H5O_token_t *token)
 {
     ref_path_node_t *new_node;
 
@@ -252,7 +252,7 @@ ref_path_table_put(const char *path, const h5token_t *token)
         if((new_node = (ref_path_node_t *)HDmalloc(sizeof(ref_path_node_t))) == NULL)
             return(-1);
 
-        HDmemcpy(&new_node->obj_token, token, sizeof(h5token_t));
+        HDmemcpy(&new_node->obj_token, token, sizeof(H5O_token_t));
         new_node->path = HDstrdup(path);
 
         return(H5SL_insert(ref_path_table, new_node, &(new_node->obj_token)));
@@ -279,15 +279,15 @@ int get_next_xid(void) {
 haddr_t fake_xid = HADDR_MAX;
 
 void
-get_fake_token(h5token_t *token) {
+get_fake_token(H5O_token_t *token) {
     if(thefile > 0) {
         /* TODO: potential for this to be called with non-native connector objects */
         if(H5VLnative_addr_to_token(thefile, fake_xid, token) < 0)
-            *token = H5TOKEN_UNDEF;
+            *token = H5O_TOKEN_UNDEF;
         fake_xid--;
     }
     else
-        *token = H5TOKEN_UNDEF;
+        *token = H5O_TOKEN_UNDEF;
 }
 
 /*
@@ -299,7 +299,7 @@ get_fake_token(h5token_t *token) {
  */
 
 void
-ref_path_table_gen_fake(const char *path, h5token_t *token)
+ref_path_table_gen_fake(const char *path, H5O_token_t *token)
 {
     /* Generate fake object token for string */
     get_fake_token(token);

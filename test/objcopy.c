@@ -168,7 +168,7 @@ unsigned num_attributes_g;         /* Number of attributes created */
 static struct {
     size_t  nalloc;             /* number of slots allocated */
     size_t  nobjs;              /* number of objects */
-    h5token_t *obj;             /* Tokens of objects seen */
+    H5O_token_t *obj;           /* Tokens of objects seen */
 } idtab_g;
 
 /* Local function prototypes */
@@ -215,7 +215,7 @@ token_insert(H5O_info2_t *oi)
     /* Extend the table */
     if(idtab_g.nobjs >= idtab_g.nalloc) {
         idtab_g.nalloc = MAX(256, 2*idtab_g.nalloc);
-        idtab_g.obj = (h5token_t *)HDrealloc(idtab_g.obj, idtab_g.nalloc * sizeof(idtab_g.obj[0]));
+        idtab_g.obj = (H5O_token_t *)HDrealloc(idtab_g.obj, idtab_g.nalloc * sizeof(idtab_g.obj[0]));
     } /* end if */
 
     /* Insert the entry */
@@ -10251,7 +10251,7 @@ test_copy_committed_datatype_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fap
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object token */
+    H5O_token_t exp_token;                      /* Expected object token */
     char src1_filename[NAME_BUF_SIZE];
     char src2_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
@@ -10494,7 +10494,7 @@ test_copy_committed_datatype_merge_same_file(hid_t fcpl, hid_t fapl, hbool_t reo
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object token */
+    H5O_token_t exp_token;                      /* Expected object token */
     char filename[NAME_BUF_SIZE];
     int token_cmp;
 
@@ -10778,7 +10778,7 @@ test_copy_committed_dt_merge_sugg(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object token */
+    H5O_token_t exp_token;                      /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
     int token_cmp;
@@ -11013,7 +11013,7 @@ test_copy_committed_dt_merge_attr(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object token */
+    H5O_token_t exp_token;                      /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
     int token_cmp;
@@ -11245,7 +11245,7 @@ test_copy_cdt_hier_merge(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t d
     int i;                    /* Local index variable */
     hsize_t dim1d[1];                /* dimension sizes */
     int buf[DIM_SIZE_1];            /* Buffer for data */
-    h5token_t exp_token_int, exp_token_short;         /* Expected object tokenes */
+    H5O_token_t exp_token_int, exp_token_short;         /* Expected object tokenes */
     H5O_info2_t oinfo;                       /* Object info */
     char src_filename[NAME_BUF_SIZE];        /* Source file name */
     char dst_filename[NAME_BUF_SIZE];        /* Destination file name */
@@ -11580,7 +11580,7 @@ test_copy_cdt_merge_cdt(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t ds
     hid_t ocpypl_id = -1;                       /* Object copy plist ID */
     hsize_t dim1d[1];                /* dimension sizes */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object tokenes */
+    H5O_token_t exp_token;                      /* Expected object token */
     char src_filename[NAME_BUF_SIZE];        /* Source file name */
     char dst_filename[NAME_BUF_SIZE];        /* Destination file name */
     int token_cmp;
@@ -11811,7 +11811,7 @@ test_copy_cdt_merge_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     hid_t tid = -1;                             /* Datatype ID */
     hid_t ocpypl_id = -1;                       /* Object copy plist ID */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object token */
+    H5O_token_t exp_token;                      /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
     int token_cmp;
@@ -12056,7 +12056,7 @@ test_copy_cdt_merge_dset_suggs(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object token */
+    H5O_token_t exp_token;                      /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
     int token_cmp;
@@ -12829,7 +12829,7 @@ test_copy_set_mcdt_search_cb(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl,
     hsize_t dim1d[1];                           /* Dataset dimensions */
     int buf[DIM_SIZE_1];                        /* Buffer for writing data */
     H5O_info2_t oinfo;                          /* Object info */
-    h5token_t exp_token;                        /* Expected object token */
+    H5O_token_t exp_token;                      /* Expected object token */
     char src_filename[NAME_BUF_SIZE];
     char dst_filename[NAME_BUF_SIZE];
     mcdt_search_cb_ud cb_udata;                 /* User data for callback */

@@ -668,7 +668,7 @@ h5diff(const char *fname1,
                 obj1type = (h5trav_type_t)oinfo1.type;
                 trav_info_add(info1_obj, obj1fullname, obj1type);
                 idx = info1_obj->nused - 1;
-                HDmemcpy(&info1_obj->paths[idx].obj_token, &oinfo1.token, sizeof(h5token_t));
+                HDmemcpy(&info1_obj->paths[idx].obj_token, &oinfo1.token, sizeof(H5O_token_t));
                 info1_obj->paths[idx].fileno = oinfo1.fileno;
             }
             else if (src_linfo1.type == H5L_TYPE_SOFT) {
@@ -718,7 +718,7 @@ h5diff(const char *fname1,
                 obj2type = (h5trav_type_t)oinfo2.type;
                 trav_info_add(info2_obj, obj2fullname, obj2type);
                 idx = info2_obj->nused - 1;
-                HDmemcpy(&info2_obj->paths[idx].obj_token, &oinfo2.token, sizeof(h5token_t));
+                HDmemcpy(&info2_obj->paths[idx].obj_token, &oinfo2.token, sizeof(H5O_token_t));
                 info2_obj->paths[idx].fileno = oinfo2.fileno;
             }
             else if (src_linfo2.type == H5L_TYPE_SOFT) {
@@ -788,7 +788,7 @@ h5diff(const char *fname1,
                 size_t idx = info1_lp->nused - 1;
 
                 H5TOOLS_DEBUG("h5diff ... ... ... info1_obj not null");
-                HDmemcpy(&info1_lp->paths[idx].obj_token, &trg_linfo1.obj_token, sizeof(h5token_t));
+                HDmemcpy(&info1_lp->paths[idx].obj_token, &trg_linfo1.obj_token, sizeof(H5O_token_t));
                 info1_lp->paths[idx].type = (h5trav_type_t)trg_linfo1.trg_type;
                 info1_lp->paths[idx].fileno = trg_linfo1.fileno;
             }
@@ -828,7 +828,7 @@ h5diff(const char *fname1,
                 size_t idx = info2_lp->nused - 1;
 
                 H5TOOLS_DEBUG("h5diff ... ... ... info2_obj not null");
-                HDmemcpy(&info2_lp->paths[idx].obj_token, &trg_linfo2.obj_token, sizeof(h5token_t));
+                HDmemcpy(&info2_lp->paths[idx].obj_token, &trg_linfo2.obj_token, sizeof(H5O_token_t));
                 info2_lp->paths[idx].type = (h5trav_type_t)trg_linfo2.trg_type;
                 info2_lp->paths[idx].fileno = trg_linfo2.fileno;
             }

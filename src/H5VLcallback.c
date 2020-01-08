@@ -190,11 +190,11 @@ static herr_t H5VL__blob_specific(void *obj, const H5VL_class_t *cls,
 static herr_t H5VL__blob_optional(void *obj, const H5VL_class_t *cls,
     void *blob_id, H5VL_blob_optional_t opt_type, va_list arguments);
 static herr_t H5VL__token_cmp(void *obj, const H5VL_class_t *cls,
-    const h5token_t *token1, const h5token_t *token2, int *cmp_value);
+    const H5O_token_t *token1, const H5O_token_t *token2, int *cmp_value);
 static herr_t H5VL__token_to_str(void *obj, H5I_type_t obj_type, const H5VL_class_t *cls,
-    const h5token_t *token, char **token_str);
+    const H5O_token_t *token, char **token_str);
 static herr_t H5VL__token_from_str(void *obj, H5I_type_t obj_type, const H5VL_class_t *cls,
-    const char *token_str, h5token_t *token);
+    const char *token_str, H5O_token_t *token);
 static herr_t H5VL__optional(void *obj, const H5VL_class_t *cls, int op_type,
     hid_t dxpl_id, void **req, va_list arguments);
 
@@ -7300,7 +7300,7 @@ done:
  */
 static herr_t
 H5VL__token_cmp(void *obj, const H5VL_class_t *cls,
-    const h5token_t *token1, const h5token_t *token2, int *cmp_value)
+    const H5O_token_t *token1, const H5O_token_t *token2, int *cmp_value)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -7328,7 +7328,7 @@ H5VL__token_cmp(void *obj, const H5VL_class_t *cls,
                 HGOTO_ERROR(H5E_VOL, H5E_CANTCOMPARE, FAIL, "can't compare object tokens")
         } /* end if */
         else
-            *cmp_value = HDmemcmp(token1, token2, sizeof(h5token_t));
+            *cmp_value = HDmemcmp(token1, token2, sizeof(H5O_token_t));
     } /* end else */
 
 done:
@@ -7350,8 +7350,8 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_token_cmp(const H5VL_object_t *vol_obj, const h5token_t *token1,
-    const h5token_t *token2, int *cmp_value)
+H5VL_token_cmp(const H5VL_object_t *vol_obj, const H5O_token_t *token1,
+    const H5O_token_t *token2, int *cmp_value)
 {
     hbool_t vol_wrapper_set = FALSE;    /* Whether the VOL object wrapping context was set up */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -7396,8 +7396,8 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VLtoken_cmp(void *obj, hid_t connector_id, const h5token_t *token1,
-    const h5token_t *token2, int *cmp_value)
+H5VLtoken_cmp(void *obj, hid_t connector_id, const H5O_token_t *token1,
+    const H5O_token_t *token2, int *cmp_value)
 {
     H5VL_class_t *cls;           /* VOL connector's class struct */
     herr_t ret_value = SUCCEED;  /* Return value */
@@ -7434,7 +7434,7 @@ done:
  */
 static herr_t
 H5VL__token_to_str(void *obj, H5I_type_t obj_type, const H5VL_class_t *cls,
-    const h5token_t *token, char **token_str)
+    const H5O_token_t *token, char **token_str)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -7473,7 +7473,7 @@ done:
  */
 herr_t
 H5VL_token_to_str(const H5VL_object_t *vol_obj, H5I_type_t obj_type,
-    const h5token_t *token, char **token_str)
+    const H5O_token_t *token, char **token_str)
 {
     hbool_t vol_wrapper_set = FALSE;    /* Whether the VOL object wrapping context was set up */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -7515,7 +7515,7 @@ done:
  */
 herr_t
 H5VLtoken_to_str(void *obj, H5I_type_t obj_type, hid_t connector_id,
-    const h5token_t *token, char **token_str)
+    const H5O_token_t *token, char **token_str)
 {
     H5VL_class_t *cls;                  /* VOL connector's class struct */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -7554,7 +7554,7 @@ done:
  */
 static herr_t
 H5VL__token_from_str(void *obj, H5I_type_t obj_type, const H5VL_class_t *cls,
-    const char *token_str, h5token_t *token)
+    const char *token_str, H5O_token_t *token)
 {
     herr_t ret_value = SUCCEED;         /* Return value */
 
@@ -7574,7 +7574,7 @@ H5VL__token_from_str(void *obj, H5I_type_t obj_type, const H5VL_class_t *cls,
             HGOTO_ERROR(H5E_VOL, H5E_CANTUNSERIALIZE, FAIL, "can't deserialize object token string")
     } /* end if */
     else
-        *token = H5TOKEN_UNDEF;
+        *token = H5O_TOKEN_UNDEF;
 
 done:
     FUNC_LEAVE_NOAPI(ret_value)
@@ -7593,7 +7593,7 @@ done:
  */
 herr_t
 H5VL_token_from_str(const H5VL_object_t *vol_obj, H5I_type_t obj_type,
-    const char *token_str, h5token_t *token)
+    const char *token_str, H5O_token_t *token)
 {
     hbool_t vol_wrapper_set = FALSE;    /* Whether the VOL object wrapping context was set up */
     herr_t ret_value = SUCCEED;         /* Return value */
@@ -7635,7 +7635,7 @@ done:
  */
 herr_t
 H5VLtoken_from_str(void *obj, H5I_type_t obj_type, hid_t connector_id,
-    const char *token_str, h5token_t *token)
+    const char *token_str, H5O_token_t *token)
 {
     H5VL_class_t *cls;                  /* VOL connector's class struct */
     herr_t ret_value = SUCCEED;         /* Return value */

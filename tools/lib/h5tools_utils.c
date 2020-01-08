@@ -57,7 +57,7 @@ static void init_table(hid_t fid, table_t **tbl);
 #ifdef H5DUMP_DEBUG
 static void dump_table(hid_t fid, char* tablename, table_t *table);
 #endif  /* H5DUMP_DEBUG */
-static void add_obj(table_t *table, const h5token_t *obj_token, const char *objname, hbool_t recorded);
+static void add_obj(table_t *table, const H5O_token_t *obj_token, const char *objname, hbool_t recorded);
 
 /*-------------------------------------------------------------------------
  * Function: parallel_print
@@ -692,7 +692,7 @@ dump_tables(find_objs_t *info)
  *-------------------------------------------------------------------------
  */
 H5_ATTR_PURE obj_t *
-search_obj(table_t *table, const h5token_t *obj_token)
+search_obj(table_t *table, const H5O_token_t *obj_token)
 {
     unsigned u;
     int token_cmp;
@@ -840,7 +840,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static void
-add_obj(table_t *table, const h5token_t *obj_token, const char *objname, hbool_t record)
+add_obj(table_t *table, const H5O_token_t *obj_token, const char *objname, hbool_t record)
 {
     size_t u;
 
@@ -854,7 +854,7 @@ add_obj(table_t *table, const h5token_t *obj_token, const char *objname, hbool_t
     u = table->nobjs++;
 
     /* Set information about object */
-    HDmemcpy(&table->objs[u].obj_token, obj_token, sizeof(h5token_t));
+    HDmemcpy(&table->objs[u].obj_token, obj_token, sizeof(H5O_token_t));
     table->objs[u].objname = HDstrdup(objname);
     table->objs[u].recorded = record;
     table->objs[u].displayed = 0;
@@ -996,7 +996,7 @@ H5tools_get_symlink_info(hid_t file_id, const char * linkpath, h5tool_link_info_
         }  /* end if */
 
         /* set target obj type to return */
-        HDmemcpy(&link_info->obj_token, &trg_oinfo.token, sizeof(h5token_t));
+        HDmemcpy(&link_info->obj_token, &trg_oinfo.token, sizeof(H5O_token_t));
         link_info->trg_type = trg_oinfo.type;
         link_info->fileno = trg_oinfo.fileno;
     } /* end if */

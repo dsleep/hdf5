@@ -95,7 +95,7 @@
       HDfflush(stdout);                                         \
   } while (0)
 static const char *
-H5R__print_token(const h5token_t token) {
+H5R__print_token(const H5O_token_t token) {
     static char string[64];
 
     /* Print the raw token. */
@@ -132,8 +132,8 @@ H5R__print_token(const h5token_t token) {
 /* Local Prototypes */
 /********************/
 
-static herr_t H5R__encode_obj_token(const h5token_t *obj_token, size_t token_size, unsigned char *buf, size_t *nalloc);
-static herr_t H5R__decode_obj_token(const unsigned char *buf, size_t *nbytes, h5token_t *obj_token, uint8_t *token_size);
+static herr_t H5R__encode_obj_token(const H5O_token_t *obj_token, size_t token_size, unsigned char *buf, size_t *nalloc);
+static herr_t H5R__decode_obj_token(const unsigned char *buf, size_t *nbytes, H5O_token_t *obj_token, uint8_t *token_size);
 static herr_t H5R__encode_region(H5S_t *space, unsigned char *buf, size_t *nalloc);
 static herr_t H5R__decode_region(const unsigned char *buf, size_t *nbytes, H5S_t **space_ptr);
 static herr_t H5R__encode_string(const char *string, unsigned char *buf, size_t *nalloc);
@@ -269,7 +269,7 @@ H5R_term_package(void)
  *-------------------------------------------------------------------------
  */
 herr_t
-H5R__create_object(const h5token_t *obj_token, size_t token_size,
+H5R__create_object(const H5O_token_t *obj_token, size_t token_size,
     H5R_ref_priv_t *ref)
 {
     size_t encode_size;
@@ -310,7 +310,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5R__create_region(const h5token_t *obj_token, size_t token_size,
+H5R__create_region(const H5O_token_t *obj_token, size_t token_size,
     H5S_t *space, H5R_ref_priv_t *ref)
 {
     size_t encode_size;
@@ -361,7 +361,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5R__create_attr(const h5token_t *obj_token, size_t token_size,
+H5R__create_attr(const H5O_token_t *obj_token, size_t token_size,
     const char *attr_name, H5R_ref_priv_t *ref)
 {
     size_t encode_size;
@@ -695,7 +695,7 @@ H5R__copy(const H5R_ref_priv_t *src_ref, H5R_ref_priv_t *dst_ref)
 
     HDassert((src_ref != NULL) && (dst_ref != NULL));
 
-    H5MM_memcpy(&dst_ref->ref.obj.token, &src_ref->ref.obj.token, sizeof(h5token_t));
+    H5MM_memcpy(&dst_ref->ref.obj.token, &src_ref->ref.obj.token, sizeof(H5O_token_t));
     dst_ref->encode_size = src_ref->encode_size;
     dst_ref->type = src_ref->type;
     dst_ref->token_size = src_ref->token_size;
@@ -752,7 +752,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5R__get_obj_token(const H5R_ref_priv_t *ref, h5token_t *obj_token,
+H5R__get_obj_token(const H5R_ref_priv_t *ref, H5O_token_t *obj_token,
     size_t *token_size)
 {
     herr_t ret_value = SUCCEED; /* Return value */
@@ -760,12 +760,12 @@ H5R__get_obj_token(const H5R_ref_priv_t *ref, h5token_t *obj_token,
     FUNC_ENTER_PACKAGE
 
     HDassert(ref != NULL);
-    HDassert(ref->token_size <= H5_MAX_TOKEN_SIZE);
+    HDassert(ref->token_size <= H5O_MAX_TOKEN_SIZE);
 
     if(obj_token) {
         if(0 == ref->token_size)
             HGOTO_ERROR(H5E_REFERENCE, H5E_CANTCOPY, FAIL, "NULL token size")
-        H5MM_memcpy(obj_token, &ref->ref.obj.token, sizeof(h5token_t));
+        H5MM_memcpy(obj_token, &ref->ref.obj.token, sizeof(H5O_token_t));
     }
     if(token_size)
         *token_size = ref->token_size;
@@ -785,7 +785,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5R__set_obj_token(H5R_ref_priv_t *ref, const h5token_t *obj_token,
+H5R__set_obj_token(H5R_ref_priv_t *ref, const H5O_token_t *obj_token,
     size_t token_size)
 {
     herr_t ret_value = SUCCEED; /* Return value */
@@ -795,9 +795,9 @@ H5R__set_obj_token(H5R_ref_priv_t *ref, const h5token_t *obj_token,
     HDassert(ref != NULL);
     HDassert(obj_token);
     HDassert(token_size);
-    HDassert(token_size <= H5_MAX_TOKEN_SIZE);
+    HDassert(token_size <= H5O_MAX_TOKEN_SIZE);
 
-    H5MM_memcpy(&ref->ref.obj.token, obj_token, sizeof(h5token_t));
+    H5MM_memcpy(&ref->ref.obj.token, obj_token, sizeof(H5O_token_t));
     ref->token_size = (uint8_t)token_size;
 
     FUNC_LEAVE_NOAPI(ret_value)
@@ -1115,7 +1115,7 @@ done:
  *-------------------------------------------------------------------------
  */
 static herr_t
-H5R__encode_obj_token(const h5token_t *obj_token, size_t token_size,
+H5R__encode_obj_token(const H5O_token_t *obj_token, size_t token_size,
     unsigned char *buf, size_t *nalloc)
 {
     herr_t ret_value = SUCCEED;
@@ -1151,7 +1151,7 @@ H5R__encode_obj_token(const h5token_t *obj_token, size_t token_size,
  */
 static herr_t
 H5R__decode_obj_token(const unsigned char *buf, size_t *nbytes,
-    h5token_t *obj_token, uint8_t *token_size)
+    H5O_token_t *obj_token, uint8_t *token_size)
 {
     const uint8_t *p = (const uint8_t *)buf;
     herr_t ret_value = SUCCEED;
@@ -1169,11 +1169,11 @@ H5R__decode_obj_token(const unsigned char *buf, size_t *nbytes,
 
     /* Get token size */
     *token_size = *p++;
-    if(*token_size > sizeof(h5token_t))
+    if(*token_size > sizeof(H5O_token_t))
         HGOTO_ERROR(H5E_REFERENCE, H5E_CANTDECODE, FAIL, "Invalid token size (%u)", *token_size)
 
     /* Make sure that token is initialized */
-    HDmemset(obj_token, 0, sizeof(h5token_t));
+    HDmemset(obj_token, 0, sizeof(H5O_token_t));
 
     /* Decode token */
     H5MM_memcpy(obj_token, p, *token_size);
@@ -1523,7 +1523,7 @@ done:
  */
 herr_t
 H5R__decode_token_compat(H5VL_object_t *vol_obj, H5I_type_t type, H5R_type_t ref_type,
-    const unsigned char *buf, h5token_t *obj_token)
+    const unsigned char *buf, H5O_token_t *obj_token)
 {
     hid_t file_id = H5I_INVALID_HID;    /* File ID for region reference */
     H5VL_object_t *vol_obj_file = NULL;
@@ -1594,7 +1594,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5R__encode_token_obj_compat(const h5token_t *obj_token, size_t token_size,
+H5R__encode_token_obj_compat(const H5O_token_t *obj_token, size_t token_size,
     unsigned char *buf, size_t *nalloc)
 {
     herr_t ret_value = SUCCEED;
@@ -1626,7 +1626,7 @@ H5R__encode_token_obj_compat(const h5token_t *obj_token, size_t token_size,
  */
 herr_t
 H5R__decode_token_obj_compat(const unsigned char *buf, size_t *nbytes,
-    h5token_t *obj_token, size_t token_size)
+    H5O_token_t *obj_token, size_t token_size)
 {
     herr_t ret_value = SUCCEED;
 
@@ -1660,7 +1660,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5R__encode_token_region_compat(H5F_t *f, const h5token_t *obj_token,
+H5R__encode_token_region_compat(H5F_t *f, const H5O_token_t *obj_token,
     size_t token_size, H5S_t *space, unsigned char *buf, size_t *nalloc)
 {
     size_t buf_size;
@@ -1736,11 +1736,11 @@ done:
  */
 herr_t
 H5R__decode_token_region_compat(H5F_t *f, const unsigned char *buf,
-    size_t *nbytes, h5token_t *obj_token, size_t token_size,
+    size_t *nbytes, H5O_token_t *obj_token, size_t token_size,
     H5S_t **space_ptr)
 {
     unsigned char *data = NULL;
-    h5token_t token = { 0 };
+    H5O_token_t token = { 0 };
     size_t data_size;
     const uint8_t *p;
     herr_t ret_value = SUCCEED;
@@ -1783,7 +1783,7 @@ H5R__decode_token_region_compat(H5F_t *f, const unsigned char *buf,
         *space_ptr = space;
     }
     if(obj_token)
-        H5MM_memcpy(obj_token, &token, sizeof(h5token_t));
+        H5MM_memcpy(obj_token, &token, sizeof(H5O_token_t));
 
 done:
     H5MM_free(data);

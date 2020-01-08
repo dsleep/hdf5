@@ -72,7 +72,7 @@ H5VL__native_object_open(void *obj, const H5VL_loc_params_t *loc_params, H5I_typ
 
         case H5VL_OBJECT_BY_TOKEN:
             {
-                h5token_t token = *loc_params->loc_data.loc_by_token.token;
+                H5O_token_t token = *loc_params->loc_data.loc_by_token.token;
                 haddr_t addr;
 
                 /* Decode token */
@@ -185,7 +185,7 @@ H5VL__native_object_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_obj
                 } /* end if */
                 else if(loc_params->type == H5VL_OBJECT_BY_TOKEN) {
                     H5O_loc_t obj_oloc; /* Object location */
-                    h5token_t token = *loc_params->loc_data.loc_by_token.token;
+                    H5O_token_t token = *loc_params->loc_data.loc_by_token.token;
 
                     /* Initialize the object location */
                     H5O_loc_reset(&obj_oloc);
@@ -212,7 +212,7 @@ H5VL__native_object_get(void *obj, const H5VL_loc_params_t *loc_params, H5VL_obj
                 if(loc_params->type == H5VL_OBJECT_BY_TOKEN) {
                     H5O_loc_t obj_oloc; /* Object location */
                     unsigned rc;        /* Reference count of object */
-                    h5token_t token = *loc_params->loc_data.loc_by_token.token;
+                    H5O_token_t token = *loc_params->loc_data.loc_by_token.token;
 
                     /* Initialize the object location */
                     H5O_loc_reset(&obj_oloc);
@@ -342,7 +342,7 @@ H5VL__native_object_specific(void *obj, const H5VL_loc_params_t *loc_params, H5V
         /* Lookup object */
         case H5VL_OBJECT_LOOKUP:
             {
-                h5token_t *token = va_arg(arguments, h5token_t *);
+                H5O_token_t *token = va_arg(arguments, H5O_token_t *);
 
                 HDassert(token);
 

@@ -66,7 +66,7 @@
  */
 herr_t
 H5VL__native_token_cmp(void H5_ATTR_UNUSED *obj,
-    const h5token_t *token1, const h5token_t *token2, int *cmp_value)
+    const H5O_token_t *token1, const H5O_token_t *token2, int *cmp_value)
 {
     herr_t ret_value = SUCCEED;
 
@@ -76,7 +76,7 @@ H5VL__native_token_cmp(void H5_ATTR_UNUSED *obj,
     HDassert(token1);
     HDassert(token2);
 
-    *cmp_value = HDmemcmp(token1, token2, sizeof(h5token_t));
+    *cmp_value = HDmemcmp(token1, token2, sizeof(H5O_token_t));
 
     FUNC_LEAVE_NOAPI(ret_value)
 } /* end H5VL__native_token_cmp() */
@@ -93,7 +93,7 @@ H5VL__native_token_cmp(void H5_ATTR_UNUSED *obj,
  *---------------------------------------------------------------------------
  */
 herr_t
-H5VL__native_token_to_str(void *obj, H5I_type_t obj_type, const h5token_t *token,
+H5VL__native_token_to_str(void *obj, H5I_type_t obj_type, const H5O_token_t *token,
     char **token_str)
 {
     haddr_t addr;
@@ -136,7 +136,7 @@ done:
  */
 herr_t
 H5VL__native_str_to_token(void *obj, H5I_type_t obj_type,
-    const char *token_str, h5token_t *token)
+    const char *token_str, H5O_token_t *token)
 {
     haddr_t addr;
     herr_t ret_value = SUCCEED;

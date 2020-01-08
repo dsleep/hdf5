@@ -441,7 +441,7 @@ H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
     H5I_type_t opened_type;             /* Opened object type */
     void *opened_obj = NULL;            /* Opened object */
     H5VL_loc_params_t loc_params;       /* Location parameters */
-    h5token_t obj_token = {0};          /* Object token */
+    H5O_token_t obj_token = {0};        /* Object token */
     hbool_t is_native_vol_obj;
     hid_t ret_value = H5I_INVALID_HID;  /* Return value */
 
@@ -498,7 +498,7 @@ done:
  *-------------------------------------------------------------------------
  */
 hid_t
-H5Oopen_by_token(hid_t loc_id, h5token_t token)
+H5Oopen_by_token(hid_t loc_id, H5O_token_t token)
 {
     H5VL_object_t *vol_obj;             /* Object of loc_id */
     H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
@@ -511,8 +511,8 @@ H5Oopen_by_token(hid_t loc_id, h5token_t token)
     H5TRACE2("i", "ik", loc_id, token);
 
     /* Check args */
-    if(H5_IS_TOKEN_UNDEF(token))
-        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, H5I_INVALID_HID, "can't open H5TOKEN_UNDEF")
+    if(H5O_IS_TOKEN_UNDEF(token))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADVALUE, H5I_INVALID_HID, "can't open H5O_TOKEN_UNDEF")
 
     /* Get the location object */
     if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
@@ -2139,7 +2139,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5Otoken_cmp(hid_t loc_id, const h5token_t *token1, const h5token_t *token2,
+H5Otoken_cmp(hid_t loc_id, const H5O_token_t *token1, const H5O_token_t *token2,
     int *cmp_value)
 {
     H5VL_object_t *vol_obj;         /* VOL object for ID */
@@ -2174,7 +2174,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5Otoken_to_str(hid_t loc_id, const h5token_t *token, char **token_str)
+H5Otoken_to_str(hid_t loc_id, const H5O_token_t *token, char **token_str)
 {
     H5VL_object_t *vol_obj;             /* VOL object for ID */
     H5I_type_t vol_obj_type;            /* VOL object's type */
@@ -2215,7 +2215,7 @@ done:
  *---------------------------------------------------------------------------
  */
 herr_t
-H5Otoken_from_str(hid_t loc_id, const char *token_str, h5token_t *token)
+H5Otoken_from_str(hid_t loc_id, const char *token_str, H5O_token_t *token)
 {
     H5VL_object_t *vol_obj;             /* VOL object for ID */
     H5I_type_t vol_obj_type;            /* VOL object's type */

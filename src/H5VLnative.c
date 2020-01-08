@@ -309,7 +309,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, h5token_t *token)
+H5VLnative_addr_to_token(hid_t loc_id, haddr_t addr, H5O_token_t *token)
 {
     H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
     void           *vol_obj         = NULL;         /* VOL Object of loc_id */
@@ -366,7 +366,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token_t *token)
+H5VL_native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, H5O_token_t *token)
 {
     uint8_t *p;
     size_t   addr_len = 0;                   /* Size of haddr_t      */
@@ -383,7 +383,7 @@ H5VL_native_addr_to_token(void *obj, H5I_type_t obj_type, haddr_t addr, h5token_
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, FAIL, "couldn't get length of haddr_t from VOL object")
 
     /* Ensure that token is initialized */
-    HDmemset(token, 0, sizeof(h5token_t));
+    HDmemset(token, 0, sizeof(H5O_token_t));
 
     /* Encode token */
     p = (uint8_t *)token;
@@ -404,7 +404,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VLnative_token_to_addr(hid_t loc_id, h5token_t token, haddr_t *addr)
+H5VLnative_token_to_addr(hid_t loc_id, H5O_token_t token, haddr_t *addr)
 {
     H5I_type_t      vol_obj_type    = H5I_BADID;    /* Object type of loc_id */
     void           *vol_obj         = NULL;         /* VOL Object of loc_id */
@@ -461,7 +461,7 @@ done:
  *-------------------------------------------------------------------------
  */
 herr_t
-H5VL_native_token_to_addr(void *obj, H5I_type_t obj_type, h5token_t token, haddr_t *addr)
+H5VL_native_token_to_addr(void *obj, H5I_type_t obj_type, H5O_token_t token, haddr_t *addr)
 {
     const uint8_t *p;
     size_t         addr_len = 0;                   /* Size of haddr_t      */

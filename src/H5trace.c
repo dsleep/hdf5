@@ -1638,10 +1638,10 @@ H5_trace(const double *returning, const char *func, const char *type, ...)
                         HDfprintf(out, "NULL");
                 } /* end if */
                 else {
-                    h5token_t token = HDva_arg(ap, h5token_t);
+                    H5O_token_t token = HDva_arg(ap, H5O_token_t);
                     int j;
 
-                    for (j = 0; j < H5_MAX_TOKEN_SIZE; j++)
+                    for (j = 0; j < H5O_MAX_TOKEN_SIZE; j++)
                         HDfprintf(out, "%02x", token.__data[j]);
                 } /* end else */
                 break;

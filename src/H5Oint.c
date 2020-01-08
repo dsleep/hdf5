@@ -153,6 +153,13 @@ H5FL_BLK_DEFINE(chunk_image);
 /* Declare external the free list for H5O_cont_t sequences */
 H5FL_SEQ_EXTERN(H5O_cont_t);
 
+/* The canonical 'undefined' token */
+const H5O_token_t H5O_TOKEN_UNDEF_g = {{
+    255, 255, 255, 255,
+    255, 255, 255, 255,
+    255, 255, 255, 255,
+    255, 255, 255, 255}};
+
 
 /*****************************/
 /* Library Private Variables */
@@ -3114,7 +3121,7 @@ H5O_reset_info2(H5O_info2_t *oinfo)
     /* Reset the passed-in info struct */
     HDmemset(oinfo, 0, sizeof(H5O_info2_t));
     oinfo->type = H5O_TYPE_UNKNOWN;
-    oinfo->token = H5TOKEN_UNDEF;
+    oinfo->token = H5O_TOKEN_UNDEF;
 
     FUNC_LEAVE_NOAPI(SUCCEED);
 } /* end H5O_reset_info2() */

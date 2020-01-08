@@ -171,9 +171,9 @@ H5_DLL herr_t H5VLblob_specific(void *obj, hid_t connector_id, void *blob_id, H5
 H5_DLL herr_t H5VLblob_optional(void *obj, hid_t connector_id, void *blob_id, H5VL_blob_optional_t opt_type, va_list arguments);
 
 /* Public wrappers for token callbacks */
-H5_DLL herr_t H5VLtoken_cmp(void *obj, hid_t connector_id, const h5token_t *token1, const h5token_t *token2, int *cmp_value);
-H5_DLL herr_t H5VLtoken_to_str(void *obj, H5I_type_t obj_type, hid_t connector_id, const h5token_t *token, char **token_str);
-H5_DLL herr_t H5VLtoken_from_str(void *obj, H5I_type_t obj_type, hid_t connector_id, const char *token_str, h5token_t *token);
+H5_DLL herr_t H5VLtoken_cmp(void *obj, hid_t connector_id, const H5O_token_t *token1, const H5O_token_t *token2, int *cmp_value);
+H5_DLL herr_t H5VLtoken_to_str(void *obj, H5I_type_t obj_type, hid_t connector_id, const H5O_token_t *token, char **token_str);
+H5_DLL herr_t H5VLtoken_from_str(void *obj, H5I_type_t obj_type, hid_t connector_id, const char *token_str, H5O_token_t *token);
 
 /* Public wrappers for generic 'optional' callback */
 H5_DLL herr_t H5VLoptional(void *obj, hid_t connector_id, int op_type, hid_t dxpl_id,

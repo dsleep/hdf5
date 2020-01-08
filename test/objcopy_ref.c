@@ -74,7 +74,7 @@ unsigned num_attributes_g;         /* Number of attributes created */
 static struct {
     size_t      nalloc;         /* number of slots allocated */
     size_t      nobjs;          /* number of objects */
-    h5token_t   *obj;           /* tokens for objects seen */
+    H5O_token_t *obj;           /* tokens for objects seen */
 } idtab_g;
 
 /* Local function prototypes */
@@ -111,7 +111,7 @@ token_insert(H5O_info2_t *oinfo)
     /* Extend the table */
     if(idtab_g.nobjs >= idtab_g.nalloc) {
         idtab_g.nalloc = MAX(256, 2 * idtab_g.nalloc);
-        idtab_g.obj = (h5token_t *)HDrealloc(idtab_g.obj, idtab_g.nalloc * sizeof(idtab_g.obj[0]));
+        idtab_g.obj = (H5O_token_t *)HDrealloc(idtab_g.obj, idtab_g.nalloc * sizeof(idtab_g.obj[0]));
     }
 
     /* Insert the entry */
