@@ -2177,7 +2177,7 @@ unsigned H5Location::childObjVersion(const char* objname) const
     unsigned version = 0;
 
     // Use C API to get information of the object
-    herr_t ret_value = H5Oget_native_info_by_name(getId(), objname, &objinfo, H5O_INFO_HDR, H5P_DEFAULT);
+    herr_t ret_value = H5Oget_native_info_by_name(getId(), objname, &objinfo, H5O_NATIVE_INFO_HDR, H5P_DEFAULT);
 
     // Throw exception if C API returns failure
     if (ret_value < 0)

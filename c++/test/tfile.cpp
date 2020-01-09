@@ -718,7 +718,7 @@ static void test_libver_bounds_real(
     // Verify object header version another way
     H5O_native_info_t ninfo;
     HDmemset(&ninfo, 0, sizeof(ninfo));
-    file.getNativeObjinfo(ninfo, H5O_INFO_HDR);
+    file.getNativeObjinfo(ninfo, H5O_NATIVE_INFO_HDR);
     verify_val(ninfo.hdr.version, oh_vers_create, "H5File::getNativeObjinfo", __LINE__, __FILE__);
 
     /*
@@ -745,7 +745,7 @@ static void test_libver_bounds_real(
 
     // Verify object header version another way
     HDmemset(&ninfo, 0, sizeof(ninfo));
-    group.getNativeObjinfo(ninfo, H5O_INFO_HDR);
+    group.getNativeObjinfo(ninfo, H5O_NATIVE_INFO_HDR);
     verify_val(ninfo.hdr.version, oh_vers_mod, "Group::getNativeObjinfo", __LINE__, __FILE__);
 
     group.close(); // close "/G1"

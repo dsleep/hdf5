@@ -813,11 +813,11 @@ compare_data(hid_t parent1, hid_t parent2, hid_t pid, hid_t tid, size_t nelmts,
 
         /* Check for object or region reference */
         if(H5Tequal(tid, H5T_STD_REF) > 0) {
-            const H5R_ref_t *ref_buf1, *ref_buf2;      /* Aliases for buffers to compare */
+            H5R_ref_t *ref_buf1, *ref_buf2;      /* Aliases for buffers to compare */
 
             /* Loop over elements in buffers */
-            ref_buf1 = (const H5R_ref_t *)buf1;
-            ref_buf2 = (const H5R_ref_t *)buf2;
+            ref_buf1 = (H5R_ref_t *)buf1;
+            ref_buf2 = (H5R_ref_t *)buf2;
             for(u = 0; u < nelmts; u++, ref_buf1++, ref_buf2++) {
                 hid_t obj1_id, obj2_id;         /* IDs for objects referenced */
                 H5O_type_t obj1_type, obj2_type; /* Types of objects referenced */
@@ -1144,8 +1144,8 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
                 if(H5Oget_info_by_name3(gid2, objname2, &oinfo2, H5O_INFO_BASIC, H5P_DEFAULT) < 0) TEST_ERROR
 
                 /* Get native object info */
-                if(H5Oget_native_info_by_name(gid, objname, &ninfo, H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
-                if(H5Oget_native_info_by_name(gid2, objname2, &ninfo2, H5O_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Oget_native_info_by_name(gid, objname, &ninfo, H5O_NATIVE_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Oget_native_info_by_name(gid2, objname2, &ninfo2, H5O_NATIVE_INFO_HDR, H5P_DEFAULT) < 0) TEST_ERROR
 
                 if(oinfo.type != oinfo2.type) TEST_ERROR
                 if(oinfo.rc != oinfo2.rc) TEST_ERROR

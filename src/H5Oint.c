@@ -83,6 +83,8 @@ static herr_t H5O__free_visit_visited(void *item, void *key,
 static herr_t H5O__visit_cb(hid_t group, const char *name, const H5L_info2_t *linfo,
     void *_udata);
 static const H5O_obj_class_t *H5O__obj_class_real(const H5O_t *oh);
+static herr_t H5O__reset_info2(H5O_info2_t *oinfo);
+
 
 /*********************/
 /* Package Variables */
@@ -2196,7 +2198,7 @@ H5O_get_info(const H5O_loc_t *loc, H5O_info2_t *oinfo, unsigned fields)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "unable to determine object class")
 
     /* Reset the object info structure */
-    if (H5O_reset_info2(oinfo) < 0)
+    if(H5O__reset_info2(oinfo) < 0)
         HGOTO_ERROR(H5E_OHDR, H5E_CANTSET, FAIL, "can't reset object data struct")
 
     /* Get basic information, if requested */
@@ -2309,12 +2311,12 @@ H5O_get_native_info(const H5O_loc_t *loc, H5O_native_info_t *oinfo, unsigned fie
     HDmemset(oinfo, 0, sizeof(*oinfo));
 
     /* Get the information for the object header, if requested */
-    if(fields & H5O_INFO_HDR)
+    if(fields & H5O_NATIVE_INFO_HDR)
         if(H5O__get_hdr_info_real(oh, &oinfo->hdr) < 0)
             HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, FAIL, "can't retrieve object header info")
 
     /* Get B-tree & heap metadata storage size, if requested */
-    if(fields & H5O_INFO_META_SIZE) {
+    if(fields & H5O_NATIVE_INFO_META_SIZE) {
         /* Check for 'bh_info' callback for this type of object */
         if(obj_class->bh_info)
             /* Call the object's class 'bh_info' routine */
@@ -3083,29 +3085,7 @@ done:
 } /* end H5O__free() */
 
 /*-------------------------------------------------------------------------
- * Function:    H5O_reset_info1
- *
- * Purpose:     Resets/initializes an H5O_info1_t struct.
- *
- * Return:      SUCCEED/FAIL
- *
- *-------------------------------------------------------------------------
- */
-herr_t
-H5O_reset_info1(H5O_info1_t *oinfo)
-{
-    FUNC_ENTER_NOAPI_NOINIT_NOERR;
-
-    /* Reset the passed-in info struct */
-    HDmemset(oinfo, 0, sizeof(H5O_info1_t));
-    oinfo->type = H5O_TYPE_UNKNOWN;
-    oinfo->addr = HADDR_UNDEF;
-
-    FUNC_LEAVE_NOAPI(SUCCEED);
-} /* end H5O_reset_info1() */
-
-/*-------------------------------------------------------------------------
- * Function:    H5O_reset_info2
+ * Function:    H5O__reset_info2
  *
  * Purpose:     Resets/initializes an H5O_info2_t struct.
  *
@@ -3113,10 +3093,10 @@ H5O_reset_info1(H5O_info1_t *oinfo)
  *
  *-------------------------------------------------------------------------
  */
-herr_t
-H5O_reset_info2(H5O_info2_t *oinfo)
+static herr_t
+H5O__reset_info2(H5O_info2_t *oinfo)
 {
-    FUNC_ENTER_NOAPI_NOINIT_NOERR;
+    FUNC_ENTER_STATIC_NOERR;
 
     /* Reset the passed-in info struct */
     HDmemset(oinfo, 0, sizeof(H5O_info2_t));
@@ -3124,5 +3104,5 @@ H5O_reset_info2(H5O_info2_t *oinfo)
     oinfo->token = H5O_TOKEN_UNDEF;
 
     FUNC_LEAVE_NOAPI(SUCCEED);
-} /* end H5O_reset_info2() */
+} /* end H5O__reset_info2() */
 

@@ -392,7 +392,7 @@ test_ohdr_swmr(hbool_t new_format)
         FAIL_STACK_ERROR
 
     /* Get the object information */
-    if(H5Oget_native_info(did, &ninfo, H5O_INFO_HDR) < 0)
+    if(H5Oget_native_info(did, &ninfo, H5O_NATIVE_INFO_HDR) < 0)
         FAIL_STACK_ERROR
 
     if(new_format)
@@ -776,7 +776,7 @@ _oh_getsize(hid_t did, hsize_t *size_out)
 {
     H5O_native_info_t ninfo;
 
-    if(FAIL == H5Oget_native_info(did, &ninfo, H5O_INFO_HDR))
+    if(FAIL == H5Oget_native_info(did, &ninfo, H5O_NATIVE_INFO_HDR))
         return FAIL;
 
     *size_out = ninfo.hdr.space.total;
