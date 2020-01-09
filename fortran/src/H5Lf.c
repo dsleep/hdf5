@@ -525,7 +525,8 @@ done:
 int_f
 h5lget_info_by_idx_c(hid_t_f *loc_id, _fcd group_name, size_t_f *group_namelen,
 		      int_f *index_field, int_f *order, hsize_t_f *n,
-		      int_f *link_type, int_f *corder_valid, int_f *corder, int_f *cset,  haddr_t_f *address, size_t_f *val_size, hid_t_f *lapl_id)
+		      int_f *link_type, int_f *corder_valid, int_f *corder,
+                      int_f *cset, haddr_t_f *address, size_t_f *val_size, hid_t_f *lapl_id)
 /******/
 {
     char *c_group_name = NULL;          /* Buffer to hold C string */
