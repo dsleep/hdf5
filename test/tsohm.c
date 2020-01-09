@@ -758,7 +758,7 @@ getsize_testsize1(const char *filename, hid_t fcpl_id, hid_t fapl_id,
     fid = size1_helper(fid, filename, fapl_id, test_file_closing);
     CHECK(fid, H5I_INVALID_HID, "size1_helper");
 
-    ret = H5Oget_native_info_by_name(fid, DSETNAME[0], ninfo, H5O_INFO_HDR, H5P_DEFAULT);
+    ret = H5Oget_native_info_by_name(fid, DSETNAME[0], ninfo, H5O_NATIVE_INFO_HDR, H5P_DEFAULT);
     CHECK(ret, FAIL, "H5Oget_native_info_by_name");
 
     ret = H5Fclose(fid);
@@ -1024,7 +1024,7 @@ test_sohm_size_consistency_open_create(void)
         CHECK_I(file, "size1_helper");
 
         /* Get the size of a dataset object header */
-        ret = H5Oget_native_info_by_name(file, DSETNAME[0], &oinfo, H5O_INFO_HDR, H5P_DEFAULT);
+        ret = H5Oget_native_info_by_name(file, DSETNAME[0], &oinfo, H5O_NATIVE_INFO_HDR, H5P_DEFAULT);
         CHECK_I(ret, "H5Oget_native_info_by_name");
         oh_size_open = oinfo.hdr.space.total;
 
@@ -1039,7 +1039,7 @@ test_sohm_size_consistency_open_create(void)
         CHECK_I(file, "size1_helper");
 
         /* Get the size of a dataset object header */
-        ret = H5Oget_native_info_by_name(file, DSETNAME[0], &oinfo, H5O_INFO_HDR, H5P_DEFAULT);
+        ret = H5Oget_native_info_by_name(file, DSETNAME[0], &oinfo, H5O_NATIVE_INFO_HDR, H5P_DEFAULT);
         CHECK_I(ret, "H5Oget_native_info_by_name");
         oh_size_create = oinfo.hdr.space.total;
 

@@ -1144,7 +1144,7 @@ static herr_t test_getnativeinfo(H5File& file)
         // Get dataset header info
         H5O_native_info_t ninfo;
         HDmemset(&ninfo, 0, sizeof(ninfo));
-        dataset.getNativeObjinfo(ninfo, H5O_INFO_HDR);
+        dataset.getNativeObjinfo(ninfo, H5O_NATIVE_INFO_HDR);
         verify_val(ninfo.hdr.nchunks, 1, "DataSet::getNativeObjinfo", __LINE__, __FILE__);
         dataset.close();
 
@@ -1152,7 +1152,7 @@ static herr_t test_getnativeinfo(H5File& file)
         // way to open an existing dataset for accessing.
         dataset = file.openDataSet(DSET_DEFAULT_NAME);
         HDmemset(&ninfo, 0, sizeof(ninfo));
-        dataset.getNativeObjinfo(ninfo, H5O_INFO_ALL);
+        dataset.getNativeObjinfo(ninfo, H5O_NATIVE_INFO_ALL);
         verify_val(ninfo.hdr.nchunks, 1, "DataSet::getNativeObjinfo", __LINE__, __FILE__);
         dataset.close();
 

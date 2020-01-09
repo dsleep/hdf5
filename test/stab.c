@@ -70,8 +70,10 @@ const char *FILENAME[] = {
 #define GCPL_ON_ROOT_MAX_COMPACT   4
 #define GCPL_ON_ROOT_MIN_DENSE     2
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 /* Definitions for 'old_api' test */
 #define OLD_API_GROUP           "/old_api"
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 /* Definitions for 'corrupt_stab_msg' test */
 #define CORRUPT_STAB_FILE           "corrupt_stab_msg.h5"
@@ -419,7 +421,7 @@ lifecycle(hid_t fcpl, hid_t fapl2)
     if(H5G__is_new_dense_test(gid) != FALSE) TEST_ERROR
 
     /* Check that the object header is only one chunk and the space has been allocated correctly */
-    if(H5Oget_native_info(gid, &ninfo, H5O_INFO_HDR) < 0) TEST_ERROR
+    if(H5Oget_native_info(gid, &ninfo, H5O_NATIVE_INFO_HDR) < 0) TEST_ERROR
     if(ninfo.hdr.space.total != 151) TEST_ERROR
     if(ninfo.hdr.space.free != 0) TEST_ERROR
     if(ninfo.hdr.nmesgs != 6) TEST_ERROR
@@ -441,7 +443,7 @@ lifecycle(hid_t fcpl, hid_t fapl2)
     if(H5G__is_new_dense_test(gid) != TRUE) TEST_ERROR
 
     /* Check that the object header is still one chunk and the space has been allocated correctly */
-    if(H5Oget_native_info(gid, &ninfo, H5O_INFO_HDR) < 0) TEST_ERROR
+    if(H5Oget_native_info(gid, &ninfo, H5O_NATIVE_INFO_HDR) < 0) TEST_ERROR
     if(ninfo.hdr.space.total != 151) TEST_ERROR
     if(ninfo.hdr.space.free != 92) TEST_ERROR
     if(ninfo.hdr.nmesgs != 3) TEST_ERROR

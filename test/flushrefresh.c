@@ -994,8 +994,8 @@ herr_t refresh_verification(const char * obj_pathname)
 
     /* Get Object info */
     if((status = H5Oget_info3(oid, &flushed_oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS)) < 0) PROCESS_ERROR;
-    if((status = H5Oget_native_info(oid, &flushed_ninfo, H5O_INFO_HDR)) < 0) PROCESS_ERROR;
-    
+    if((status = H5Oget_native_info(oid, &flushed_ninfo, H5O_NATIVE_INFO_HDR)) < 0) PROCESS_ERROR;
+
     /* Make sure there are no attributes on the object. This is just a sanity
         check to ensure we didn't erroneously flush the attribute before
         starting the verification. */
@@ -1014,7 +1014,7 @@ herr_t refresh_verification(const char * obj_pathname)
        in the cache. Thus, all values will be unchanged from above, despite 
        newer information being on disk. */
     if((status = H5Oget_info3(oid, &refreshed_oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS)) < 0) PROCESS_ERROR;
-    if((status = H5Oget_native_info(oid, &refreshed_ninfo, H5O_INFO_HDR)) < 0) PROCESS_ERROR;
+    if((status = H5Oget_native_info(oid, &refreshed_ninfo, H5O_NATIVE_INFO_HDR)) < 0) PROCESS_ERROR;
 
     /* Verify that before doing a refresh, getting the object info returns stale
        information. (i.e., unchanged from above, despite new info on disk). */
@@ -1054,7 +1054,7 @@ herr_t refresh_verification(const char * obj_pathname)
 
         /* Get object info. This should now accurately reflect the refreshed object on disk. */
         if((status = H5Oget_info3(oid, &refreshed_oinfo, H5O_INFO_BASIC|H5O_INFO_NUM_ATTRS)) < 0) PROCESS_ERROR;
-        if((status = H5Oget_native_info(oid, &refreshed_ninfo, H5O_INFO_HDR)) < 0) PROCESS_ERROR;
+        if((status = H5Oget_native_info(oid, &refreshed_ninfo, H5O_NATIVE_INFO_HDR)) < 0) PROCESS_ERROR;
         if(H5Otoken_cmp(oid, &flushed_oinfo.token, &refreshed_oinfo.token, &token_cmp) < 0) PROCESS_ERROR;
 
         /* Confirm following (first 4) attributes are the same: */

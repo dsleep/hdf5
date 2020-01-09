@@ -308,7 +308,7 @@ unsigned H5Object::objVersion() const
     unsigned version = 0;
 
     // Use C API to get information of the object
-    herr_t ret_value = H5Oget_native_info(getId(), &objinfo, H5O_INFO_HDR);
+    herr_t ret_value = H5Oget_native_info(getId(), &objinfo, H5O_NATIVE_INFO_HDR);
 
     // Throw exception if C API returns failure
     if (ret_value < 0)
