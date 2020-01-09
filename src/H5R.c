@@ -66,10 +66,10 @@
 /*-------------------------------------------------------------------------
  * Function:    H5Rcreate_object
  *
- * Purpose: Creates an object reference. The LOC_ID and NAME are used to locate
- * the object pointed to.
+ * Purpose:     Creates an object reference. The LOC_ID and NAME are used
+ *              to locate the object pointed to.
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / Negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -152,11 +152,11 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rcreate_region
  *
- * Purpose: Creates a region reference. The LOC_ID and NAME are used to locate
- * the object pointed to and the SPACE_ID is used to choose the region pointed
- * to.
+ * Purpose:     Creates a region reference. The LOC_ID and NAME are used to
+ *              locate the object pointed to and the SPACE_ID is used to
+ *              choose the region pointed to.
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / Negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -245,10 +245,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rcreate_attr
  *
- * Purpose: Creates an attribute reference. The LOC_ID, NAME and ATTR_NAME are
- * used to locate the attribute pointed to.
+ * Purpose:     Creates an attribute reference. The LOC_ID, NAME and
+ *              ATTR_NAME are used to locate the attribute pointed to.
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / Negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -334,9 +334,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rdestroy
  *
- * Purpose: Destroy reference and free resources allocated during H5Rcreate.
+ * Purpose:     Destroy reference and free resources allocated during
+ *              H5Rcreate.
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / Negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -367,9 +368,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_type
  *
- * Purpose: Given a reference to some object, return the type of that reference.
+ * Purpose:     Given a reference to some object, return the type of that
+ *              reference.
  *
- * Return:  Reference type/H5R_BADTYPE on failure
+ * Return:      Reference type / H5R_BADTYPE on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -398,9 +400,9 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Requal
  *
- * Purpose: Compare two references
+ * Purpose:     Compare two references
  *
- * Return:  TRUE if equal, FALSE if unequal, FAIL if error
+ * Return:      TRUE if equal, FALSE if unequal, FAIL if error
  *
  *-------------------------------------------------------------------------
  */
@@ -428,9 +430,9 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rcopy
  *
- * Purpose: Copy a reference
+ * Purpose:     Copy a reference
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / Negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -458,10 +460,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Ropen_object
  *
- * Purpose: Given a reference to some object, open that object and return an
- * ID for that object.
+ * Purpose:     Given a reference to some object, open that object and
+ *              return an ID for that object.
  *
- * Return:  Valid ID on success/Negative on failure
+ * Return:      Valid ID on success / H5I_INVALID_HID on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -530,11 +532,11 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Ropen_region
  *
- * Purpose: Given a reference to some object, creates a copy of the dataset
- * pointed to's dataspace and defines a selection in the copy which is the
- * region pointed to.
+ * Purpose:     Given a reference to some object, creates a copy of the dataset
+ *              pointed to's dataspace and defines a selection in the copy
+ *              which is the region pointed to.
  *
- * Return:  Valid ID on success/Negative on failure
+ * Return:      Valid ID on success / H5I_INVALID_HID on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -625,10 +627,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Ropen_attr
  *
- * Purpose: Given a reference to some attribute, open that attribute and
- * return an ID for that attribute.
+ * Purpose:     Given a reference to some attribute, open that attribute and
+ *              return an ID for that attribute.
  *
- * Return:  Valid ID on success/Negative on failure
+ * Return:      Valid ID on success / H5I_INVALID_HID on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -720,10 +722,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_obj_type3
  *
- * Purpose: Given a reference to some object, this function returns the type
- * of object pointed to.
+ * Purpose:     Given a reference to some object, this function returns the
+ *              type of object pointed to.
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / Negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -780,10 +782,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_file_name
  *
- * Purpose: Given a reference to some object, determine a file name of the
- * object located into.
+ * Purpose:     Given a reference to some object, determine a file name of the
+ *              object located into.
  *
- * Return:  Non-negative length of the path on success/Negative on failure
+ * Return:      Non-negative length of the path on success / -1 on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -809,7 +811,8 @@ H5Rget_file_name(const H5R_ref_t *ref_ptr, char *buf, size_t size)
          * copy of the filename */
         if((ret_value = H5R__get_file_name((const H5R_ref_priv_t *)ref_ptr, buf, size)) < 0)
             HGOTO_ERROR(H5E_REFERENCE, H5E_CANTGET, (-1), "unable to retrieve file name")
-    } else {
+    }
+    else {
         H5VL_object_t *vol_obj = NULL;  /* Object of loc_id */
 
         /* Retrieve VOL file object */
@@ -828,10 +831,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_obj_name
  *
- * Purpose: Given a reference to some object, determine a path to the object
- * referenced in the file.
+ * Purpose:     Given a reference to some object, determine a path to the
+ *              object referenced in the file.
  *
- * Return:  Non-negative length of the path on success/Negative on failure
+ * Return:      Non-negative length of the path on success / -1 on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -888,9 +891,9 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_attr_name
  *
- * Purpose: Given a reference to some attribute, determine its name.
+ * Purpose:     Given a reference to some attribute, determine its name.
  *
- * Return:  Non-negative length of the path on success/Negative on failure
+ * Return:      Non-negative length of the path on success / -1 on failure
  *
  *-------------------------------------------------------------------------
  */

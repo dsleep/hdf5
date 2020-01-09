@@ -87,10 +87,10 @@
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_obj_type1
  *
- * Purpose: Retrieves the type of the object that a reference points to.
+ * Purpose:     Retrieves the type of the object that a reference points to.
  *
- * Return: Object type (as defined in H5Gpublic.h) on success
- *         H5G_UNKNOWN on failure
+ * Return:      Success:    Object type (as defined in H5Gpublic.h)
+ *              Failure:    H5G_UNKNOWN
  *
  *-------------------------------------------------------------------------
  */
@@ -146,10 +146,11 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rdereference1
  *
- * Purpose: Given a reference to some object, open that object and return an
- * ID for that object.
+ * Purpose:     Given a reference to some object, open that object and return
+ *              an ID for that object.
  *
- * Return:  Valid ID on success/Negative on failure
+ * Return:      Success:    Valid ID
+ *              Failure:    H5I_INVALID_HID
  *
  *-------------------------------------------------------------------------
  */
@@ -209,12 +210,12 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rcreate
  *
- * Purpose: Creates a particular type of reference specified with REF_TYPE,
- * in the space pointed to by REF. The LOC_ID and NAME are used to locate the
- * object pointed to and the SPACE_ID is used to choose the region pointed to
- * (for Dataset Region references).
+ * Purpose:     Creates a particular type of reference specified with REF_TYPE,
+ *              in the space pointed to by REF. The LOC_ID and NAME are used to
+ *              locate the object pointed to and the SPACE_ID is used to choose
+ *              the region pointed to (for Dataset Region references).
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -327,10 +328,10 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_obj_type2
  *
- * Purpose: Given a reference to some object, this function returns the type
- * of object pointed to.
+ * Purpose:     Given a reference to some object, this function returns the
+ *              type of object pointed to.
  *
- * Return:  Non-negative on success/Negative on failure
+ * Return:      Non-negative on success / negative on failure
  *
  *-------------------------------------------------------------------------
  */
@@ -383,10 +384,11 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rdereference2
  *
- * Purpose: Given a reference to some object, open that object and return an
- * ID for that object.
+ * Purpose:     Given a reference to some object, open that object and return
+ *              an ID for that object.
  *
- * Return:  Valid ID on success/Negative on failure
+ * Return:      Success:    Valid ID
+ *              Failure:    H5I_INVALID_HID
  *
  *-------------------------------------------------------------------------
  */
@@ -451,11 +453,12 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_region
  *
- * Purpose: Given a reference to some object, creates a copy of the dataset
- * pointed to's dataspace and defines a selection in the copy which is the
- * region pointed to.
+ * Purpose:     Given a reference to some object, creates a copy of the dataset
+ *              pointed to's dataspace and defines a selection in the copy
+ *              which is the region pointed to.
  *
- * Return:  Valid ID on success/Negative on failure
+ * Return:      Success:    Valid ID
+ *              Failure:    H5I_INVALID_HID
  *
  *-------------------------------------------------------------------------
  */
@@ -537,10 +540,11 @@ done:
 /*-------------------------------------------------------------------------
  * Function:    H5Rget_name
  *
- * Purpose: Given a reference to some object, determine a path to the object
- * referenced in the file.
+ * Purpose:     Given a reference to some object, determine a path to the
+ *              object referenced in the file.
  *
- * Return:  Non-negative length of the path on success/Negative on failure
+ * Return:      Success:    Non-negative length of the path
+ *              Failure:    -1
  *
  *-------------------------------------------------------------------------
  */
@@ -588,3 +592,4 @@ H5Rget_name(hid_t id, H5R_type_t ref_type, const void *ref, char *name,
 done:
     FUNC_LEAVE_API(ret_value)
 }   /* end H5Rget_name() */
+
