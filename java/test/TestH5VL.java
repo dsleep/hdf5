@@ -77,7 +77,15 @@ public class TestH5VL {
     	try {
     		long native_id = H5.H5VLget_connector_id(H5fid);
     		assertTrue("H5.H5VLget_connector_id", native_id >= 0);
-    		assertEquals(HDF5Constants.H5VL_NATIVE, native_id);
+
+    		/*
+    		 * If HDF5_VOL_CONNECTOR is set, this might not be the
+    		 * native connector. Only check for the native connector
+    		 * if this isn't set.
+    		 */
+    		String connector = System.getenv("HDF5_VOL_CONNECTOR");
+    		if (connector == null)
+    			assertEquals(HDF5Constants.H5VL_NATIVE, native_id);
     	}
     	catch (Throwable err) {
     		err.printStackTrace();
@@ -114,7 +122,15 @@ public class TestH5VL {
 
         try {
             String native_name = H5.H5VLget_connector_name(H5fid);
-            assertTrue("H5.H5VLget_connector_name H5VL_NATIVE", native_name.compareToIgnoreCase(HDF5Constants.H5VL_NATIVE_NAME)==0);
+
+    		/*
+    		 * If HDF5_VOL_CONNECTOR is set, this might not be the
+    		 * native connector. Only check for the native connector
+    		 * if this isn't set.
+    		 */
+    		String connector = System.getenv("HDF5_VOL_CONNECTOR");
+    		if (connector == null)
+    			assertTrue("H5.H5VLget_connector_name H5VL_NATIVE", native_name.compareToIgnoreCase(HDF5Constants.H5VL_NATIVE_NAME)==0);
         }
         catch (Throwable err) {
             err.printStackTrace();
