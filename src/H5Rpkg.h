@@ -40,8 +40,8 @@
 #define H5R_IS_EXTERNAL         0x1     /* Set when encoding reference to external file */
 
 /* Macros for convenience */
-#define H5R_REF_FILENAME(x)     ((x)->ref.obj.filename)
-#define H5R_REF_ATTRNAME(x)     ((x)->ref.attr.name)
+#define H5R_REF_FILENAME(x)     ((x)->info.obj.filename)
+#define H5R_REF_ATTRNAME(x)     ((x)->info.attr.name)
 
 /* Header size */
 #define H5R_ENCODE_HEADER_SIZE  (2 * H5_SIZEOF_UINT8_T)
@@ -74,7 +74,7 @@ typedef struct H5R_ref_priv_t {
         H5R_ref_priv_obj_t  obj;/* Object reference                 */
         H5R_ref_priv_reg_t  reg;/* Region reference                 */
         H5R_ref_priv_attr_t attr;/* Attribute Reference             */
-    } ref;
+    } info;
     hid_t    loc_id;            /* Cached location identifier       */
     uint32_t encode_size;       /* Cached encoding size             */
     int8_t   type;              /* Reference type                   */
