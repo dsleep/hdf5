@@ -47,24 +47,45 @@
  */
 #define UNUSED(o) (void) o
 
+/*
+ * Macro to check for a JNI exception after a JNI method is called.
+ * If an exception occurred, the value of 'clearException' will determine
+ * whether or not the exception will be cleared in order for the native
+ * method to do its own error handling.
+ *
+ * If the exception does not get cleared, this macro will skip to the
+ * cleanup+return section of the native method, since at that point
+ * cleaning up and returning is the only safe thing that can be done.
+ */
+#define CHECK_JNI_EXCEPTION(env, clearException)   \
+{                                                  \
+    if (JNI_TRUE == (*env)->ExceptionCheck(env)) { \
+        if (JNI_TRUE == clearException)            \
+            (*env)->ExceptionClear(env);           \
+        else                                       \
+            goto done;                             \
+    }                                              \
+}
+
 /* Macros for class access */
 /* Calling code must define ret_obj as jobject */
-#define CALL_CONSTRUCTOR(env, classname, classsig, args, ret_obj)                          \
-{                                                                                          \
-    jmethodID constructor;                                                                 \
-    jclass    cls;                                                                         \
-                                                                                           \
-    if (NULL == (cls = ENVPTR->FindClass(env, (classname)))) {                             \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                \
-        H5_JNI_FATAL_ERROR(env, "JNI error: GetObjectClass");                              \
-    }                                                                                      \
-    if (NULL == (constructor = ENVPTR->GetMethodID(ENVONLY, cls, "<init>", (classsig)))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                \
-        H5_JNI_FATAL_ERROR(env, "JNI error: GetMethodID failed");                          \
-    }                                                                                      \
-    if (NULL == (ret_obj = ENVPTR->NewObjectA(ENVONLY, cls, constructor, (args)))) {       \
-        CHECK_JNI_EXCEPTION(env, JNI_FALSE);                                               \
-    }                                                                                      \
+#define CALL_CONSTRUCTOR(envptr, classname, classsig, args, ret_obj)                         \
+{                                                                                            \
+    jmethodID constructor;                                                                   \
+    jclass    cls;                                                                           \
+                                                                                             \
+    if (NULL == (cls = (*envptr)->FindClass(envptr, (classname)))) {                         \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                               \
+        H5_JNI_FATAL_ERROR(envptr, "JNI error: GetObjectClass");                             \
+    }                                                                                        \
+    if (NULL == (constructor = (*envptr)->GetMethodID(envptr, cls, "<init>", (classsig)))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                               \
+        H5_JNI_FATAL_ERROR(envptr, "JNI error: GetMethodID failed");                         \
+    }                                                                                        \
+    if (NULL == (ret_obj = (*envptr)->NewObjectA(envptr, cls, constructor, (args)))) {       \
+        HDprintf("FATAL ERROR: %s: Creation failed\n", classname);                           \
+        CHECK_JNI_EXCEPTION(envptr, JNI_FALSE);                                              \
+    }                                                                                        \
 }
 
 /*
@@ -234,26 +255,6 @@
 #define UNPIN_JAVA_STRING(env, pinnedString, stringToRelease)          \
 {                                                                      \
     ENVPTR->ReleaseStringUTFChars(env, pinnedString, stringToRelease); \
-}
-
-/*
- * Macro to check for a JNI exception after a JNI method is called.
- * If an exception occurred, the value of 'clearException' will determine
- * whether or not the exception will be cleared in order for the native
- * method to do its own error handling.
- *
- * If the exception does not get cleared, this macro will skip to the
- * cleanup+return section of the native method, since at that point
- * cleaning up and returning is the only safe thing that can be done.
- */
-#define CHECK_JNI_EXCEPTION(env, clearException)   \
-{                                                  \
-    if (JNI_TRUE == (*env)->ExceptionCheck(env)) { \
-        if (JNI_TRUE == clearException)            \
-            (*env)->ExceptionClear(env);           \
-        else                                       \
-            goto done;                             \
-    }                                              \
 }
 
 #ifdef __cplusplus

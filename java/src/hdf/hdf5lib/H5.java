@@ -24,8 +24,8 @@ import hdf.hdf5lib.callbacks.H5D_iterate_cb;
 import hdf.hdf5lib.callbacks.H5D_iterate_t;
 import hdf.hdf5lib.callbacks.H5E_walk_cb;
 import hdf.hdf5lib.callbacks.H5E_walk_t;
-import hdf.hdf5lib.callbacks.H5L_iterate_cb;
 import hdf.hdf5lib.callbacks.H5L_iterate_t;
+import hdf.hdf5lib.callbacks.H5L_iterate_opdata_t;
 import hdf.hdf5lib.callbacks.H5O_iterate_cb;
 import hdf.hdf5lib.callbacks.H5O_iterate_t;
 import hdf.hdf5lib.callbacks.H5P_cls_close_func_cb;
@@ -4340,8 +4340,8 @@ public class H5 implements java.io.Serializable {
      * @exception HDF5LibraryException
      *                - Error from the HDF-5 Library.
      **/
-    public synchronized static native int H5Literate(long grp_id, int idx_type, int order, long idx, H5L_iterate_cb op,
-            H5L_iterate_t op_data) throws HDF5LibraryException;
+    public synchronized static native int H5Literate(long grp_id, int idx_type, int order, long idx, H5L_iterate_t op,
+            H5L_iterate_opdata_t op_data) throws HDF5LibraryException;
 
     /**
      * H5Literate_by_name iterates through links in a group.
@@ -4372,7 +4372,7 @@ public class H5 implements java.io.Serializable {
      *                - group_name is null.
      **/
     public synchronized static native int H5Literate_by_name(long grp_id, String group_name, int idx_type, int order,
-            long idx, H5L_iterate_cb op, H5L_iterate_t op_data, long lapl_id) throws HDF5LibraryException,
+            long idx, H5L_iterate_t op, H5L_iterate_opdata_t op_data, long lapl_id) throws HDF5LibraryException,
             NullPointerException;
 
     /**
@@ -4419,8 +4419,8 @@ public class H5 implements java.io.Serializable {
      * @exception HDF5LibraryException
      *                - Error from the HDF-5 Library.
      **/
-    public synchronized static native int H5Lvisit(long grp_id, int idx_type, int order, H5L_iterate_cb op,
-            H5L_iterate_t op_data) throws HDF5LibraryException;
+    public synchronized static native int H5Lvisit(long grp_id, int idx_type, int order, H5L_iterate_t op,
+            H5L_iterate_opdata_t op_data) throws HDF5LibraryException;
 
     /**
      * H5Lvisit_by_name recursively visits all links starting from a specified group.
@@ -4449,7 +4449,7 @@ public class H5 implements java.io.Serializable {
      *                - group_name is null.
      **/
     public synchronized static native int H5Lvisit_by_name(long loc_id, String group_name, int idx_type, int order,
-            H5L_iterate_cb op, H5L_iterate_t op_data, long lapl_id) throws HDF5LibraryException, NullPointerException;
+            H5L_iterate_t op, H5L_iterate_opdata_t op_data, long lapl_id) throws HDF5LibraryException, NullPointerException;
 
 
     /**

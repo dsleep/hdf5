@@ -639,7 +639,7 @@ Java_hdf_hdf5lib_H5_H5Oget_1comment
 
     if (buf_size) {
         if (NULL == (oComment = (char *) HDmalloc(sizeof(char) * (size_t)buf_size + 1)))
-            H5_JNI_FATAL_ERROR(ENVONLY, "H5Oget_comment: failed to allocate object comment buffer");
+            H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Oget_comment: failed to allocate object comment buffer");
 
         if ((status = H5Oget_comment((hid_t)loc_id, oComment, (size_t)buf_size + 1)) < 0)
             H5_LIBRARY_ERROR(ENVONLY);
@@ -684,7 +684,7 @@ Java_hdf_hdf5lib_H5_H5Oget_1comment_1by_1name
 
     if (buf_size) {
         if (NULL == (objComment = (char *) HDmalloc(sizeof(char) * (size_t)buf_size + 1)))
-            H5_JNI_FATAL_ERROR(ENVONLY, "H5Oget_comment_by_name: failed to allocate buffer for object comment");
+            H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Oget_comment_by_name: failed to allocate buffer for object comment");
 
         if ((status = H5Oget_comment_by_name((hid_t)loc_id, objName, objComment, (size_t)buf_size + 1, (hid_t)access_id)) < 0)
             H5_LIBRARY_ERROR(ENVONLY);

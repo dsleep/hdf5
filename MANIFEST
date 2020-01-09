@@ -3044,8 +3044,8 @@
 ./java/src/hdf/hdf5lib/callbacks/H5D_append_t.java
 ./java/src/hdf/hdf5lib/callbacks/H5E_walk_cb.java
 ./java/src/hdf/hdf5lib/callbacks/H5E_walk_t.java
-./java/src/hdf/hdf5lib/callbacks/H5L_iterate_cb.java
 ./java/src/hdf/hdf5lib/callbacks/H5L_iterate_t.java
+./java/src/hdf/hdf5lib/callbacks/H5L_iterate_opdata_t.java
 ./java/src/hdf/hdf5lib/callbacks/H5O_iterate_cb.java
 ./java/src/hdf/hdf5lib/callbacks/H5O_iterate_t.java
 ./java/src/hdf/hdf5lib/callbacks/H5P_cls_close_func_cb.java

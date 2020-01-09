@@ -309,7 +309,7 @@ Java_hdf_hdf5lib_H5_H5Eget_1class_1name
         H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Eget_class_name: no class name");
 
     if (NULL == (namePtr = (char *) HDmalloc(sizeof(char) * (size_t)buf_size + 1)))
-        H5_JNI_FATAL_ERROR(ENVONLY, "H5Eget_class_name: malloc failed");
+        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Eget_class_name: malloc failed");
 
     if ((H5Eget_class_name((hid_t)cls_id, (char *)namePtr, (size_t)buf_size + 1)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
@@ -464,10 +464,10 @@ Java_hdf_hdf5lib_H5_H5Eget_1msg
         H5_LIBRARY_ERROR(ENVONLY);
 
     if (!buf_size)
-        H5_JNI_FATAL_ERROR(ENVONLY, "H5Eget_msg: invalid message");
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Eget_msg: invalid message");
 
     if (NULL == (namePtr = (char *) HDmalloc(sizeof(char) * (size_t)buf_size + 1)))
-        H5_JNI_FATAL_ERROR(ENVONLY, "H5Eget_msg: malloc failed");
+        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Eget_msg: malloc failed");
 
     PIN_INT_ARRAY(ENVONLY, error_msg_type_list, theArray, NULL, "H5Eget_msg: error_msg_type_list not pinned");
 
