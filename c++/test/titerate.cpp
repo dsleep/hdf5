@@ -96,7 +96,7 @@ int iter_strcmp(const void *s1, const void *s2)
  * Purpose      Custom link iteration callback routine
  *-------------------------------------------------------------------------
  */
-static herr_t liter_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info_t H5_ATTR_UNUSED *link_info, void *op_data)
+static herr_t liter_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info2_t H5_ATTR_UNUSED *link_info, void *op_data)
 {
     iter_info *info = (iter_info *)op_data;
     static int count = 0;
@@ -207,7 +207,7 @@ static void test_iter_group(FileAccPropList& fapl)
         H5std_string obj_name;
         for (i = 0; i < nobjs; i++)
         {
-            //H5O_info_t oinfo;                /* Object info */
+            //H5O_info2_t oinfo;                /* Object info */
 
             obj_name = root_group.getObjnameByIdx(i);
         //ret = (herr_t)H5Lget_name_by_idx(root_group, ".", H5_INDEX_NAME, H5_ITER_INC, (hsize_t)i, dataset_name, (size_t)NAMELEN, H5P_DEFAULT);

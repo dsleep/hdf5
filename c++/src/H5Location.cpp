@@ -1711,11 +1711,11 @@ void H5Location::getObjinfo(const H5std_string& name, H5G_stat_t& statbuf) const
 ///\exception   H5::FileIException/H5::GroupIException/H5::LocationException
 // 2000
 //--------------------------------------------------------------------------
-H5L_info_t H5Location::getLinkInfo(const char* link_name, const LinkAccPropList& lapl) const
+H5L_info2_t H5Location::getLinkInfo(const char* link_name, const LinkAccPropList& lapl) const
 {
-    H5L_info_t linkinfo; // link info structure
+    H5L_info2_t linkinfo; // link info structure
 
-    herr_t ret_value = H5Lget_info(getId(), link_name, &linkinfo, lapl.getId());
+    herr_t ret_value = H5Lget_info2(getId(), link_name, &linkinfo, lapl.getId());
     if (ret_value < 0)
         throwException("getLinkInfo", "H5Lget_info to find buffer size failed");
 
@@ -1728,7 +1728,7 @@ H5L_info_t H5Location::getLinkInfo(const char* link_name, const LinkAccPropList&
 ///             It differs from the above function in that it takes an
 ///             \c H5std_string for \a link_name.
 //--------------------------------------------------------------------------
-H5L_info_t H5Location::getLinkInfo(const H5std_string& link_name, const LinkAccPropList& lapl) const
+H5L_info2_t H5Location::getLinkInfo(const H5std_string& link_name, const LinkAccPropList& lapl) const
 {
     return(getLinkInfo(link_name.c_str(), lapl));
 }
@@ -1744,7 +1744,7 @@ H5L_info_t H5Location::getLinkInfo(const H5std_string& link_name, const LinkAccP
 //--------------------------------------------------------------------------
 H5std_string H5Location::getLinkval(const char* name, size_t size) const
 {
-    H5L_info_t linkinfo;
+    H5L_info2_t linkinfo;
     char *value_C;        // value in C string
     size_t val_size = size;
     H5std_string value = "";
@@ -1753,7 +1753,7 @@ H5std_string H5Location::getLinkval(const char* name, size_t size) const
     // if user doesn't provide buffer size, determine it
     if (size == 0)
     {
-        ret_value = H5Lget_info(getId(), name, &linkinfo, H5P_DEFAULT);
+        ret_value = H5Lget_info2(getId(), name, &linkinfo, H5P_DEFAULT);
         if (ret_value < 0)
             throwException("getLinkval", "H5Lget_info to find buffer size failed");
 
