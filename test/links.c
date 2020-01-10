@@ -16742,7 +16742,7 @@ open_by_idx_check_old(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file
     if(H5Otoken_cmp(group_id, &oi.token, &mnt_root_token, &cmp_value) < 0) TEST_ERROR
     if(0 != cmp_value) TEST_ERROR
     if(H5Otoken_cmp(group_id, &oi.token, &objno[mnt_idx], &cmp_value) < 0) TEST_ERROR
-    if(0 != cmp_value) TEST_ERROR
+    if(0 == cmp_value) TEST_ERROR
 
     /* Close object */
     if(H5Oclose(obj_id) < 0) TEST_ERROR
