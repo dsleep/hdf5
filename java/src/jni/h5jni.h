@@ -57,20 +57,20 @@
  * cleanup+return section of the native method, since at that point
  * cleaning up and returning is the only safe thing that can be done.
  */
-#define CHECK_JNI_EXCEPTION(env, clearException)   \
-{                                                  \
-    if (JNI_TRUE == (*env)->ExceptionCheck(env)) { \
-        if (JNI_TRUE == clearException)            \
-            (*env)->ExceptionClear(env);           \
-        else                                       \
-            goto done;                             \
-    }                                              \
-}
+#define CHECK_JNI_EXCEPTION(envptr, clearException)         \
+do {                                                        \
+    if (JNI_TRUE == (*envptr)->ExceptionCheck(envptr)) {    \
+        if (JNI_TRUE == clearException)                     \
+            (*envptr)->ExceptionClear(envptr);              \
+        else                                                \
+            goto done;                                      \
+    }                                                       \
+} while(0)
 
 /* Macros for class access */
 /* Calling code must define ret_obj as jobject */
 #define CALL_CONSTRUCTOR(envptr, classname, classsig, args, ret_obj)                         \
-{                                                                                            \
+do {                                                                                         \
     jmethodID constructor;                                                                   \
     jclass    cls;                                                                           \
                                                                                              \
@@ -86,176 +86,176 @@
         HDprintf("FATAL ERROR: %s: Creation failed\n", classname);                           \
         CHECK_JNI_EXCEPTION(envptr, JNI_FALSE);                                              \
     }                                                                                        \
-}
+} while(0)
 
 /*
  * Macros for pinning/unpinning objects.
  */
-#define PIN_BYTE_ARRAY(env, arrayToPin, outBuf, isCopy, failErrMsg)                 \
-{                                                                                   \
-    if (NULL == (outBuf = ENVPTR->GetByteArrayElements(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                         \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                        \
-    }                                                                               \
-}
+#define PIN_BYTE_ARRAY(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                    \
+do {                                                                                      \
+    if (NULL == (outBuf = (*envptr)->GetByteArrayElements(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                            \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                           \
+    }                                                                                     \
+} while(0)
 
-#define PIN_BYTE_ARRAY_CRITICAL(env, arrayToPin, outBuf, isCopy, failErrMsg)                       \
-{                                                                                                  \
-    if (NULL == (outBuf = (jbyte *) ENVPTR->GetPrimitiveArrayCritical(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                        \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                                       \
-    }                                                                                              \
-}
+#define PIN_BYTE_ARRAY_CRITICAL(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                          \
+do {                                                                                                     \
+    if (NULL == (outBuf = (jbyte *) (*envptr)->GetPrimitiveArrayCritical(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                                           \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                                          \
+    }                                                                                                    \
+} while(0)
 
-#define UNPIN_BYTE_ARRAY(env, pinnedArray, bufToRelease, freeMode)                        \
-{                                                                                         \
-    ENVPTR->ReleaseByteArrayElements(env, pinnedArray, (jbyte *) bufToRelease, freeMode); \
-}
+#define UNPIN_BYTE_ARRAY(envptr, pinnedArray, bufToRelease, freeMode)                           \
+do {                                                                                            \
+    (*envptr)->ReleaseByteArrayElements(envptr, pinnedArray, (jbyte *) bufToRelease, freeMode); \
+} while(0)
 
-#define PIN_SHORT_ARRAY(env, arrayToPin, outBuf, isCopy, failErrMsg)                 \
-{                                                                                    \
-    if (NULL == (outBuf = ENVPTR->GetShortArrayElements(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                          \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                         \
-    }                                                                                \
-}
+#define PIN_SHORT_ARRAY(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                    \
+do {                                                                                       \
+    if (NULL == (outBuf = (*envptr)->GetShortArrayElements(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                             \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                            \
+    }                                                                                      \
+} while(0)
 
-#define PIN_SHORT_ARRAY_CRITICAL(env, arrayToPin, outBuf, isCopy, failErrMsg)                       \
-{                                                                                                   \
-    if (NULL == (outBuf = (jshort *) ENVPTR->GetPrimitiveArrayCritical(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                         \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                                        \
-    }                                                                                               \
-}
+#define PIN_SHORT_ARRAY_CRITICAL(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                          \
+do {                                                                                                      \
+    if (NULL == (outBuf = (jshort *) (*envptr)->GetPrimitiveArrayCritical(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                                            \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                                           \
+    }                                                                                                     \
+} while(0)
 
-#define UNPIN_SHORT_ARRAY(env, pinnedArray, bufToRelease, freeMode)                         \
-{                                                                                           \
-    ENVPTR->ReleaseShortArrayElements(env, pinnedArray, (jshort *) bufToRelease, freeMode); \
-}
+#define UNPIN_SHORT_ARRAY(envptr, pinnedArray, bufToRelease, freeMode)                            \
+do {                                                                                              \
+    (*envptr)->ReleaseShortArrayElements(envptr, pinnedArray, (jshort *) bufToRelease, freeMode); \
+} while(0)
 
-#define PIN_INT_ARRAY(env, arrayToPin, outBuf, isCopy, failErrMsg)                 \
-{                                                                                  \
-    if (NULL == (outBuf = ENVPTR->GetIntArrayElements(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                        \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                       \
-    }                                                                              \
-}
+#define PIN_INT_ARRAY(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                    \
+do {                                                                                     \
+    if (NULL == (outBuf = (*envptr)->GetIntArrayElements(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                           \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                          \
+    }                                                                                    \
+} while(0)
 
-#define PIN_INT_ARRAY_CRITICAL(env, arrayToPin, outBuf, isCopy, failErrMsg)                       \
-{                                                                                                 \
-    if (NULL == (outBuf = (jint *) ENVPTR->GetPrimitiveArrayCritical(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                       \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                                      \
-    }                                                                                             \
-}
+#define PIN_INT_ARRAY_CRITICAL(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                          \
+do {                                                                                                    \
+    if (NULL == (outBuf = (jint *) (*envptr)->GetPrimitiveArrayCritical(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                                          \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                                         \
+    }                                                                                                   \
+} while(0)
 
-#define UNPIN_INT_ARRAY(env, pinnedArray, bufToRelease, freeMode)                       \
-{                                                                                       \
-    ENVPTR->ReleaseIntArrayElements(env, pinnedArray, (jint *) bufToRelease, freeMode); \
-}
+#define UNPIN_INT_ARRAY(envptr, pinnedArray, bufToRelease, freeMode)                          \
+do {                                                                                          \
+    (*envptr)->ReleaseIntArrayElements(envptr, pinnedArray, (jint *) bufToRelease, freeMode); \
+} while(0)
 
-#define PIN_LONG_ARRAY(env, arrayToPin, outBuf, isCopy, failErrMsg)                 \
-{                                                                                   \
-    if (NULL == (outBuf = ENVPTR->GetLongArrayElements(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                         \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                        \
-    }                                                                               \
-}
+#define PIN_LONG_ARRAY(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                    \
+do {                                                                                      \
+    if (NULL == (outBuf = (*envptr)->GetLongArrayElements(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                            \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                           \
+    }                                                                                     \
+} while(0)
 
-#define PIN_LONG_ARRAY_CRITICAL(env, arrayToPin, outBuf, isCopy, failErrMsg)                       \
-{                                                                                                  \
-    if (NULL == (outBuf = (jlong *) ENVPTR->GetPrimitiveArrayCritical(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                        \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                                       \
-    }                                                                                              \
-}
+#define PIN_LONG_ARRAY_CRITICAL(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                          \
+do {                                                                                                     \
+    if (NULL == (outBuf = (jlong *) (*envptr)->GetPrimitiveArrayCritical(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                                           \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                                          \
+    }                                                                                                    \
+} while(0)
 
-#define UNPIN_LONG_ARRAY(env, pinnedArray, bufToRelease, freeMode)                        \
-{                                                                                         \
-    ENVPTR->ReleaseLongArrayElements(env, pinnedArray, (jlong *) bufToRelease, freeMode); \
-}
+#define UNPIN_LONG_ARRAY(envptr, pinnedArray, bufToRelease, freeMode)                           \
+do {                                                                                            \
+    (*envptr)->ReleaseLongArrayElements(envptr, pinnedArray, (jlong *) bufToRelease, freeMode); \
+} while(0)
 
-#define PIN_FLOAT_ARRAY(env, arrayToPin, outBuf, isCopy, failErrMsg)                 \
-{                                                                                    \
-    if (NULL == (outBuf = ENVPTR->GetFloatArrayElements(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                          \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                         \
-    }                                                                                \
-}
+#define PIN_FLOAT_ARRAY(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                    \
+do {                                                                                       \
+    if (NULL == (outBuf = (*envptr)->GetFloatArrayElements(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                             \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                            \
+    }                                                                                      \
+} while(0)
 
-#define PIN_FLOAT_ARRAY_CRITICAL(env, arrayToPin, outBuf, isCopy, failErrMsg)                       \
-{                                                                                                   \
-    if (NULL == (outBuf = (jfloat *) ENVPTR->GetPrimitiveArrayCritical(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                         \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                                        \
-    }                                                                                               \
-}
+#define PIN_FLOAT_ARRAY_CRITICAL(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                          \
+do {                                                                                                      \
+    if (NULL == (outBuf = (jfloat *) (*envptr)->GetPrimitiveArrayCritical(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                                            \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                                           \
+    }                                                                                                     \
+} while(0)
 
-#define UNPIN_FLOAT_ARRAY(env, pinnedArray, bufToRelease, freeMode)                         \
-{                                                                                           \
-    ENVPTR->ReleaseFloatArrayElements(env, pinnedArray, (jfloat *) bufToRelease, freeMode); \
-}
+#define UNPIN_FLOAT_ARRAY(envptr, pinnedArray, bufToRelease, freeMode)                            \
+do {                                                                                              \
+    (*envptr)->ReleaseFloatArrayElements(envptr, pinnedArray, (jfloat *) bufToRelease, freeMode); \
+} while(0)
 
-#define PIN_DOUBLE_ARRAY(env, arrayToPin, outBuf, isCopy, failErrMsg)                 \
-{                                                                                     \
-    if (NULL == (outBuf = ENVPTR->GetDoubleArrayElements(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                           \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                          \
-    }                                                                                 \
-}
+#define PIN_DOUBLE_ARRAY(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                    \
+do {                                                                                        \
+    if (NULL == (outBuf = (*envptr)->GetDoubleArrayElements(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                              \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                             \
+    }                                                                                       \
+} while(0)
 
-#define PIN_DOUBLE_ARRAY_CRITICAL(env, arrayToPin, outBuf, isCopy, failErrMsg)                       \
-{                                                                                                    \
-    if (NULL == (outBuf = (jdouble *) ENVPTR->GetPrimitiveArrayCritical(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                          \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                                         \
-    }                                                                                                \
-}
+#define PIN_DOUBLE_ARRAY_CRITICAL(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                          \
+do {                                                                                                       \
+    if (NULL == (outBuf = (jdouble *) (*envptr)->GetPrimitiveArrayCritical(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                                             \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                                            \
+    }                                                                                                      \
+} while(0)
 
-#define UNPIN_DOUBLE_ARRAY(env, pinnedArray, bufToRelease, freeMode)                          \
-{                                                                                             \
-    ENVPTR->ReleaseDoubleArrayElements(env, pinnedArray, (jdouble *) bufToRelease, freeMode); \
-}
+#define UNPIN_DOUBLE_ARRAY(envptr, pinnedArray, bufToRelease, freeMode)                             \
+do {                                                                                                \
+    (*envptr)->ReleaseDoubleArrayElements(envptr, pinnedArray, (jdouble *) bufToRelease, freeMode); \
+} while(0)
 
-#define PIN_BOOL_ARRAY(env, arrayToPin, outBuf, isCopy, failErrMsg)                    \
-{                                                                                      \
-    if (NULL == (outBuf = ENVPTR->GetBooleanArrayElements(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                            \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                           \
-    }                                                                                  \
-}
+#define PIN_BOOL_ARRAY(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                       \
+do {                                                                                         \
+    if (NULL == (outBuf = (*envptr)->GetBooleanArrayElements(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                               \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                              \
+    }                                                                                        \
+} while(0)
 
-#define PIN_BOOL_ARRAY_CRITICAL(env, arrayToPin, outBuf, isCopy, failErrMsg)                          \
-{                                                                                                     \
-    if (NULL == (outBuf = (jboolean *) ENVPTR->GetPrimitiveArrayCritical(env, arrayToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                                           \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                                          \
-    }                                                                                                 \
-}
+#define PIN_BOOL_ARRAY_CRITICAL(envptr, arrayToPin, outBuf, isCopy, failErrMsg)                             \
+do {                                                                                                        \
+    if (NULL == (outBuf = (jboolean *) (*envptr)->GetPrimitiveArrayCritical(envptr, arrayToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                                              \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                                             \
+    }                                                                                                       \
+} while(0)
 
-#define UNPIN_BOOL_ARRAY(env, pinnedArray, bufToRelease, freeMode)                              \
-{                                                                                               \
-    ENVPTR->ReleaseBooleanArrayElements(env, pinnedArray, (jboolean *) bufToRelease, freeMode); \
-}
+#define UNPIN_BOOL_ARRAY(envptr, pinnedArray, bufToRelease, freeMode)                                 \
+do {                                                                                                  \
+    (*envptr)->ReleaseBooleanArrayElements(envptr, pinnedArray, (jboolean *) bufToRelease, freeMode); \
+} while(0)
 
-#define UNPIN_ARRAY_CRITICAL(env, pinnedArray, bufToRelease, freeMode)               \
-{                                                                                    \
-    ENVPTR->ReleasePrimitiveArrayCritical(env, pinnedArray, bufToRelease, freeMode); \
-}
+#define UNPIN_ARRAY_CRITICAL(envptr, pinnedArray, bufToRelease, freeMode)                  \
+do {                                                                                       \
+    (*envptr)->ReleasePrimitiveArrayCritical(envptr, pinnedArray, bufToRelease, freeMode); \
+} while(0)
 
 /* Macros for string access */
-#define PIN_JAVA_STRING(env, stringToPin, outString, isCopy, failErrMsg)             \
-{                                                                                    \
-    if (NULL == (outString = ENVPTR->GetStringUTFChars(env, stringToPin, isCopy))) { \
-        CHECK_JNI_EXCEPTION(env, JNI_TRUE);                                          \
-        H5_JNI_FATAL_ERROR(env, failErrMsg);                                         \
-    }                                                                                \
-}
+#define PIN_JAVA_STRING(envptr, stringToPin, outString, isCopy, failErrMsg)                \
+do {                                                                                       \
+    if (NULL == (outString = (*envptr)->GetStringUTFChars(envptr, stringToPin, isCopy))) { \
+        CHECK_JNI_EXCEPTION(envptr, JNI_TRUE);                                             \
+        H5_JNI_FATAL_ERROR(envptr, failErrMsg);                                            \
+    }                                                                                      \
+} while(0)
 
-#define UNPIN_JAVA_STRING(env, pinnedString, stringToRelease)          \
-{                                                                      \
-    ENVPTR->ReleaseStringUTFChars(env, pinnedString, stringToRelease); \
-}
+#define UNPIN_JAVA_STRING(envptr, pinnedString, stringToRelease)             \
+do {                                                                         \
+    (*envptr)->ReleaseStringUTFChars(envptr, pinnedString, stringToRelease); \
+} while(0)
 
 #ifdef __cplusplus
 extern "C" {
@@ -280,46 +280,46 @@ extern jboolean h5unimplemented( JNIEnv *env, const char *functName);
  * then do its own error handling, but we instead opt to immediately return.
  */
 #define H5_JNI_FATAL_ERROR(env, message) \
-{                                        \
+do {                                     \
     h5JNIFatalError(env, message);       \
     goto done;                           \
-}
+} while(0)
 
 #define H5_NULL_ARGUMENT_ERROR(env, message) \
-{                                            \
+do {                                         \
     h5nullArgument(env, message);            \
     goto done;                               \
-}
+} while(0)
 
 #define H5_BAD_ARGUMENT_ERROR(env, message) \
-{                                           \
+do {                                        \
     h5badArgument(env, message);            \
     goto done;                              \
-}
+} while(0)
 
 #define H5_OUT_OF_MEMORY_ERROR(env, message) \
-{                                            \
+do {                                         \
     h5outOfMemory(env, message);             \
     goto done;                               \
-}
+} while(0)
 
 #define H5_LIBRARY_ERROR(env) \
-{                             \
+do {                          \
     h5libraryError(env);      \
     goto done;                \
-}
+} while(0)
 
 #define H5_RAISE_EXCEPTION(env, message, exception) \
-{                                                   \
+do {                                                \
     h5raiseException(env, message, exception);      \
     goto done;                                      \
-}
+} while(0)
 
 #define H5_UNIMPLEMENTED(env, message) \
-{                                      \
+do {                                   \
     h5unimplemented(env, message);     \
     goto done;                         \
-}
+} while(0)
 
 /* implemented at H5.c */
 extern jint get_enum_value(JNIEnv *env, jobject enum_obj);
@@ -328,6 +328,9 @@ extern jobject get_enum_object(JNIEnv *env, const char* enum_class_name,
 
 /* implemented at H5G.c */
 extern jobject create_H5G_info_t(JNIEnv *env, H5G_info_t group_info);
+
+/* implemented at h5oimp.c */
+extern jobject create_H5O_token_t(JNIEnv *env, const H5O_token_t *token, hbool_t is_critical_pinning);
 
 #ifdef __cplusplus
 } /* end extern "C" */

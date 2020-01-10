@@ -1243,7 +1243,7 @@ H5AwriteVL_str
     }
 
     if (NULL == (writeBuf = (char **) HDcalloc((size_t)size + 1, sizeof(char *))))
-        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5AwriteVL_str: failed to allocate variable length string write buffer")
+        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5AwriteVL_str: failed to allocate variable length string write buffer");
 
     for (i = 0; i < size; ++i) {
         jsize length;
@@ -2162,7 +2162,7 @@ static herr_t
 H5A_iterate_cb
     (hid_t g_id, const char *name, const H5A_info_t *info, void *cb_data) {
     cb_wrapper *wrapper = (cb_wrapper *)cb_data;
-    jmethodID   constructor, mid;
+    jmethodID   mid;
     jobject     cb_info_t = NULL;
     jobject     visit_callback = wrapper->visit_callback;
     jstring     str;
@@ -2191,18 +2191,7 @@ H5A_iterate_cb
     args[2].i = info->cset;
     args[3].j = (jlong)info->data_size;
 
-    /* Get a reference to your class if you don't have it already */
-    if (NULL == (cls = CBENVPTR->FindClass(CBENVONLY, "hdf/hdf5lib/structs/H5A_info_t")))
-        CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
-
-    /* Get a reference to the constructor; the name is <init> */
-    if (NULL == (constructor = CBENVPTR->GetMethodID(CBENVONLY, cls, "<init>", "(ZJIJ)V")))
-        CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
-
-    if (NULL == (cb_info_t = CBENVPTR->NewObjectA(CBENVONLY, cls, constructor, args))) {
-        HDprintf("FATAL ERROR:  hdf/hdf5lib/structs/H5A_info_t: Creation failed\n");
-        CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
-    }
+    CALL_CONSTRUCTOR(CBENVONLY, "hdf/hdf5lib/structs/H5A_info_t", "(ZJIJ)V", args, cb_info_t);
 
     status = CBENVPTR->CallIntMethod(CBENVONLY, visit_callback, mid, g_id, str, cb_info_t, op_data);
     CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);

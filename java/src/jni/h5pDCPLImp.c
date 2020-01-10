@@ -632,7 +632,7 @@ done:
     if (cd_nelmtsArray)
         UNPIN_LONG_ARRAY(ENVONLY, cd_nelmts, cd_nelmtsArray, (status < 0) ? JNI_ABORT : 0);
     if (flagsArray)
-        UNPIN_INT_ARRAY(ENVONLY, flags, flagsArray, (status < 0) ? JNI_ABORT : 0)
+        UNPIN_INT_ARRAY(ENVONLY, flags, flagsArray, (status < 0) ? JNI_ABORT : 0);
     if (filter)
         HDfree(filter);
 

@@ -98,7 +98,7 @@ Java_hdf_hdf5lib_H5__1H5Screate_1simple
     PIN_LONG_ARRAY(ENVONLY, dims, dimsP, &isCopy, "H5Screate_simple: dims not pinned");
 
     if (NULL == (sa = lp = (hsize_t *) HDmalloc((size_t)rank * sizeof(hsize_t))))
-        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Screate_simple: failed to allocate dims buffer")
+        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Screate_simple: failed to allocate dims buffer");
 
     jlp = (jlong *) dimsP;
     for (i = 0; i < rank; i++) {
@@ -115,7 +115,7 @@ Java_hdf_hdf5lib_H5__1H5Screate_1simple
         PIN_LONG_ARRAY(ENVONLY, maxdims, maxdimsP, &isCopy, "H5Screate_simple: maxdims not pinned");
 
         if (NULL == (msa = lp = (hsize_t *) HDmalloc((size_t)rank * sizeof(hsize_t))))
-            H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Screate_simple: failed to allocate maxdims buffer")
+            H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Screate_simple: failed to allocate maxdims buffer");
 
         jlp = (jlong *) maxdimsP;
         for (i = 0; i < mrank; i++) {

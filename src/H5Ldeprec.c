@@ -37,6 +37,8 @@
 #include "H5Iprivate.h"         /* IDs                                      */
 #include "H5Lpkg.h"             /* Links                                    */
 
+#include "H5VLnative_private.h"
+
 #ifndef H5_NO_DEPRECATED_SYMBOLS
 
 /****************/

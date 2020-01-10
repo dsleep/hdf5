@@ -645,9 +645,9 @@ Java_hdf_hdf5lib_H5_H5Rcreate
     }
 
     if ((H5R_OBJECT == ref_type) && (refBufLen != H5R_OBJ_REF_BUF_SIZE))
-        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rcreate: reference input array length != H5R_OBJ_REF_BUF_SIZE")
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rcreate: reference input array length != H5R_OBJ_REF_BUF_SIZE");
     else if ((H5R_DATASET_REGION == ref_type) && (refBufLen != H5R_DSET_REG_REF_BUF_SIZE))
-        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rcreate: region reference input array length != H5R_DSET_REG_REF_BUF_SIZE")
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rcreate: region reference input array length != H5R_DSET_REG_REF_BUF_SIZE");
     else if ((H5R_OBJECT != ref_type) && (H5R_DATASET_REGION != ref_type))
         H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rcreate: unknown reference type");
 
@@ -692,9 +692,9 @@ Java_hdf_hdf5lib_H5__1H5Rdereference
     }
 
     if ((H5R_OBJECT == ref_type) && (refBufLen != H5R_OBJ_REF_BUF_SIZE))
-        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rdereference: reference input array length != H5R_OBJ_REF_BUF_SIZE")
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rdereference: reference input array length != H5R_OBJ_REF_BUF_SIZE");
     else if ((H5R_DATASET_REGION == ref_type) && (refBufLen != H5R_DSET_REG_REF_BUF_SIZE))
-        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rdereference: region reference input array length != H5R_DSET_REG_REF_BUF_SIZE")
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rdereference: region reference input array length != H5R_DSET_REG_REF_BUF_SIZE");
     else if ((H5R_OBJECT != ref_type) && (H5R_DATASET_REGION != ref_type))
         H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rdereference: unknown reference type");
 
@@ -854,9 +854,9 @@ Java_hdf_hdf5lib_H5_H5Rget_1name
     }
 
     if ((H5R_OBJECT == ref_type) && (refBufLen != H5R_OBJ_REF_BUF_SIZE))
-        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rget_name: reference input array length != H5R_OBJ_REF_BUF_SIZE")
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rget_name: reference input array length != H5R_OBJ_REF_BUF_SIZE");
     else if ((H5R_DATASET_REGION == ref_type) && (refBufLen != H5R_DSET_REG_REF_BUF_SIZE))
-        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rget_name: region reference input array length != H5R_DSET_REG_REF_BUF_SIZE")
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rget_name: region reference input array length != H5R_DSET_REG_REF_BUF_SIZE");
     else if ((H5R_OBJECT != ref_type) && (H5R_DATASET_REGION != ref_type))
         H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Rget_name: unknown reference type");
 

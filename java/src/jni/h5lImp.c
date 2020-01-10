@@ -297,22 +297,33 @@ Java_hdf_hdf5lib_H5_H5Lget_1info
     if ((status = H5Lget_info2((hid_t)loc_id, linkName, &infobuf, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
-    args[0].i = infobuf.type;
-    args[1].z = infobuf.corder_valid;
-    args[2].j = infobuf.corder;
-    args[3].i = infobuf.cset;
-
     /*
      * Set the last argument based upon whether this is a hard link (which returns object tokens)
      * or a soft/user-defined link (which returns the link's value size). Then, call the appropriate
      * constructor to instantiate an H5L_info_t object.
      */
     if (infobuf.type == H5L_TYPE_HARD) {
-        args[4].l = X; /* TODO */
-        CALL_CONSTRUCTOR(ENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJILhdf/hdf5lib/structs/H5O_token_t)V", args, ret_obj);
+        jobject token;
+
+        /* Create an H5O_token_t object */
+        if (NULL == (token = create_H5O_token_t(ENVONLY, &infobuf.u.token, FALSE)))
+            CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
+
+        args[0].i = infobuf.type;
+        args[1].z = infobuf.corder_valid;
+        args[2].j = infobuf.corder;
+        args[3].i = infobuf.cset;
+        args[4].l = token;
+
+        CALL_CONSTRUCTOR(ENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJILhdf/hdf5lib/structs/H5O_token_t;)V", args, ret_obj);
     }
     else {
+        args[0].i = infobuf.type;
+        args[1].z = infobuf.corder_valid;
+        args[2].j = infobuf.corder;
+        args[3].i = infobuf.cset;
         args[4].j = (jlong)infobuf.u.val_size;
+
         CALL_CONSTRUCTOR(ENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJIJ)V", args, ret_obj);
     }
 
@@ -349,22 +360,33 @@ Java_hdf_hdf5lib_H5_H5Lget_1info_1by_1idx
     if ((status = H5Lget_info_by_idx2((hid_t)loc_id, groupName, (H5_index_t)index_field, (H5_iter_order_t)order, (hsize_t)link_n, &infobuf, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
-    args[0].i = infobuf.type;
-    args[1].z = infobuf.corder_valid;
-    args[2].j = infobuf.corder;
-    args[3].i = infobuf.cset;
-
     /*
      * Set the last argument based upon whether this is a hard link (which returns object tokens)
      * or a soft/user-defined link (which returns the link's value size). Then, call the appropriate
      * constructor to instantiate an H5L_info_t object.
      */
     if (infobuf.type == H5L_TYPE_HARD) {
-        args[4].l = X; /* TODO */
-        CALL_CONSTRUCTOR(ENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJILhdf/hdf5lib/structs/H5O_token_t)V", args, ret_obj);
+        jobject token;
+
+        /* Create an H5O_token_t object */
+        if (NULL == (token = create_H5O_token_t(ENVONLY, &infobuf.u.token, FALSE)))
+            CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
+
+        args[0].i = infobuf.type;
+        args[1].z = infobuf.corder_valid;
+        args[2].j = infobuf.corder;
+        args[3].i = infobuf.cset;
+        args[4].l = token;
+
+        CALL_CONSTRUCTOR(ENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJILhdf/hdf5lib/structs/H5O_token_t;)V", args, ret_obj);
     }
     else {
+        args[0].i = infobuf.type;
+        args[1].z = infobuf.corder_valid;
+        args[2].j = infobuf.corder;
+        args[3].i = infobuf.cset;
         args[4].j = (jlong)infobuf.u.val_size;
+
         CALL_CONSTRUCTOR(ENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJIJ)V", args, ret_obj);
     }
 
@@ -542,7 +564,7 @@ Java_hdf_hdf5lib_H5_H5Lget_1value_1by_1idx
         H5_LIBRARY_ERROR(ENVONLY);
 
     if (H5L_TYPE_HARD == infobuf.type)
-        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Lget_val_by_idx: hard links are unsupported")
+        H5_BAD_ARGUMENT_ERROR(ENVONLY, "H5Lget_val_by_idx: hard links are unsupported");
 
     if (!infobuf.u.val_size)
         H5_LIBRARY_ERROR(ENVONLY);
@@ -670,22 +692,33 @@ H5L_iterate_cb
     if (NULL == (str = CBENVPTR->NewStringUTF(CBENVONLY, name)))
         CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
 
-    args[0].i = info->type;
-    args[1].z = info->corder_valid;
-    args[2].j = info->corder;
-    args[3].i = info->cset;
-
     /*
      * Set the last argument based upon whether this is a hard link (which returns object tokens)
      * or a soft/user-defined link (which returns the link's value size). Then, call the appropriate
      * constructor to instantiate an H5L_info_t object.
      */
     if (info->type == H5L_TYPE_HARD) {
-        args[4].l = X; /* TODO */
-        CALL_CONSTRUCTOR(CBENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJILhdf/hdf5lib/structs/H5O_token_t)V", args, cb_info_t);
+        jobject token;
+
+        /* Create an H5O_token_t object */
+        if (NULL == (token = create_H5O_token_t(CBENVONLY, &info->u.token, FALSE)))
+            CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
+
+        args[0].i = info->type;
+        args[1].z = info->corder_valid;
+        args[2].j = info->corder;
+        args[3].i = info->cset;
+        args[4].l = token;
+
+        CALL_CONSTRUCTOR(CBENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJILhdf/hdf5lib/structs/H5O_token_t;)V", args, cb_info_t);
     }
     else {
+        args[0].i = info->type;
+        args[1].z = info->corder_valid;
+        args[2].j = info->corder;
+        args[3].i = info->cset;
         args[4].j = (jlong)info->u.val_size;
+
         CALL_CONSTRUCTOR(CBENVONLY, "hdf/hdf5lib/structs/H5L_info_t", "(IZJIJ)V", args, cb_info_t);
     }
 
@@ -722,8 +755,8 @@ Java_hdf_hdf5lib_H5_H5Lvisit
     if (NULL == callback_op)
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Lvisit: callback_op is NULL");
 
-    if ((status = H5Lvisit((hid_t)grp_id, (H5_index_t)idx_type, (H5_iter_order_t)order,
-            (H5L_iterate2_t)H5L_iterate_cb, (void *)&wrapper)) < 0)
+    if ((status = H5Lvisit2((hid_t)grp_id, (H5_index_t)idx_type, (H5_iter_order_t)order,
+            H5L_iterate_cb, (void *)&wrapper)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:
@@ -758,8 +791,8 @@ Java_hdf_hdf5lib_H5_H5Lvisit_1by_1name
 
     PIN_JAVA_STRING(ENVONLY, name, grpName, NULL, "H5Lvisit_by_name: group name not pinned");
 
-    if ((status = H5Lvisit_by_name((hid_t)grp_id, grpName, (H5_index_t)idx_type, (H5_iter_order_t)order,
-            (H5L_iterate2_t)H5L_iterate_cb, (void *)&wrapper, (hid_t)access_id)) < 0)
+    if ((status = H5Lvisit_by_name2((hid_t)grp_id, grpName, (H5_index_t)idx_type, (H5_iter_order_t)order,
+            H5L_iterate_cb, (void *)&wrapper, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:
@@ -793,8 +826,8 @@ Java_hdf_hdf5lib_H5_H5Literate
     if (NULL == callback_op)
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Literate: callback_op is NULL");
 
-    if ((status = H5Literate((hid_t)grp_id, (H5_index_t)idx_type, (H5_iter_order_t)order,
-            (hsize_t *)&start_idx, (H5L_iterate2_t)H5L_iterate_cb, (void *)&wrapper)) < 0)
+    if ((status = H5Literate2((hid_t)grp_id, (H5_index_t)idx_type, (H5_iter_order_t)order,
+            &start_idx, H5L_iterate_cb, (void *)&wrapper)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:
@@ -830,8 +863,8 @@ Java_hdf_hdf5lib_H5_H5Literate_1by_1name
 
     PIN_JAVA_STRING(ENVONLY, name, groupName, NULL, "H5Literate_by_name: group name not pinned");
 
-    if ((status = H5Literate_by_name((hid_t)grp_id, groupName, (H5_index_t)idx_type, (H5_iter_order_t)order,
-            (hsize_t*)&start_idx, (H5L_iterate2_t)H5L_iterate_cb, (void*)&wrapper, (hid_t)access_id)) < 0)
+    if ((status = H5Literate_by_name2((hid_t)grp_id, groupName, (H5_index_t)idx_type, (H5_iter_order_t)order,
+            &start_idx, H5L_iterate_cb, (void*)&wrapper, (hid_t)access_id)) < 0)
         H5_LIBRARY_ERROR(ENVONLY);
 
 done:

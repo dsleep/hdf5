@@ -1069,10 +1069,10 @@ h5str_sprintf
                     case H5R_OBJECT1:
                         {
                         /* Object references -- show the type and OID of the referenced object. */
-                        H5O_info1_t  oi;
+                        H5O_info2_t oi;
 
                         if((obj = H5Ropen_object(ref_vp, H5P_DEFAULT, H5P_DEFAULT)) >= 0) {
-                            H5Oget_info2(obj, &oi, H5O_INFO_BASIC);
+                            H5Oget_info3(obj, &oi, H5O_INFO_BASIC);
                             if(H5Oclose(obj) < 0)
                                 CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
                         }
@@ -1114,10 +1114,19 @@ h5str_sprintf
                         h5str_sprint_reference(ENVONLY, out_str, container, ref_vp);
 
                         /* Print OID */
-                        if (NULL == (this_str = (char *) HDmalloc(64)))
-                            H5_OUT_OF_MEMORY_ERROR(ENVONLY, "h5str_sprintf: failed to allocate string buffer");
-                        if (HDsprintf(this_str, "%lu:"H5_PRINTF_HADDR_FMT" ", oi.fileno, oi.addr) < 0)
-                            H5_JNI_FATAL_ERROR(ENVONLY, "h5str_sprintf: HDsprintf failure");
+                        {
+                            char *token_str;
+
+                            H5Otoken_to_str(tid, &oi.token, &token_str);
+
+                            if (NULL == (this_str = (char *) HDmalloc(64 + strlen(token_str) + 1)))
+                                H5_OUT_OF_MEMORY_ERROR(ENVONLY, "h5str_sprintf: failed to allocate string buffer");
+                            if (HDsprintf(this_str, "%lu:%s", oi.fileno, token_str) < 0)
+                                H5_JNI_FATAL_ERROR(ENVONLY, "h5str_sprintf: HDsprintf failure");
+
+                            H5free_memory(token_str);
+                        }
+
                         }
 
                         break;
@@ -3206,13 +3215,13 @@ done:
 #ifdef __cplusplus
     herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info2_t *linfo, void *op_data);
     herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info2_t *linfo, void *op_data);
-    int H5Gget_obj_info_max(hid_t, char **, int *, int *, unsigned long *, long);
-    int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, unsigned long *objno, int indexType, int indexOrder);
+    int H5Gget_obj_info_max(hid_t, char **, int *, int *, H5O_token_t *, long);
+    int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, H5O_token_t *obj_token, int indexType, int indexOrder);
 #else
     static herr_t obj_info_all(hid_t g_id, const char *name, const H5L_info2_t *linfo, void *op_data);
     static herr_t obj_info_max(hid_t g_id, const char *name, const H5L_info2_t *linfo, void *op_data);
-    static int H5Gget_obj_info_max(hid_t, char **, int *, int *, unsigned long *, long);
-    static int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, unsigned long *objno, int indexType, int indexOrder);
+    static int H5Gget_obj_info_max(hid_t, char **, int *, int *, H5O_token_t *, long);
+    static int H5Gget_obj_info_full( hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, H5O_token_t *obj_token, int indexType, int indexOrder);
 #endif
 
 typedef struct info_all
@@ -3220,7 +3229,7 @@ typedef struct info_all
     char **objname;
     int *otype;
     int *ltype;
-    unsigned long *objno;
+    H5O_token_t *obj_token;
     unsigned long *fno;
     unsigned long idxnum;
     int count;
@@ -3241,17 +3250,17 @@ JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_H5_H5Gget_1obj_1info_1full
     (JNIEnv *env, jclass clss, jlong loc_id, jstring group_name,
         jobjectArray objName, jintArray oType, jintArray lType, jlongArray fNo,
-        jlongArray oRef, jint n, jint indx_type, jint indx_order)
+        jobjectArray oToken, jint n, jint indx_type, jint indx_order)
 {
-    unsigned long  *refs = NULL;
     unsigned long  *fnos = NULL;
+    H5O_token_t    *tokens = NULL;
     const char     *gName = NULL;
     char          **oName = NULL;
     jboolean        isCopy;
     jstring         str;
+    jobject         token;
     jint           *otarr = NULL;
     jint           *ltarr = NULL;
-    jlong          *refP = NULL;
     jlong          *fnoP = NULL;
     hid_t           gid = (hid_t)loc_id;
     int             i;
@@ -3265,21 +3274,20 @@ Java_hdf_hdf5lib_H5_H5Gget_1obj_1info_1full
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_full: oType is NULL");
     if (NULL == lType)
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_full: lType is NULL");
-    if (NULL == oRef)
-        H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_full: oRef is NULL");
+    if (NULL == oToken)
+        H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_full: oToken is NULL");
     if (NULL == fNo)
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_full: fNo is NULL");
 
     PIN_INT_ARRAY(ENVONLY, oType, otarr, &isCopy, "H5Gget_obj_info_full: oType not pinned");
     PIN_INT_ARRAY(ENVONLY, lType, ltarr, &isCopy, "H5Gget_obj_info_full: lType not pinned");
-    PIN_LONG_ARRAY(ENVONLY, oRef, refP, &isCopy, "H5Gget_obj_info_full: oRef not pinned");
     PIN_LONG_ARRAY(ENVONLY, fNo, fnoP, &isCopy, "H5Gget_obj_info_full: fNo not pinned");
 
     if (NULL == (oName = (char **) HDcalloc((size_t)n, sizeof(*oName))))
         H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Gget_obj_info_full: failed to allocate buffer for object name");
 
-    if (NULL == (refs = (unsigned long *) HDcalloc((size_t)n, sizeof(unsigned long))))
-        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Gget_obj_info_full: failed to allocate buffer for ref. info");
+    if (NULL == (tokens = (H5O_token_t *) HDcalloc((size_t)n, sizeof(H5O_token_t))))
+        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Gget_obj_info_full: failed to allocate buffer for object tokens");
 
     if (NULL == (fnos = (unsigned long *) HDcalloc((size_t)n, sizeof(unsigned long))))
         H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Gget_obj_info_full: failed to allocate buffer for file number info");
@@ -3291,11 +3299,10 @@ Java_hdf_hdf5lib_H5_H5Gget_1obj_1info_1full
             H5_LIBRARY_ERROR(ENVONLY);
     }
 
-    if ((ret_val = H5Gget_obj_info_full(gid, oName, (int *)otarr, (int *)ltarr, fnos, refs, indexType, indexOrder)) < 0)
+    if ((ret_val = H5Gget_obj_info_full(gid, oName, (int *)otarr, (int *)ltarr, fnos, tokens, indexType, indexOrder)) < 0)
         H5_JNI_FATAL_ERROR(ENVONLY, "H5Gget_obj_info_full: retrieval of object info failed");
 
     for (i = 0; i < n; i++) {
-        refP[i] = (jlong)refs[i];
         fnoP[i] = (jlong)fnos[i];
 
         if (oName[i]) {
@@ -3307,6 +3314,15 @@ Java_hdf_hdf5lib_H5_H5Gget_1obj_1info_1full
 
             ENVPTR->DeleteLocalRef(ENVONLY, str);
         } /* end if */
+
+        /* Create an H5O_token_t object */
+        if (NULL == (token = create_H5O_token_t(ENVONLY, &tokens[i], TRUE)))
+            CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
+
+        ENVPTR->SetObjectArrayElement(ENVONLY, oToken, i, token);
+        CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
+
+        ENVPTR->DeleteLocalRef(ENVONLY, token);
     }
 
 done:
@@ -3316,14 +3332,12 @@ done:
     }
     if (fnos)
         HDfree(fnos);
-    if (refs)
-        HDfree(refs);
+    if (tokens)
+        HDfree(tokens);
     if (oName)
         h5str_array_free(oName, (size_t)n);
     if (fnoP)
         UNPIN_LONG_ARRAY(ENVONLY, fNo, fnoP, (ret_val < 0) ? JNI_ABORT : 0);
-    if (refP)
-        UNPIN_LONG_ARRAY(ENVONLY, oRef, refP, (ret_val < 0) ? JNI_ABORT : 0);
     if (ltarr)
         UNPIN_INT_ARRAY(ENVONLY, lType, ltarr, (ret_val < 0) ? JNI_ABORT : 0);
     if (otarr)
@@ -3345,17 +3359,17 @@ done:
 JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_H5_H5Gget_1obj_1info_1max
     (JNIEnv *env, jclass clss, jlong loc_id, jobjectArray objName,
-          jintArray oType, jintArray lType, jlongArray oRef, jlong maxnum, jint n)
+          jintArray oType, jintArray lType, jobjectArray oToken, jlong maxnum, jint n)
 {
-    unsigned long  *refs = NULL;
-    jboolean        isCopy;
-    jstring         str;
-    jlong          *refP = NULL;
-    char          **oName = NULL;
-    jint           *otarr = NULL;
-    jint           *ltarr = NULL;
-    int             i;
-    herr_t          ret_val = FAIL;
+    H5O_token_t  *tokens = NULL;
+    jboolean      isCopy;
+    jstring       str;
+    jobject       token;
+    char        **oName = NULL;
+    jint         *otarr = NULL;
+    jint         *ltarr = NULL;
+    int           i;
+    herr_t        ret_val = FAIL;
 
     UNUSED(clss);
 
@@ -3363,25 +3377,22 @@ Java_hdf_hdf5lib_H5_H5Gget_1obj_1info_1max
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_max: oType is NULL");
     if (NULL == lType)
         H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_max: lType is NULL");
-    if (NULL == oRef)
-        H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_max: oRef is NULL");
+    if (NULL == oToken)
+        H5_NULL_ARGUMENT_ERROR(ENVONLY, "H5Gget_obj_info_max: oToken is NULL");
 
     PIN_INT_ARRAY(ENVONLY, oType, otarr, &isCopy, "H5Gget_obj_info_max: oType not pinned");
     PIN_INT_ARRAY(ENVONLY, lType, ltarr, &isCopy, "H5Gget_obj_info_max: lType not pinned");
-    PIN_LONG_ARRAY(ENVONLY, oRef, refP, &isCopy, "H5Gget_obj_info_max: oRef not pinned");
 
     if (NULL == (oName = (char **) HDcalloc((size_t)n, sizeof(*oName))))
         H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Gget_obj_info_max: failed to allocate buffer for object name");
 
-    if (NULL == (refs = (unsigned long *) HDcalloc((size_t)n, sizeof(unsigned long))))
-        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Gget_obj_info_max: failed to allocate buffer for ref. info");
+    if (NULL == (tokens = (H5O_token_t *) HDcalloc((size_t)n, sizeof(H5O_token_t))))
+        H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5Gget_obj_info_max: failed to allocate buffer for object tokens");
 
-    if ((ret_val = H5Gget_obj_info_max((hid_t)loc_id, oName, (int *)otarr, (int *)ltarr, refs, maxnum)) < 0)
+    if ((ret_val = H5Gget_obj_info_max((hid_t)loc_id, oName, (int *)otarr, (int *)ltarr, tokens, maxnum)) < 0)
         H5_JNI_FATAL_ERROR(ENVONLY, "H5Gget_obj_info_max: retrieval of object info failed");
 
     for (i = 0; i < n; i++) {
-        refP[i] = (jlong) refs[i];
-
         if (oName[i]) {
             if (NULL == (str = ENVPTR->NewStringUTF(ENVONLY, oName[i])))
                 CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
@@ -3391,15 +3402,22 @@ Java_hdf_hdf5lib_H5_H5Gget_1obj_1info_1max
 
             ENVPTR->DeleteLocalRef(ENVONLY, str);
         }
+
+        /* Create an H5O_token_t object */
+        if (NULL == (token = create_H5O_token_t(ENVONLY, &tokens[i], TRUE)))
+            CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
+
+        ENVPTR->SetObjectArrayElement(ENVONLY, oToken, i, token);
+        CHECK_JNI_EXCEPTION(ENVONLY, JNI_FALSE);
+
+        ENVPTR->DeleteLocalRef(ENVONLY, token);
     } /* end for */
 
 done:
-    if (refs)
-        HDfree(refs);
+    if (tokens)
+        HDfree(tokens);
     if (oName)
         h5str_array_free(oName, (size_t)n);
-    if (refP)
-        UNPIN_LONG_ARRAY(ENVONLY, oRef, refP, (ret_val < 0) ? JNI_ABORT : 0);
     if (ltarr)
         UNPIN_INT_ARRAY(ENVONLY, lType, ltarr, (ret_val < 0) ? JNI_ABORT : 0);
     if (otarr)
@@ -3410,7 +3428,7 @@ done:
 
 int
 H5Gget_obj_info_full
-    (hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, unsigned long *objno, int indexType, int indexOrder)
+    (hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *fno, H5O_token_t *obj_token, int indexType, int indexOrder)
 {
     info_all_t info;
 
@@ -3419,10 +3437,10 @@ H5Gget_obj_info_full
     info.ltype = ltype;
     info.idxnum = 0;
     info.fno = fno;
-    info.objno = objno;
+    info.obj_token = obj_token;
     info.count = 0;
 
-    if (H5Literate1(loc_id, (H5_index_t)indexType, (H5_iter_order_t)indexOrder, NULL, obj_info_all, (void *)&info) < 0) {
+    if (H5Literate2(loc_id, (H5_index_t)indexType, (H5_iter_order_t)indexOrder, NULL, obj_info_all, (void *)&info) < 0) {
         /*
          * Reset info stats; most importantly, reset the count.
          */
@@ -3431,11 +3449,11 @@ H5Gget_obj_info_full
         info.ltype = ltype;
         info.idxnum = 0;
         info.fno = fno;
-        info.objno = objno;
+        info.obj_token = obj_token;
         info.count = 0;
 
         /* Iteration failed, try normal alphabetical order */
-        if (H5Literate1(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, obj_info_all, (void *)&info) < 0)
+        if (H5Literate2(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, obj_info_all, (void *)&info) < 0)
             return -1;
     }
 
@@ -3444,7 +3462,7 @@ H5Gget_obj_info_full
 
 int
 H5Gget_obj_info_max
-    (hid_t loc_id, char **objname, int *otype, int *ltype, unsigned long *objno, long maxnum)
+    (hid_t loc_id, char **objname, int *otype, int *ltype, H5O_token_t *obj_token, long maxnum)
 {
     info_all_t info;
 
@@ -3452,10 +3470,10 @@ H5Gget_obj_info_max
     info.otype = otype;
     info.ltype = ltype;
     info.idxnum = (unsigned long)maxnum;
-    info.objno = objno;
+    info.obj_token = obj_token;
     info.count = 0;
 
-    if (H5Lvisit1(loc_id, H5_INDEX_NAME, H5_ITER_NATIVE, obj_info_max, (void *)&info) < 0)
+    if (H5Lvisit2(loc_id, H5_INDEX_NAME, H5_ITER_NATIVE, obj_info_max, (void *)&info) < 0)
         return -1;
 
     return info.count;
@@ -3466,13 +3484,13 @@ obj_info_all
     (hid_t loc_id, const char *name, const H5L_info2_t *info, void *op_data)
 {
     info_all_t  *datainfo = (info_all_t *)op_data;
-    H5O_info1_t  object_info;
+    H5O_info2_t  object_info;
     htri_t       object_exists;
     size_t       str_len;
 
     datainfo->otype[datainfo->count] = -1;
     datainfo->ltype[datainfo->count] = -1;
-    datainfo->objno[datainfo->count] = (unsigned long)-1;
+    datainfo->obj_token[datainfo->count] = H5O_TOKEN_UNDEF;
 
     str_len = HDstrlen(name);
     if (NULL == (datainfo->objname[datainfo->count] = (char *) HDmalloc(str_len + 1)))
@@ -3485,20 +3503,14 @@ obj_info_all
         goto done;
 
     if (object_exists) {
-        if (H5Oget_info_by_name2(loc_id, name, &object_info, H5O_INFO_ALL, H5P_DEFAULT) < 0)
+        if (H5Oget_info_by_name3(loc_id, name, &object_info, H5O_INFO_ALL, H5P_DEFAULT) < 0)
             goto done;
 
         datainfo->otype[datainfo->count] = object_info.type;
         datainfo->ltype[datainfo->count] = info->type;
         datainfo->fno[datainfo->count] = object_info.fileno;
-        datainfo->objno[datainfo->count] = (unsigned long)object_info.addr;
 
-        /*
-        if (info->type == H5L_TYPE_HARD)
-            datainfo->objno[datainfo->count] = (unsigned long)info->u.address;
-        else
-            datainfo->objno[datainfo->count] = info->u.val_size;
-        */
+        HDmemcpy(&datainfo->obj_token[datainfo->count], &object_info.token, sizeof(object_info.token));
     }
 
 done:
@@ -3512,13 +3524,13 @@ obj_info_max
     (hid_t loc_id, const char *name, const H5L_info2_t *info, void *op_data)
 {
     info_all_t  *datainfo = (info_all_t *)op_data;
-    H5O_info1_t  object_info;
+    H5O_info2_t  object_info;
     size_t       str_len;
 
     datainfo->otype[datainfo->count] = -1;
     datainfo->ltype[datainfo->count] = -1;
     datainfo->objname[datainfo->count] = NULL;
-    datainfo->objno[datainfo->count] = (unsigned long)-1;
+    datainfo->obj_token[datainfo->count] = H5O_TOKEN_UNDEF;
 
     /* This will be freed by h5str_array_free(oName, n) */
     str_len = HDstrlen(name);
@@ -3528,16 +3540,13 @@ obj_info_max
     HDstrncpy(datainfo->objname[datainfo->count], name, str_len);
     (datainfo->objname[datainfo->count])[str_len] = '\0';
 
-    if (H5Oget_info2(loc_id, &object_info, H5O_INFO_ALL) < 0)
+    if (H5Oget_info3(loc_id, &object_info, H5O_INFO_ALL) < 0)
         goto done;
 
     datainfo->otype[datainfo->count] = object_info.type;
     datainfo->ltype[datainfo->count] = info->type;
 
-    if (info->type == H5L_TYPE_HARD)
-        datainfo->objno[datainfo->count] = (unsigned long)info->u.address;
-    else
-        datainfo->objno[datainfo->count] = info->u.val_size;
+    HDmemcpy(&datainfo->obj_token[datainfo->count], &object_info.token, sizeof(object_info.token));
 
 done:
     datainfo->count++;

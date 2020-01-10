@@ -121,7 +121,6 @@ public class TestH5Lbasic {
         }
         assertFalse("H5Lget_info",link_info==null);
         assertTrue("H5Lget_info link type",link_info.type==HDF5Constants.H5L_TYPE_HARD);
-        assertTrue("Link Value Size", link_info.val_size > 0);
     }
 
     @Test(expected = HDF5LibraryException.class)

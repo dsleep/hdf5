@@ -11,37 +11,8 @@
  * help@hdfgroup.org.                                                        *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-package hdf.hdf5lib.structs;
+package hdf.hdf5lib.callbacks;
 
-import java.io.Serializable;
+public interface H5O_iterate_opdata_t {
 
-//Information struct for group (for H5Gget_info/H5Gget_info_by_name/H5Gget_info_by_idx)
-public class H5_ih_info_t implements Serializable {
-    private static final long serialVersionUID = -142238015615462707L;
-    public long     index_size;     /* btree and/or list */
-    public long     heap_size;
-
-    H5_ih_info_t (long index_size, long heap_size)
-    {
-        this.index_size = index_size;
-        this.heap_size = heap_size;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-
-        if (!(o instanceof H5_ih_info_t))
-            return false;
-
-        H5_ih_info_t info = (H5_ih_info_t) o;
-
-        if (this.index_size != info.index_size)
-        	return false;
-        if (this.heap_size != info.heap_size)
-        	return false;
-
-        return true;
-    }
 }

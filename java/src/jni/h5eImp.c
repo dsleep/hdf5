@@ -517,7 +517,6 @@ H5E_walk_cb
     (int nindx, const H5E_error2_t *info, void *cb_data)
 {
     cb_wrapper *wrapper = (cb_wrapper *)cb_data;
-    jmethodID   constructor;
     jmethodID   mid;
     jobject     visit_callback = wrapper->visit_callback;
     jstring     str1, str2, str3;
@@ -559,16 +558,7 @@ H5E_walk_cb
 
     args[6].l = str3;
 
-    /* Get a reference to your class if you don't have it already */
-    if (NULL == (cls = CBENVPTR->FindClass(CBENVONLY, "hdf/hdf5lib/structs/H5E_error2_t")))
-        CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
-
-    /* get a reference to the constructor; the name is <init> */
-    if (NULL == (constructor = CBENVPTR->GetMethodID(CBENVONLY, cls, "<init>", "(JJJILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V")))
-        CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
-
-    if (NULL == (cb_info_t = CBENVPTR->NewObjectA(CBENVONLY, cls, constructor, args)))
-        CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
+    CALL_CONSTRUCTOR(CBENVONLY, "hdf/hdf5lib/structs/H5E_error2_t", "(JJJILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", args, cb_info_t);
 
     status = CBENVPTR->CallIntMethod(CBENVONLY, visit_callback, mid, nindx, cb_info_t, op_data);
     CHECK_JNI_EXCEPTION(CBENVONLY, JNI_FALSE);
