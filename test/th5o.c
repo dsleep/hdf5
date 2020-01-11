@@ -234,6 +234,7 @@ test_h5o_close(void)
 }
 
 
+#ifndef H5_NO_DEPRECATED_SYMBOLS
 /****************************************************************
 **
 **  test_h5o_open_by_addr(): Test H5Oopen_by_addr function.
@@ -374,6 +375,7 @@ test_h5o_open_by_addr(void)
     }H5E_END_TRY
     VERIFY(dtype, FAIL, "H5Oopen_by_addr");
 } /* test_h5o_open_by_addr() */
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 
 
 /****************************************************************
@@ -1751,7 +1753,9 @@ test_h5o(void)
     MESSAGE(5, ("Testing Objects\n"));
 
     test_h5o_open();                /* Test generic open function */
+#ifndef H5_NO_DEPRECATED_SYMBOLS
     test_h5o_open_by_addr();        /* Test opening objects by address */
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
     test_h5o_open_by_token();       /* Test opening objects by token */
     test_h5o_close();               /* Test generic close function */
     test_h5o_refcount();            /* Test incrementing and decrementing reference count */
@@ -1763,7 +1767,7 @@ test_h5o(void)
 #ifndef H5_NO_DEPRECATED_SYMBOLS
     test_h5o_open_by_addr_deprec(); /* Test opening objects by address with H5Lget_info1 */
     test_h5o_getinfo_visit();       /* Test object info for H5Oget_info1/2 and H5Ovisit1 */
-#endif
+#endif /* H5_NO_DEPRECATED_SYMBOLS */
 } /* test_h5o() */
 
 

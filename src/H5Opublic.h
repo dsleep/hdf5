@@ -181,7 +181,6 @@ extern "C" {
 #endif
 
 H5_DLL hid_t H5Oopen(hid_t loc_id, const char *name, hid_t lapl_id);
-H5_DLL hid_t H5Oopen_by_addr(hid_t loc_id, haddr_t addr);
 H5_DLL hid_t H5Oopen_by_token(hid_t loc_id, H5O_token_t token);
 H5_DLL hid_t H5Oopen_by_idx(hid_t loc_id, const char *group_name,
     H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id);
@@ -280,6 +279,7 @@ typedef herr_t (*H5O_iterate1_t)(hid_t obj, const char *name, const H5O_info1_t 
 
 
 /* Function prototypes */
+H5_DLL hid_t H5Oopen_by_addr(hid_t loc_id, haddr_t addr);
 H5_DLL herr_t H5Oget_info1(hid_t loc_id, H5O_info1_t *oinfo);
 H5_DLL herr_t H5Oget_info_by_name1(hid_t loc_id, const char *name, H5O_info1_t *oinfo,
     hid_t lapl_id);
