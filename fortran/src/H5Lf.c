@@ -441,7 +441,7 @@ done:
  *     	                H5L_LINK_SOFT_F      - Soft link
  *     	                H5L_LINK_EXTERNAL_F  - External link
  *     	                H5L_LINK_ERROR_F     - Error
- *  address - If the link is a hard link, address specifies the file address that the link points to
+ *  token - If the link is a hard link, token specifies the token for the object that the link points to
  *  val_size - If the link is a symbolic link, val_size will be the length of the link value
  *
  * RETURNS
@@ -456,13 +456,12 @@ done:
 int_f
 h5lget_info_c(hid_t_f *link_loc_id, _fcd link_name, size_t_f *link_namelen,
 		int_f *cset, int_f *corder, int_f *corder_valid, int_f *link_type,
-		haddr_t_f *address, size_t_f *val_size,
-		hid_t_f *lapl_id)
+		H5O_token_t *token, size_t_f *val_size, hid_t_f *lapl_id)
 /******/
 {
     char *c_link_name = NULL;          /* Buffer to hold C string */
     int_f ret_value = 0;          /* Return value */
-    H5L_info1_t link_buff;
+    H5L_info2_t link_buff;
 
     /*
      * Convert FORTRAN name to C name
@@ -473,7 +472,7 @@ h5lget_info_c(hid_t_f *link_loc_id, _fcd link_name, size_t_f *link_namelen,
     /*
      * Call H5Linfo function.
      */
-    if(H5Lget_info1((hid_t)*link_loc_id, c_link_name, &link_buff, (hid_t)*lapl_id) < 0)
+    if(H5Lget_info2((hid_t)*link_loc_id, c_link_name, &link_buff, (hid_t)*lapl_id) < 0)
         HGOTO_DONE(FAIL);
 
     /* Unpack the structure */
@@ -482,7 +481,7 @@ h5lget_info_c(hid_t_f *link_loc_id, _fcd link_name, size_t_f *link_namelen,
     *corder_valid = 0;
     if(link_buff.corder_valid > 0) *corder_valid = 1;
     *link_type = (int_f)link_buff.type;
-    *address = (haddr_t_f)link_buff.u.address;
+    *token = link_buff.u.token;
     *val_size = (size_t_f)link_buff.u.val_size;
 
 done:
@@ -526,14 +525,14 @@ int_f
 h5lget_info_by_idx_c(hid_t_f *loc_id, _fcd group_name, size_t_f *group_namelen,
 		      int_f *index_field, int_f *order, hsize_t_f *n,
 		      int_f *link_type, int_f *corder_valid, int_f *corder,
-                      int_f *cset, haddr_t_f *address, size_t_f *val_size, hid_t_f *lapl_id)
+                      int_f *cset, H5O_token_t *token, size_t_f *val_size, hid_t_f *lapl_id)
 /******/
 {
     char *c_group_name = NULL;          /* Buffer to hold C string */
     H5_index_t c_index_field;
     H5_iter_order_t c_order;
     int_f ret_value = 0;          /* Return value */
-    H5L_info1_t link_buff;
+    H5L_info2_t link_buff;
 
     /*
      * Convert FORTRAN name to C name
@@ -546,7 +545,7 @@ h5lget_info_by_idx_c(hid_t_f *loc_id, _fcd group_name, size_t_f *group_namelen,
      /*
       * Call H5Linfo_by_idx function.
       */
-    if(H5Lget_info_by_idx1((hid_t)*loc_id, c_group_name, c_index_field, c_order, (hsize_t)*n,
+    if(H5Lget_info_by_idx2((hid_t)*loc_id, c_group_name, c_index_field, c_order, (hsize_t)*n,
 			  &link_buff, (hid_t)*lapl_id) < 0)
       HGOTO_DONE(FAIL);
 
@@ -558,7 +557,7 @@ h5lget_info_by_idx_c(hid_t_f *loc_id, _fcd group_name, size_t_f *group_namelen,
     *corder = (int_f)link_buff.corder;
     *cset = (int_f)link_buff.cset;
     *link_type = (int_f)link_buff.type;
-    *address = (haddr_t_f)link_buff.u.address;
+    *token = link_buff.u.token;
     *val_size = (size_t_f)link_buff.u.val_size;
 
 done:
