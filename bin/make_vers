@@ -95,7 +95,7 @@ sub print_checkoptions ($) {
     # Print the #ifdef
     print $fh "#if (";
     for $curr_idx ($min_sup_idx .. ($max_idx - 1)) {
-        print $fh "defined(H5_USE_1", ($curr_idx * 2), "_API)";
+        print $fh "defined(H5_USE_1", ($curr_idx * 2), "_API_DEFAULT)";
         if($curr_idx < ($max_idx - 1)) {
             print $fh " || ";
         }
@@ -108,7 +108,7 @@ sub print_checkoptions ($) {
     # Print the #endif
     print $fh "#endif /* (";
     for $curr_idx ($min_sup_idx .. ($max_idx - 1)) {
-        print $fh "defined(H5_USE_1", ($curr_idx * 2), "_API)";
+        print $fh "defined(H5_USE_1", ($curr_idx * 2), "_API_DEFAULT)";
         if($curr_idx < ($max_idx - 1)) {
             print $fh " || ";
         }
