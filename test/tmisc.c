@@ -5324,7 +5324,7 @@ test_misc29(void)
 
 
 static int
-test_misc30_get_info_cb(hid_t loc_id, const char *name, const H5L_info_t H5_ATTR_UNUSED *info,
+test_misc30_get_info_cb(hid_t loc_id, const char *name, const H5L_info2_t H5_ATTR_UNUSED *info,
     void H5_ATTR_UNUSED *op_data)
 {
     H5O_info2_t object_info;
@@ -5335,7 +5335,7 @@ test_misc30_get_info_cb(hid_t loc_id, const char *name, const H5L_info_t H5_ATTR
 static int
 test_misc30_get_info(hid_t loc_id)
 {
-    return H5Literate(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, test_misc30_get_info_cb, NULL);
+    return H5Literate2(loc_id, H5_INDEX_NAME, H5_ITER_INC, NULL, test_misc30_get_info_cb, NULL);
 }
 
 

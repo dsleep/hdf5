@@ -1402,8 +1402,8 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
     if(ginfo2.nlinks > 0) {
         char objname[NAME_BUF_SIZE];            /* Name of object in group */
         char objname2[NAME_BUF_SIZE];           /* Name of object in group */
-        H5L_info_t linfo;                       /* Link information */
-        H5L_info_t linfo2;                      /* Link information */
+        H5L_info2_t linfo;                      /* Link information */
+        H5L_info2_t linfo2;                     /* Link information */
 
         /* Loop over contents of groups */
         for(idx = 0; idx < ginfo.nlinks; idx++) {
@@ -1413,8 +1413,8 @@ compare_groups(hid_t gid, hid_t gid2, hid_t pid, int depth, unsigned copy_flags)
             if(HDstrcmp(objname, objname2)) TEST_ERROR
 
             /* Get link info */
-            if(H5Lget_info(gid, objname, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
-            if(H5Lget_info(gid2, objname2, &linfo2, H5P_DEFAULT) < 0) TEST_ERROR
+            if(H5Lget_info2(gid, objname, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
+            if(H5Lget_info2(gid2, objname2, &linfo2, H5P_DEFAULT) < 0) TEST_ERROR
             if(linfo.type != linfo2.type) TEST_ERROR
 
             /* Extra checks for "real" objects */
@@ -7043,7 +7043,7 @@ test_copy_group_links(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t dst_
     hid_t plid = -1;                            /* Object copy plist ID */
     hsize_t dim2d[2];
     hsize_t dim1d[1];
-    H5L_info_t linfo;
+    H5L_info2_t linfo;
     int buf[DIM_SIZE_1][DIM_SIZE_2];
     int i, j;
     unsigned expand_soft;
@@ -7177,7 +7177,7 @@ test_copy_group_links(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t dst_
              * re-add it as a soft link so compare_groups() works */
             if(expand_soft) {
                 /* Check link type */
-                if(H5Lget_info(fid_dst, NAME_LINK_SOFT, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Lget_info2(fid_dst, NAME_LINK_SOFT, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
                 if(linfo.type != H5L_TYPE_HARD)
                     FAIL_PUTS_ERROR("Soft link was not expanded to a hard link")
 
@@ -7200,7 +7200,7 @@ test_copy_group_links(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t dst_
              * and re-add it as an external link so compare_groups() works */
             if(expand_ext) {
                 /* Check link type */
-                if(H5Lget_info(fid_dst, NAME_LINK_EXTERN, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
+                if(H5Lget_info2(fid_dst, NAME_LINK_EXTERN, &linfo, H5P_DEFAULT) < 0) TEST_ERROR
                 if(linfo.type != H5L_TYPE_HARD)
                     FAIL_PUTS_ERROR("External link was not expanded to a hard link")
 
@@ -13461,7 +13461,7 @@ error:
  */
 static herr_t
 test_copy_iterate_cb(hid_t loc_id, const char *name,
-    const H5L_info_t H5_ATTR_UNUSED *link_info, void *op_data)
+    const H5L_info2_t H5_ATTR_UNUSED *link_info, void *op_data)
 {
     hid_t dst_loc_id = *((hid_t *)op_data);
 
@@ -13521,8 +13521,7 @@ test_copy_iterate(hid_t fcpl_src, hid_t fcpl_dst, hid_t src_fapl, hid_t dst_fapl
 
     /* Iterate over links in the root group, copying each object */
     if((gid = H5Gopen2(fid1, "/", H5P_DEFAULT)) < 0) TEST_ERROR
-    if(H5Literate(gid, H5_INDEX_NAME, H5_ITER_INC, NULL, test_copy_iterate_cb,
-            &fid2) < 0)
+    if(H5Literate2(gid, H5_INDEX_NAME, H5_ITER_INC, NULL, test_copy_iterate_cb, &fid2) < 0)
         TEST_ERROR
 
     /* Close */

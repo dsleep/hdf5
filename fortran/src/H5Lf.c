@@ -988,7 +988,7 @@ done:
  * SOURCE
 */
 int_f
-h5literate_c(hid_t_f *group_id, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate_t op, void *op_data )
+h5literate_c(hid_t_f *group_id, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate2_t op, void *op_data )
 /******/
 {
   int_f ret_value = -1;  /* Return value */
@@ -1001,7 +1001,7 @@ h5literate_c(hid_t_f *group_id, int_f *index_type, int_f *order, hsize_t_f *idx,
    * Call H5Linterate
    */
 
-  func_ret_value = H5Literate( (hid_t)*group_id, (H5_index_t)*index_type, (H5_iter_order_t)*order, &idx_c, op, op_data);
+  func_ret_value = H5Literate2( (hid_t)*group_id, (H5_index_t)*index_type, (H5_iter_order_t)*order, &idx_c, op, op_data);
 
   ret_value = (int_f)func_ret_value;
   *idx = (hsize_t_f)idx_c;
@@ -1038,7 +1038,7 @@ h5literate_c(hid_t_f *group_id, int_f *index_type, int_f *order, hsize_t_f *idx,
  * SOURCE
 */
 int_f
-h5literate_by_name_c(hid_t_f *loc_id, _fcd name, size_t_f *namelen, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate_t op, void *op_data, hid_t_f *lapl_id)
+h5literate_by_name_c(hid_t_f *loc_id, _fcd name, size_t_f *namelen, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate2_t op, void *op_data, hid_t_f *lapl_id)
 /******/
 {
   int_f ret_value = -1;       /* Return value */
@@ -1058,7 +1058,7 @@ h5literate_by_name_c(hid_t_f *loc_id, _fcd name, size_t_f *namelen, int_f *index
    * Call H5Linterate
    */
 
-  func_ret_value = H5Literate_by_name((hid_t)*loc_id, c_name,(H5_index_t)*index_type,(H5_iter_order_t)*order,&idx_c,op,op_data,(hid_t)*lapl_id);
+  func_ret_value = H5Literate_by_name2((hid_t)*loc_id, c_name,(H5_index_t)*index_type,(H5_iter_order_t)*order,&idx_c,op,op_data,(hid_t)*lapl_id);
 
   ret_value = (int_f)func_ret_value;
   *idx = (hsize_t_f)idx_c;

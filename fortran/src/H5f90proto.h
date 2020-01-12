@@ -588,8 +588,8 @@ H5_FCDLL int_f h5lget_name_by_idx_c(hid_t_f *loc_id, _fcd group_name, size_t_f *
 H5_FCDLL int_f h5lget_val_c(hid_t_f *link_loc_id, _fcd link_name, size_t_f *link_namelen, size_t_f *size,
 			     void *linkval_buff, hid_t_f *lapl_id) ;
 
-H5_FCDLL int_f h5literate_c(hid_t_f *group_id, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate_t op, void *op_data );
-H5_FCDLL int_f h5literate_by_name_c(hid_t_f *loc_id, _fcd name, size_t_f *namelen, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate_t op, void *op_data, hid_t_f *lapl_id);
+H5_FCDLL int_f h5literate_c(hid_t_f *group_id, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate2_t op, void *op_data );
+H5_FCDLL int_f h5literate_by_name_c(hid_t_f *loc_id, _fcd name, size_t_f *namelen, int_f *index_type, int_f *order, hsize_t_f *idx, H5L_iterate2_t op, void *op_data, hid_t_f *lapl_id);
 
 
 #endif /* _H5f90proto_H */
