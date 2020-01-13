@@ -178,7 +178,7 @@ Java_hdf_hdf5lib_H5_H5VLget_1connector_1name
 
     if (buf_size > 0) {
         if (NULL == (volName = (char *) HDmalloc(sizeof(char) * (size_t)buf_size + 1)))
-            H5_JNI_FATAL_ERROR(ENVONLY, "H5VLget_connector_name: failed to allocated VOL connector name buffer");
+            H5_OUT_OF_MEMORY_ERROR(ENVONLY, "H5VLget_connector_name: failed to allocated VOL connector name buffer");
 
         if ((status = H5VLget_connector_name((hid_t)object_id, volName, (size_t)buf_size + 1)) < 0)
             H5_LIBRARY_ERROR(ENVONLY);
