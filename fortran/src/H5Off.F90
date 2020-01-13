@@ -44,23 +44,15 @@ MODULE H5O
   USE H5GLOBAL
   IMPLICIT NONE
 
-!****t* H5O (F03)/h5o_token_t
-!
-! Fortran2003 Derived Type:
-!
-  TYPE, BIND(C) :: h5o_token_t_f03
-     INTEGER(C_SIGNED_CHAR), DIMENSION(1: H5O_MAX_TOKEN_SIZE_F) :: token
-  END TYPE h5o_token_t_f03
-
 !****t* H5O (F03)/h5o_info_t
 !
 ! Fortran2003 Derived Type:
 !
   TYPE, BIND(C) :: h5o_info_t
-     INTEGER(C_LONG)  :: fileno     ! File number that object is located in
-     TYPE(H5O_TOKEN_T_F) :: token    ! Token for object in file
-     INTEGER(C_INT)   :: type       ! Basic object type (group, dataset, etc.)
-     INTEGER          :: rc         ! Reference count of object
+     INTEGER(C_LONG)     :: fileno     ! File number that object is located in
+     TYPE(H5O_TOKEN_T_F) :: token      ! Token for object in file
+     INTEGER(C_INT)      :: type       ! Basic object type (group, dataset, etc.)
+     INTEGER             :: rc         ! Reference count of object
 
      INTEGER, DIMENSION(8) :: atime ! Access time         !    -- NOTE --
      INTEGER, DIMENSION(8) :: mtime ! Modification time   ! Returns an integer array
@@ -76,7 +68,7 @@ MODULE H5O
 
   TYPE, BIND(C) :: c_h5o_info_t
      INTEGER(C_LONG)  :: fileno     ! File number that object is located in
-     TYPE(H5O_TOKEN_T_C) :: token   ! Token for object in file
+     TYPE(H5O_TOKEN_T_F) :: token   ! Token for object in file
      INTEGER(C_INT)   :: type       ! Basic object type (group, dataset, etc.)
      INTEGER(C_INT)   :: rc         ! Reference count of object
 

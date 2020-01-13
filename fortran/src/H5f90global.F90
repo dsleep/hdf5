@@ -54,7 +54,7 @@ MODULE H5GLOBAL
   ! If you change the value of these parameters, do not forget to change corresponding
   ! values in the H5f90.h file.
   INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3
-  INTEGER, PARAMETER :: H5O_TOKEN_BUF_LEN = 4   ! 4 INTs, or 16 bytes
+  INTEGER, PARAMETER :: H5O_TOKEN_BUF_LEN = 16 /* Matches C defined value in H5public.h */
 
   ! Parameters used in the function 'h5kind_to_type' located in H5_ff.F90.
   ! The flag is used to tell the function whether the kind input variable
@@ -72,13 +72,8 @@ MODULE H5GLOBAL
   END TYPE hdset_reg_ref_t_f
 
   TYPE, BIND(C) :: h5o_token_t_f
-     INTEGER, DIMENSION(1:H5O_TOKEN_BUF_LEN) :: token
+     INTEGER(C_INT8_T), DIMENSION(1:H5O_TOKEN_BUF_LEN) :: token
   END TYPE h5o_token_t_f
-
-  ! C compatible version of H5O_token_t type (possibly redundant)
-  TYPE, BIND(C) :: h5o_token_t_c
-     INTEGER, DIMENSION(1:H5O_TOKEN_BUF_LEN) :: token
-  END TYPE h5o_token_t_c
 
   ! Do not forget to change these values when new predefined
   ! datatypes are added
