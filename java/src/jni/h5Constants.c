@@ -30,8 +30,6 @@ extern "C" {
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-JNIEXPORT
-
 JNIEXPORT jlong JNICALL
 Java_hdf_hdf5lib_HDF5Constants_H5_1QUARTER_1HADDR_1MAX(JNIEnv *env, jclass cls) { return (hsize_t)HADDR_MAX/4; }
 
