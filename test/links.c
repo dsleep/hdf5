@@ -11642,7 +11642,7 @@ error:
 
 
 /*-------------------------------------------------------------------------
- * Function:    ud_callbacks
+ * Function:    UD_cb_create
  *
  * Purpose:     Check that all callbacks are called and are given the correct
  *              information.
@@ -11764,7 +11764,7 @@ ud_callbacks(hid_t fapl, hbool_t new_format)
     hid_t       fid = -1;                        /* File ID */
     hid_t       gid = -1;                        /* Group ID */
     hid_t       lcpl = -1;                       /* Link Creation PL */
-    H5L_info_t  li;                              /* Link information */
+    H5L_info2_t li;                              /* Link information */
     char        ud_target_name[] = UD_CB_TARGET; /* Link target name */
     char        filename[NAME_BUF_SIZE];
     char        query_buf[NAME_BUF_SIZE];
@@ -11809,7 +11809,7 @@ ud_callbacks(hid_t fapl, hbool_t new_format)
     if(H5Gclose(gid) < 0) TEST_ERROR
 
     /* Query the link to test its query callback */
-    if(H5Lget_info(fid, UD_CB_LINK_NAME, &li, H5P_DEFAULT) < 0) TEST_ERROR
+    if(H5Lget_info2(fid, UD_CB_LINK_NAME, &li, H5P_DEFAULT) < 0) TEST_ERROR
     if(li.u.val_size != 16) TEST_ERROR
     if (UD_CB_TYPE != li.type) {
         H5_FAILED();
@@ -11841,7 +11841,7 @@ ud_callbacks(hid_t fapl, hbool_t new_format)
     if(H5Pclose(lcpl) < 0) FAIL_STACK_ERROR
 
     /* Check its character encoding */
-    if(H5Lget_info(fid, UD_CB_LINK_NAME, &li, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lget_info2(fid, UD_CB_LINK_NAME, &li, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(li.cset != H5T_CSET_UTF8) TEST_ERROR
 
     /* Unregister the link class so the library forgets what its callbacks do */
@@ -11857,7 +11857,7 @@ ud_callbacks(hid_t fapl, hbool_t new_format)
     } H5E_END_TRY
 
     /* The query callback should NOT fail, but should be unable to give a linklen */
-    if(H5Lget_info(fid, UD_CB_LINK_NAME, &li, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lget_info2(fid, UD_CB_LINK_NAME, &li, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(li.u.val_size != 0) TEST_ERROR
     if(li.type != UD_CB_TYPE) TEST_ERROR
 
@@ -12790,7 +12790,7 @@ error:
  *-------------------------------------------------------------------------
  */
 static int
-visit_link_cb(hid_t H5_ATTR_UNUSED group_id, const char *name, const H5L_info_t *linfo, void *_op_data)
+visit_link_cb(hid_t H5_ATTR_UNUSED group_id, const char *name, const H5L_info2_t *linfo, void *_op_data)
 {
     lvisit_ud_t *op_data = (lvisit_ud_t *)_op_data;
 
@@ -12832,26 +12832,26 @@ link_visit(hid_t fapl, hbool_t new_format)
     /* Visit all the links reachable from the root group (with file ID) */
     udata.idx = 0;
     udata.info = lvisit0;
-    if(H5Lvisit(fid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit2(fid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
 
     /* Visit all the links reachable from the root group (with group ID) */
     if((gid = H5Gopen2(fid, "/", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = lvisit0;
-    if(H5Lvisit(gid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit2(gid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Visit all the links reachable from each internal group */
     if((gid = H5Gopen2(fid, "/Group1", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = lvisit1;
-    if(H5Lvisit(gid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit2(gid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     if((gid = H5Gopen2(fid, "/Group1/Group2", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = lvisit2;
-    if(H5Lvisit(gid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit2(gid, H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Close file created */
@@ -12896,34 +12896,34 @@ link_visit_by_name(hid_t fapl, hbool_t new_format)
     /* Visit all the links reachable from the root group (with file ID) */
     udata.idx = 0;
     udata.info = lvisit0;
-    if(H5Lvisit_by_name(fid, "/", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit_by_name2(fid, "/", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
 
     /* Visit all the links reachable from the root group (with group ID) */
     if((gid = H5Gopen2(fid, "/", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = lvisit0;
-    if(H5Lvisit_by_name(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit_by_name2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Visit all the links reachable from each internal group */
     udata.idx = 0;
     udata.info = lvisit1;
-    if(H5Lvisit_by_name(fid, "/Group1", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit_by_name2(fid, "/Group1", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
 
     if((gid = H5Gopen2(fid, "/Group1", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = lvisit1;
-    if(H5Lvisit_by_name(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit_by_name2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     udata.idx = 0;
     udata.info = lvisit2;
-    if(H5Lvisit_by_name(fid, "/Group1/Group2", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit_by_name2(fid, "/Group1/Group2", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
 
     if((gid = H5Gopen2(fid, "/Group1/Group2", H5P_DEFAULT)) < 0) FAIL_STACK_ERROR
     udata.idx = 0;
     udata.info = lvisit2;
-    if(H5Lvisit_by_name(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
+    if(H5Lvisit_by_name2(gid, ".", H5_INDEX_NAME, H5_ITER_INC, visit_link_cb, &udata, H5P_DEFAULT) < 0) FAIL_STACK_ERROR
     if(H5Gclose(gid) < 0) FAIL_STACK_ERROR
 
     /* Close file created */
@@ -16742,7 +16742,7 @@ open_by_idx_check_old(hid_t main_group_id, hid_t soft_group_id, hid_t mount_file
     if(H5Otoken_cmp(group_id, &oi.token, &mnt_root_token, &cmp_value) < 0) TEST_ERROR
     if(0 != cmp_value) TEST_ERROR
     if(H5Otoken_cmp(group_id, &oi.token, &objno[mnt_idx], &cmp_value) < 0) TEST_ERROR
-    if(0 != cmp_value) TEST_ERROR
+    if(0 == cmp_value) TEST_ERROR
 
     /* Close object */
     if(H5Oclose(obj_id) < 0) TEST_ERROR

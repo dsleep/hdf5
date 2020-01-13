@@ -68,9 +68,9 @@ static int find_err_msg_cb(unsigned n, const H5E_error2_t *err_desc, void *_clie
 /* Local functions */
 int iter_strcmp(const void *s1, const void *s2);
 int iter_strcmp2(const void *s1, const void *s2);
-static herr_t liter_cb(hid_t group, const char *name, const H5L_info_t *info,
+static herr_t liter_cb(hid_t group, const char *name, const H5L_info2_t *info,
     void *op_data);
-static herr_t liter_cb2(hid_t group, const char *name, const H5L_info_t *info,
+static herr_t liter_cb2(hid_t group, const char *name, const H5L_info2_t *info,
     void *op_data);
 herr_t aiter_cb(hid_t group, const char *name, const H5A_info_t *ainfo,
     void *op_data);
@@ -91,7 +91,7 @@ H5_ATTR_PURE int iter_strcmp(const void *s1, const void *s2)
 **
 ****************************************************************/
 static herr_t
-liter_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info_t H5_ATTR_UNUSED *link_info,
+liter_cb(hid_t H5_ATTR_UNUSED group, const char *name, const H5L_info2_t H5_ATTR_UNUSED *link_info,
     void *op_data)
 {
     iter_info *info = (iter_info *)op_data;
@@ -153,8 +153,8 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     /* Test iterating over empty group */
     info.command = RET_ZERO;
     idx = 0;
-    ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
-    VERIFY(ret, SUCCEED, "H5Literate");
+    ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+    VERIFY(ret, SUCCEED, "H5Literate2");
 
     datatype = H5Tcopy(H5T_NATIVE_INT);
     CHECK(datatype, FAIL, "H5Tcopy");
@@ -264,28 +264,28 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     info.command = RET_ZERO;
     idx = (hsize_t)-1;
     H5E_BEGIN_TRY {
-        ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+        ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
     } H5E_END_TRY;
-    VERIFY(ret, FAIL, "H5Literate");
+    VERIFY(ret, FAIL, "H5Literate2");
 
     /* Test skipping exactly as many entries as in the group */
     idx = NDATASETS + 2;
     H5E_BEGIN_TRY {
-        ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+        ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
     } H5E_END_TRY;
-    VERIFY(ret, FAIL, "H5Literate");
+    VERIFY(ret, FAIL, "H5Literate2");
 
     /* Test skipping more entries than are in the group */
     idx = NDATASETS + 3;
     H5E_BEGIN_TRY {
-        ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
+        ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info);
     } H5E_END_TRY;
-    VERIFY(ret, FAIL, "H5Literate");
+    VERIFY(ret, FAIL, "H5Literate2");
 
     /* Test all objects in group, when callback always returns 0 */
     info.command = RET_ZERO;
     idx = 0;
-    if((ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) > 0)
+    if((ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) > 0)
         TestErrPrintf("Group iteration function didn't return zero correctly!\n");
 
     /* Test all objects in group, when callback always returns 1 */
@@ -293,15 +293,15 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     info.command = RET_TWO;
     i = 0;
     idx = 0;
-    while((ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) > 0) {
+    while((ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) > 0) {
         /* Verify return value from iterator gets propagated correctly */
-        VERIFY(ret, 2, "H5Literate");
+        VERIFY(ret, 2, "H5Literate2");
 
         /* Increment the number of times "2" is returned */
         i++;
 
         /* Verify that the index is the correct value */
-        VERIFY(idx, (hsize_t)i, "H5Literate");
+        VERIFY(idx, (hsize_t)i, "H5Literate2");
         if(idx > (NDATASETS + 2))
             TestErrPrintf("Group iteration function walked too far!\n");
 
@@ -309,7 +309,7 @@ test_iter_group(hid_t fapl, hbool_t new_format)
         if(HDstrcmp(info.name, lnames[(size_t)(idx - 1)]) != 0)
             TestErrPrintf("Group iteration function didn't return name correctly for link - lnames[%u] = '%s'!\n", (unsigned)(idx - 1), lnames[(size_t)(idx - 1)]);
     } /* end while */
-    VERIFY(ret, -1, "H5Literate");
+    VERIFY(ret, -1, "H5Literate2");
 
     if(i != (NDATASETS + 2))
         TestErrPrintf("%u: Group iteration function didn't perform multiple iterations correctly!\n", __LINE__);
@@ -319,15 +319,15 @@ test_iter_group(hid_t fapl, hbool_t new_format)
     info.command = new_format ? RET_CHANGE2 : RET_CHANGE;
     i = 0;
     idx = 0;
-    while((ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) >= 0) {
+    while((ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb, &info)) >= 0) {
         /* Verify return value from iterator gets propagated correctly */
-        VERIFY(ret, 1, "H5Literate");
+        VERIFY(ret, 1, "H5Literate2");
 
         /* Increment the number of times "1" is returned */
         i++;
 
         /* Verify that the index is the correct value */
-        VERIFY(idx, (hsize_t)(i + 10), "H5Literate");
+        VERIFY(idx, (hsize_t)(i + 10), "H5Literate2");
         if(idx > (NDATASETS + 2))
             TestErrPrintf("Group iteration function walked too far!\n");
 
@@ -335,7 +335,7 @@ test_iter_group(hid_t fapl, hbool_t new_format)
         if(HDstrcmp(info.name, lnames[(size_t)(idx - 1)]) != 0)
             TestErrPrintf("Group iteration function didn't return name correctly for link - lnames[%u] = '%s'!\n", (unsigned)(idx - 1), lnames[(size_t)(idx - 1)]);
     } /* end while */
-    VERIFY(ret, -1, "H5Literate");
+    VERIFY(ret, -1, "H5Literate2");
 
     if(i != 42 || idx != 52)
         TestErrPrintf("%u: Group iteration function didn't perform multiple iterations correctly!\n", __LINE__);
@@ -550,7 +550,7 @@ H5_ATTR_PURE int iter_strcmp2(const void *s1, const void *s2)
 **
 ****************************************************************/
 static herr_t
-liter_cb2(hid_t loc_id, const char *name, const H5L_info_t H5_ATTR_UNUSED *link_info,
+liter_cb2(hid_t loc_id, const char *name, const H5L_info2_t H5_ATTR_UNUSED *link_info,
     void *opdata)
 {
     const iter_info *test_info = (const iter_info *)opdata;
@@ -683,14 +683,14 @@ test_iter_group_large(hid_t fapl)
 
     /* Iterate through the file to see members of the root group */
     curr_name = &names[0];
-    ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, NULL, liter_cb2, curr_name);
-    CHECK(ret, FAIL, "H5Literate");
+    ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, NULL, liter_cb2, curr_name);
+    CHECK(ret, FAIL, "H5Literate2");
     for(i = 1; i < 100; i++) {
         hsize_t idx = (hsize_t)i;
 
         curr_name = &names[i];
-        ret = H5Literate(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb2, curr_name);
-        CHECK(ret, FAIL, "H5Literate");
+        ret = H5Literate2(file, H5_INDEX_NAME, H5_ITER_INC, &idx, liter_cb2, curr_name);
+        CHECK(ret, FAIL, "H5Literate2");
     } /* end for */
 
     /* Close file */

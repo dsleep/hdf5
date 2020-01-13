@@ -292,6 +292,92 @@ done:
 
 
 /*-------------------------------------------------------------------------
+ * Function:	H5Oopen_by_addr
+ *
+ * Purpose:	Warning! This function is EXTREMELY DANGEROUS!
+ *              Improper use can lead to FILE CORRUPTION, INACCESSIBLE DATA,
+ *              and other VERY BAD THINGS!
+ *
+ *              This function opens an object using its address within the
+ *              HDF5 file, similar to an HDF5 hard link. The open object
+ *              is identical to an object opened with H5Oopen() and should
+ *              be closed with H5Oclose() or a type-specific closing
+ *              function (such as H5Gclose() ).
+ *
+ *              This function is very dangerous if called on an invalid
+ *              address. For this reason, H5Oincr_refcount() should be
+ *              used to prevent HDF5 from deleting any object that is
+ *              referenced by address (e.g. by a user-defined link).
+ *              H5Odecr_refcount() should be used when the object is
+ *              no longer being referenced by address (e.g. when the UD link
+ *              is deleted).
+ *
+ *              The address of the HDF5 file on disk has no effect on
+ *              H5Oopen_by_addr(), nor does the use of any unusual file
+ *              drivers. The "address" is really the offset within the
+ *              HDF5 file, and HDF5's file drivers will transparently
+ *              map this to an address on disk for the filesystem.
+ *
+ * Return:	Success:	An open object identifier
+ *		Failure:	H5I_INVALID_HID
+ *
+ * Programmer:	James Laird
+ *		July 14 2006
+ *
+ *-------------------------------------------------------------------------
+ */
+hid_t
+H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
+{
+    H5VL_object_t *vol_obj;             /* Object of loc_id */
+    H5I_type_t vol_obj_type = H5I_BADID;/* Object type of loc_id */
+    H5I_type_t opened_type;             /* Opened object type */
+    void *opened_obj = NULL;            /* Opened object */
+    H5VL_loc_params_t loc_params;       /* Location parameters */
+    H5O_token_t obj_token = {0};        /* Object token */
+    hbool_t is_native_vol_obj;
+    hid_t ret_value = H5I_INVALID_HID;  /* Return value */
+
+    FUNC_ENTER_API(H5I_INVALID_HID)
+    H5TRACE2("i", "ia", loc_id, addr);
+
+    /* Get the location object */
+    if(NULL == (vol_obj = (H5VL_object_t *)H5I_object(loc_id)))
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+
+    /* Get object type */
+    if((vol_obj_type = H5I_get_type(loc_id)) < 0)
+        HGOTO_ERROR(H5E_ARGS, H5E_BADTYPE, H5I_INVALID_HID, "invalid location identifier")
+
+    /* Check if the VOL object is a native VOL connector object */
+    if(H5VL_object_is_native(vol_obj, &is_native_vol_obj) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTGET, H5I_INVALID_HID, "can't determine if VOL object is native connector object")
+    if(is_native_vol_obj) {
+        /* This is a native-specific routine that requires serialization of the token */
+        if(H5VLnative_addr_to_token(loc_id, addr, &obj_token) < 0)
+            HGOTO_ERROR(H5E_OHDR, H5E_CANTSERIALIZE, H5I_INVALID_HID, "can't serialize address into object token")
+    } /* end if */
+    else
+        HGOTO_ERROR(H5E_OHDR, H5E_BADVALUE, H5I_INVALID_HID, "H5Oopen_by_addr is only meant to be used with the native VOL connector")
+
+    loc_params.type = H5VL_OBJECT_BY_TOKEN;
+    loc_params.loc_data.loc_by_token.token = &obj_token;
+    loc_params.obj_type = vol_obj_type;
+
+    /* Open the object */
+    if(NULL == (opened_obj = H5VL_object_open(vol_obj, &loc_params, &opened_type, H5P_DATASET_XFER_DEFAULT, H5_REQUEST_NULL)))
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTOPENOBJ, H5I_INVALID_HID, "unable to open object")
+
+    /* Register the object's ID */
+    if((ret_value = H5VL_register(opened_type, opened_obj, vol_obj->connector, TRUE)) < 0)
+        HGOTO_ERROR(H5E_OHDR, H5E_CANTREGISTER, H5I_INVALID_HID, "unable to atomize object handle")
+
+done:
+    FUNC_LEAVE_API(ret_value)
+} /* end H5Oopen_by_addr() */
+
+
+/*-------------------------------------------------------------------------
  * Function:    H5Oget_info1
  *
  * Purpose:     Retrieve information about an object.

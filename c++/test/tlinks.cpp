@@ -190,7 +190,7 @@ const H5std_string GROUP2NAME("Second_group");
 static void
 test_lcpl(hid_t fapl_id, hbool_t new_format)
 {
-    H5L_info_t linfo;
+    H5L_info2_t linfo;
     char filename[1024];
     hsize_t dims[2];
 

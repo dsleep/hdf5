@@ -745,7 +745,7 @@ obj_stats(const char *path, const H5O_info2_t *oi, const char *already_visited,
     /* If the object has already been seen then just return */
     if(NULL == already_visited) {
         /* Retrieve the native info for the object */
-        if(H5Oget_native_info_by_name(iter->fid, path, &native_info, H5O_INFO_ALL, H5P_DEFAULT) < 0)
+        if(H5Oget_native_info_by_name(iter->fid, path, &native_info, H5O_NATIVE_INFO_ALL, H5P_DEFAULT) < 0)
             H5TOOLS_GOTO_ERROR(FAIL, "H5Oget_native_info_by_name failed");
 
         /* Gather some general statistics about the object */
