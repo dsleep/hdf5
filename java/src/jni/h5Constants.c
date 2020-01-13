@@ -686,10 +686,6 @@ Java_hdf_hdf5lib_HDF5Constants_H5O_1INFO_1TIME(JNIEnv *env, jclass cls) { return
 JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_HDF5Constants_H5O_1INFO_1NUM_1ATTRS(JNIEnv *env, jclass cls) { return H5O_INFO_NUM_ATTRS; }
 JNIEXPORT jint JNICALL
-Java_hdf_hdf5lib_HDF5Constants_H5O_1INFO_1HDR(JNIEnv *env, jclass cls) { return H5O_INFO_HDR; }
-JNIEXPORT jint JNICALL
-Java_hdf_hdf5lib_HDF5Constants_H5O_1INFO_1META_1SIZE(JNIEnv *env, jclass cls) { return H5O_INFO_META_SIZE; }
-JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_HDF5Constants_H5O_1INFO_1ALL(JNIEnv *env, jclass cls) { return H5O_INFO_ALL; }
 JNIEXPORT jint JNICALL
 Java_hdf_hdf5lib_HDF5Constants_H5O_1NATIVE_1INFO_1HDR(JNIEnv *env, jclass cls) { return H5O_NATIVE_INFO_HDR; }

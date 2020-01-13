@@ -328,7 +328,7 @@ Java_hdf_hdf5lib_H5_H5Oget_1native_1info
     jobject           hdrinfobuf;
     jobject           obj_ihinfobuf;
     jobject           attr_ihinfobuf;
-    jvalue            args[3];
+    jvalue            args[10];
     herr_t            status = FAIL;
     jobject           ret_obj = NULL;
 
@@ -387,7 +387,7 @@ Java_hdf_hdf5lib_H5_H5Oget_1native_1info_1by_1name
     jobject            hdrinfobuf;
     jobject            obj_ihinfobuf;
     jobject            attr_ihinfobuf;
-    jvalue             args[3];
+    jvalue             args[10];
     herr_t             status = FAIL;
     jobject            ret_obj = NULL;
 
@@ -455,7 +455,7 @@ Java_hdf_hdf5lib_H5_H5Oget_1native_1info_1by_1idx
     jobject            hdrinfobuf;
     jobject            obj_ihinfobuf;
     jobject            attr_ihinfobuf;
-    jvalue             args[3];
+    jvalue             args[10];
     herr_t             status = FAIL;
     jobject            ret_obj = NULL;
 

@@ -346,8 +346,6 @@ public class HDF5Constants {
     public static final int H5O_INFO_BASIC = H5O_INFO_BASIC();
     public static final int H5O_INFO_TIME = H5O_INFO_TIME();
     public static final int H5O_INFO_NUM_ATTRS = H5O_INFO_NUM_ATTRS();
-    public static final int H5O_INFO_HDR = H5O_INFO_HDR();
-    public static final int H5O_INFO_META_SIZE = H5O_INFO_META_SIZE();
     public static final int H5O_INFO_ALL = H5O_INFO_ALL();
     public static final int H5O_NATIVE_INFO_HDR = H5O_NATIVE_INFO_HDR();
     public static final int H5O_NATIVE_INFO_META_SIZE = H5O_NATIVE_INFO_META_SIZE();
@@ -1314,10 +1312,6 @@ public class HDF5Constants {
     private static native final int H5O_INFO_TIME();
 
     private static native final int H5O_INFO_NUM_ATTRS();
-
-    private static native final int H5O_INFO_HDR();
-
-    private static native final int H5O_INFO_META_SIZE();
 
     private static native final int H5O_INFO_ALL();
 
