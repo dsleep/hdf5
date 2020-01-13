@@ -239,7 +239,8 @@ CONTAINS
     
     c_name = TRIM(name)//C_NULL_CHAR
     vol_id = H5VLget_connector_id_by_name(c_name)
-
+    
+    hdferr = 0
     IF(vol_id.LT.0)THEN
        hdferr = -1
        vol_id = H5I_INVALID_HID_F
