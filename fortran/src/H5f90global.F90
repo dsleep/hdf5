@@ -54,7 +54,7 @@ MODULE H5GLOBAL
   ! If you change the value of these parameters, do not forget to change corresponding
   ! values in the H5f90.h file.
   INTEGER, PARAMETER :: REF_REG_BUF_LEN = 3
-  INTEGER, PARAMETER :: H5O_TOKEN_BUF_LEN = 16 /* Matches C defined value in H5public.h */
+  INTEGER, PARAMETER :: H5O_TOKEN_BUF_LEN = 16 ! Matches C defined value in H5public.h
 
   ! Parameters used in the function 'h5kind_to_type' located in H5_ff.F90.
   ! The flag is used to tell the function whether the kind input variable
