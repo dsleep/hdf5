@@ -26,9 +26,6 @@
 /* Constants used in H5Gf.c files */
 #define OBJECT_NAMELEN_DEFAULT_F -1
 
-/* Constants used in H5Off.F90 and H5Of.c files */
-#define H5O_TOKEN_BUF_LEN_F  4  /* 4 INTs, or 16 bytes */
-
 #define H5_MAX(a,b)            (((a)>(b)) ? (a) : (b))
 
 #endif /* _H5f90_H */
