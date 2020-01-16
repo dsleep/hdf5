@@ -732,7 +732,7 @@ find_objs_cb(const char *name, const H5O_info2_t *oinfo, const char *already_see
 
         case H5O_TYPE_DATASET:
             if(NULL == already_seen) {
-                hid_t dset = -1;
+                hid_t dset = H5I_INVALID_HID;
 
                 /* Add the dataset to the list of objects */
                 add_obj(info->dset_table, &oinfo->token, name, TRUE);
