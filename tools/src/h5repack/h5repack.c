@@ -259,7 +259,7 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
 
                 /* Update the address and id */
                 HDmemcpy(&dt->obj_token, &travt->objs[i].obj_token, sizeof(H5O_token_t));
-                dt->id_out = -1;
+                dt->id_out = H5I_INVALID_HID;
 
                 /* Check if this type is the one requested */
                 if (H5Otoken_cmp(type_in, &oinfo.token, &dt->obj_token, &token_cmp) < 0)
@@ -282,7 +282,7 @@ copy_named_datatype(hid_t type_in, hid_t fidout, named_dt_t **named_dt_head_p, t
 
         /* Update the address and id */
         HDmemcpy(&dt_ret->obj_token, &oinfo.token, sizeof(H5O_token_t));
-        dt_ret->id_out = -1;
+        dt_ret->id_out = H5I_INVALID_HID;
     } /* end if requested datatype not found */
 
     /* If the requested datatype does not yet exist in the output file, copy it
@@ -353,11 +353,11 @@ done:
 int
 copy_attr(hid_t loc_in, hid_t loc_out, named_dt_t **named_dt_head_p, trav_table_t *travt, pack_opt_t *options)
 {
-    hid_t       attr_id = -1;  /* attr ID */
-    hid_t       attr_out = -1; /* attr ID */
-    hid_t       space_id = -1; /* space ID */
-    hid_t       ftype_id = -1; /* file type ID */
-    hid_t       wtype_id = -1; /* read/write type ID */
+    hid_t       attr_id = H5I_INVALID_HID;  /* attr ID */
+    hid_t       attr_out = H5I_INVALID_HID; /* attr ID */
+    hid_t       space_id = H5I_INVALID_HID; /* space ID */
+    hid_t       ftype_id = H5I_INVALID_HID; /* file type ID */
+    hid_t       wtype_id = H5I_INVALID_HID; /* read/write type ID */
     size_t      msize;         /* size of type */
     void       *buf = NULL;    /* data buffer */
     hsize_t     nelmts;        /* number of elements in dataset */
@@ -395,7 +395,7 @@ copy_attr(hid_t loc_in, hid_t loc_out, named_dt_t **named_dt_head_p, trav_table_
         if ((is_named = H5Tcommitted(ftype_id)) < 0)
             H5TOOLS_GOTO_ERROR((-1), "H5Tcommitted failed");
         if (is_named && travt) {
-            hid_t fidout = -1;
+            hid_t fidout = H5I_INVALID_HID;
 
             /* Create out file id */
             if ((fidout = H5Iget_file_id(loc_out)) < 0)
@@ -442,7 +442,7 @@ copy_attr(hid_t loc_in, hid_t loc_out, named_dt_t **named_dt_head_p, trav_table_
         type_class = H5Tget_class(wtype_id);
         is_ref = (type_class == H5T_REFERENCE);
         if (type_class == H5T_VLEN || type_class == H5T_ARRAY) {
-            hid_t base_type = -1;
+            hid_t base_type = H5I_INVALID_HID;
 
             base_type = H5Tget_super(ftype_id);
             is_ref = (is_ref || (H5Tget_class(base_type) == H5T_REFERENCE));
@@ -510,16 +510,16 @@ copy_attr(hid_t loc_in, hid_t loc_out, named_dt_t **named_dt_head_p, trav_table_
          */
         if (H5Sclose(space_id) < 0)
             H5TOOLS_GOTO_ERROR((-1), "H5Sclose failed");
-        space_id = -1;
+        space_id = H5I_INVALID_HID;
         if (H5Tclose(wtype_id) < 0)
             H5TOOLS_GOTO_ERROR((-1), "H5Tclose failed");
-        wtype_id = -1;
+        wtype_id = H5I_INVALID_HID;
         if (H5Tclose(ftype_id) < 0)
             H5TOOLS_GOTO_ERROR((-1), "H5Tclose failed");
-        ftype_id = -1;
+        ftype_id = H5I_INVALID_HID;
         if (H5Aclose(attr_id) < 0)
             H5TOOLS_GOTO_ERROR((-1), "H5Aclose failed");
-        attr_id = -1;
+        attr_id = H5I_INVALID_HID;
     } /* for u (each attribute) */
 
 done:
@@ -735,9 +735,9 @@ done:
 static int
 check_objects(const char* fname, pack_opt_t *options)
 {
-    hid_t         fid = -1;
-    hid_t         did = -1;
-    hid_t         sid = -1;
+    hid_t         fid = H5I_INVALID_HID;
+    hid_t         did = H5I_INVALID_HID;
+    hid_t         sid = H5I_INVALID_HID;
     unsigned int  i;
     int           ifil;
     trav_table_t *travt = NULL;
