@@ -721,6 +721,84 @@ done:
 
 
 /*---------------------------------------------------------------------------
+ * Function:    H5VLpush_lib_state
+ *
+ * Purpose:     Pushes a new internal state of the HDF5 library onto the
+ *              library's stack.
+ *
+ * Note:        This routine is _only_ for HDF5 VOL connector authors!  It is
+ *              _not_ part of the public API for HDF5 application developers.
+ *
+ * Note:        This routine must be called as a "pair" with
+ *              H5VLpop_lib_state.  It can be called before / after /
+ *              independently of H5VLfree_lib_state.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ * Programmer:  Quincey Koziol
+ *              Monday, October 7, 2019
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VLpush_lib_state(void)
+{
+    herr_t ret_value = SUCCEED; /* Return value */
+
+    /* Must use this, to avoid modifying the API context stack in FUNC_ENTER */
+    FUNC_ENTER_API_NOINIT
+    H5TRACE0("e","");
+
+    /* Reset the library state */
+    if(H5VL_push_lib_state() < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTSET, FAIL, "can't push library state")
+
+done:
+    FUNC_LEAVE_API_NOINIT(ret_value)
+} /* H5VLpush_lib_state() */
+
+
+/*---------------------------------------------------------------------------
+ * Function:    H5VLpop_lib_state
+ *
+ * Purpose:     Pops an internal state of the HDF5 library off the
+ *              library's stack.
+ *
+ * Note:        This routine is _only_ for HDF5 VOL connector authors!  It is
+ *              _not_ part of the public API for HDF5 application developers.
+ *
+ * Note:        This routine must be called as a "pair" with
+ *              H5VLpush_lib_state.  It can be called before / after /
+ *              independently of H5VLfree_lib_state.
+ *
+ * Return:      Success:    Non-negative
+ *              Failure:    Negative
+ *
+ * Programmer:  Quincey Koziol
+ *              Monday, October 7, 2019
+ *
+ *---------------------------------------------------------------------------
+ */
+herr_t
+H5VLpop_lib_state(void)
+{
+    herr_t ret_value = SUCCEED; /* Return value */
+
+    /* Must use this, to avoid modifying the API context stack in FUNC_ENTER */
+    FUNC_ENTER_API_NOINIT
+    H5TRACE0("e","");
+
+    /* Reset the library state */
+    if(H5VL_pop_lib_state() < 0)
+        HGOTO_ERROR(H5E_VOL, H5E_CANTRESET, FAIL, "can't pop library state")
+
+done:
+    FUNC_LEAVE_API_NOINIT(ret_value)
+} /* H5VLpop_lib_state() */
+
+
+/*---------------------------------------------------------------------------
  * Function:    H5VLfree_lib_state
  *
  * Purpose:     Free a retrieved library state.
